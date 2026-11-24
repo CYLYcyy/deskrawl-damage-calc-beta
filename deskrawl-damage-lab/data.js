@@ -507,7 +507,19 @@ window.DESKRAWL_DATA = (function () {
     { id: 'koboldthief', name: '沙狗头窃贼', rarity: '罕见', bonus: { vs: { bleeding: 20 } }, cap: 20 },
     { id: 'frozen', name: '冰霜僵尸战士', rarity: '罕见', bonus: { dmg: { all: 5 } }, cap: 25, note: '1.0.4 真源 全伤 3→5%' },
     { id: 'flyingfish', name: '飞鱼王', rarity: '传说', bonus: { mana: { costRed: 10 } }, cap: 30 },
-    { id: 'bluewhale', name: '蓝猛犸', rarity: '传说', bonus: { def: 1 }, cap: 35 }
+    { id: 'bluewhale', name: '蓝猛犸', rarity: '传说', bonus: { def: 1 }, cap: 35 },
+
+    /* ---- 1.0.4 新增仆从：仅收录带明确 DPS 被动者（真源 SlaveData.json statId 实证）。
+         其余 29 个新增为坐骑/防御/资源类（移速、减伤、找金、回蓝等），对玩家 DPS 无贡献，不收录。
+         base 取真源 1 级值（×100 为百分点）；成长走引擎 bonusPerLevel 路径，本批不静默外推。 ---- */
+    { id: 'defiledsuccubus', name: '腐化魅魔', rarity: '稀有', bonus: { vs: { distant: 30 } }, cap: 27, note: '1.0.4 真源 DefiledKeepSuccubus Beguiling Whisper statId=58 远处目标 +30%（1级 base 0.3）' },
+    { id: 'ogre', name: '食人魔', rarity: '传说', bonus: { vs: { immobilized: 40 } }, cap: 30, note: '1.0.4 真源 Ogre Damage to Stunned III statId=43 定身目标 +40%；另有物理减伤15%（生存向不进DPS）' },
+    { id: 'redcroc', name: '赤沙鳄鱼', rarity: '罕见', bonus: { vs: { injured: 25 } }, cap: 25, note: '1.0.4 真源 RedDesertCrocodile statId=30 受伤目标 +25%' },
+    { id: 'redsatyr', name: '赤沙萨提尔', rarity: '罕见', bonus: { dmg: { basic: 20 } }, cap: 25, note: '1.0.4 真源 RedDesertSatyr statId=33 基础攻击伤害 +20%' },
+    { id: 'skeletonwarrior', name: '骷髅战士', rarity: '罕见', bonus: { dmg: { physical: 15 } }, cap: 30, note: '1.0.4 真源 SkeletonWarrior Physical Damage I statId=23 物理伤害 +15%' },
+    { id: 'snowwhelp', name: '雪山幼龙', rarity: '稀有', bonus: { dmg: { special: 25 } }, cap: 25, note: '1.0.4 真源 SnowHillWhelp Budding Sorcery statId=61 特殊技能伤害 +25%' },
+    { id: 'spider', name: '蜘蛛', rarity: '罕见', bonus: { dmg: { poison: 15 } }, cap: 15, note: '1.0.4 真源 Spider Poison Damage I statId=27 毒素伤害 +15%' },
+    { id: 'pumpkin', name: '世界首领·南瓜王', rarity: '传说', bonus: { vs: { injured: 50 } }, cap: 35, note: '1.0.4 真源 WorldBossPumpkin Damage to Injured III statId=30 受伤目标 +50%' }
   ];
 
   /* ---------------------------------------------------------------- 传奇装备
@@ -688,18 +700,29 @@ window.DESKRAWL_DATA = (function () {
     { id: 'duskfeather', name: '暮羽之翼', slot: '披风', lvl: 9999, conf: 'none', text: '纯外观（DLC / 成就），无战斗属性。', fx: {} },
 
     /* ---- 1.0.4 新增传奇（真源 pathid 实证；机制依赖覆盖率/敌人数，暂不折算固定 fx） ---- */
-    { id: 'prismheart', name: '棱彩之心', slot: '项链', lvl: 60, conf: 'mechanism',
-      text: '1.0.4 真源：HighestElementalDamageBonus BonusIncrease=0.25——最高元素伤害属性额外 +25%。',
-      fx: {}, note: 'pathid 64193。可按主元素 +25% 近似，但需确认是否进元素加算池，暂不建模' },
+    { id: 'prismheart', name: '棱彩之心', slot: '项链', lvl: 60, conf: 'modeled',
+      text: '1.0.4 真源：HighestElementalDamageBonus BonusIncrease=0.25——玩家最高元素伤害加成 +25 个百分点。',
+      fx: { ele: 25 },
+      note: 'pathid 64193 EquipmentEffect_HighestElementalDamageBonus BonusIncrease=0.25。真源元素伤害为加算池（1+元素伤%+全伤%），"+25"按给最高元素加成 +25 个百分点处理；单主元素 build 下最高元素即 cfg.element，等价 fx.ele=25。多元素均衡堆叠且最高项非主元素时为近似（偏差随元素分布扩大），多元素构筑请手动换算' },
     { id: 'finalverdict', name: '终斩印戒', slot: '戒指', lvl: 50, cls: ['warrior'], conf: 'mechanism',
-      text: '1.0.4 真源：AbilityStatusDamage DamageBonus=2.5——对带状态目标伤害 +250%。',
-      fx: {}, note: 'pathid 5185。依赖目标状态覆盖率，暂不折算固定秒伤' },
+      text: '1.0.4 真源：AbilityStatusDamage DamageBonus=2.5——指定技能(64251 错落连击)对携带指定状态(64857 流血 DoT)目标伤害 +250%。',
+      fx: {}, note: 'pathid 5185。真源特效绑定「特定技能 × 特定状态」，非全局增伤。若手动估算：仅该技能命中带此状态目标的部分按 ×3.5 计，覆盖率=目标带该状态时间占比；无覆盖率真值，不折算固定秒伤' },
     { id: 'souldevour', name: '噬魂肩甲', slot: '肩甲', lvl: 40, conf: 'mechanism',
-      text: '1.0.4 真源：DamagePerNearbyEnemy 半径 3 内每敌 +3%（Boss 按 5 敌计）。',
-      fx: {}, note: 'pathid 64198。依赖周围敌人数，暂不建模' },
+      text: '1.0.4 真源：DamagePerNearbyEnemy 半径 3 内每敌 +3%（DamagePerEnemy=0.03, BossWeight=5）。',
+      fx: {}, note: 'pathid 64198，Radius=3.0。手动估算：全伤加成 = 3% × 半径3内敌人数（Boss 单体按 5 敌 = +15%），进元素/全伤加算池；依赖战场敌人数，不折算固定值' },
     { id: 'minionsaddle', name: '黄金可汗之鞍', slot: '仆从装备', lvl: 70, conf: 'mechanism',
       text: '1.0.4 新增仆从装备槽（槽位 12），无直接玩家 DPS 特效。',
-      fx: {}, note: 'pathid 5308，对应 Slot 12 仆从装备' }
+      fx: {}, note: 'pathid 5308，对应 Slot 12 仆从装备' },
+
+    /* ---- 清算锤：1.0.4 真源 PercentMult(Type:2) 武器伤害乘算层，层数用户录入 ---- */
+    { id: 'divinemace2', name: '魔翼之锤', slot: '武器', lvl: 1, cls: ['warrior', 'sorcerer', 'monk'], conf: 'modeled',
+      text: '1.0.4 真源：直接暴击时获得 1 层「武器伤害 +1%」，最多 50 层、持续 3 秒（Reckoning pathid 5773）。每层乘算 (1.01)^层数。',
+      fx: { weaponDamageMult: { perStack: 0.01, maxStacks: 50 } },
+      note: '真源 EquipmentEffect_StatusOnCriticalCast pathid 5120 → Reckoning(5773) Stat20 Type:2 Value=0.01。层数由配置 reckoningStacks 录入（暴击触发动态叠层，不自动推算），0 层时无效果' },
+    { id: 'ancientdivinemace2', name: '远古·魔翼之锤', slot: '武器', lvl: 1, cls: ['warrior', 'sorcerer', 'monk'], conf: 'modeled',
+      text: '1.0.4 真源：直接暴击时获得 1 层「武器伤害 +1.25%」，最多 50 层、持续 3 秒（AncientReckoning pathid 5757）。每层乘算 (1.0125)^层数。',
+      fx: { weaponDamageMult: { perStack: 0.0125, maxStacks: 50 } },
+      note: '真源 pathid 5110 → AncientReckoning(5757) Stat20 Type:2 Value=0.0125。层数由 reckoningStacks 录入，0 层时无效果' }
   ];
 
   /* ---------------------------------------------------------------- 词缀表 (ilvl 700 传奇) */

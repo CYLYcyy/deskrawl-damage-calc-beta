@@ -991,7 +991,7 @@ input:focus,select:focus{outline:none;border-color:var(--gold3)}
         <div class="grid2" style="grid-template-columns:1fr 300px;gap:20px">
           <div id="zoneTable"></div>
           <div>
-            <div class="field" title="静电层数：仅闪电伤害，每层 +5%，最多 10 层；与易伤加算进同一括号"><label>静电层数（0–10）</label>
+            <div class="field" title="静电层数：仅闪电伤害，1.0.4 真源每层 +10%，最多 10 层；与易伤加算进同一括号"><label>静电层数（0–10）</label>
               <div class="val">
                 <input type="number" id="zElectro" step="1" min="0" max="10" style="width:74px">
                 <button class="btn ghost" id="zElectroReset" style="padding:3px 8px;font-size:10.5px">自动</button>
@@ -1218,7 +1218,7 @@ input:focus,select:focus{outline:none;border-color:var(--gold3)}
               × (1 + Σ 条件伤害%)<br>
               × (1 + 基础/强力/特殊 类型伤害%)<br>
               × (1 + 技能专属加成%)<br>
-              × (1 + 易伤 30% + 静电 5%/层)<br>
+              × (1 + 易伤 30% + 静电 10%/层[1.0.4 真源])<br>
               × (1 − 护甲或魔抗 / (护甲或魔抗 + 50 × 攻击者等级))
             </div>
             <div class="note" style="margin-top:12px">
@@ -1237,7 +1237,7 @@ input:focus,select:focus{outline:none;border-color:var(--gold3)}
               <div class="step"><div class="n">04 暴击</div><div class="d">暴击率上限 85%，期望系数 <b>1 + 暴率 × 暴伤 × (1 − 目标暴伤减免)</b>；基础 5% / 150%。</div></div>
               <div class="step"><div class="n">05 条件伤</div><div class="d">对健康、受伤、减速、定身、精英、流血、中毒、燃烧、远处、易伤等，全部<b>加算进同一括号</b>，再与其它乘区相乘。</div></div>
               <div class="step"><div class="n">06 类型伤</div><div class="d">基础攻击 / 强力攻击 / 特殊技能三条独立词条，<b>只作用于对应标签</b>。DoT 不吃这一项。</div></div>
-              <div class="step"><div class="n">07 目标受伤</div><div class="d">易伤固定 <b>+30%</b>，静电每层 <b>+5%</b>（仅闪电，最多 10 层）。两者<b>加算进同一括号</b>，再与其它乘区相乘。注意「对易伤目标 +X%」是条件伤，不是这一项。</div></div>
+              <div class="step"><div class="n">07 目标受伤</div><div class="d">易伤固定 <b>×1.3</b>，静电每层 <b>+10%</b>（1.0.4 真源，仅闪电，最多 10 层）。默认<b>加算进同一括号</b>，结构无合并证据可用相乘做敏感性对照。注意「对易伤目标 +X%」是条件伤，不是这一项。</div></div>
               <div class="step"><div class="n">08 减伤</div><div class="d">物理走护甲，火冰雷毒奥走魔抗，公式 <b>R / (R + 50 × 等级)</b>。70 级时 3500 护甲 = 50%。普通怪默认 0。</div></div>
             </div>
           </div>
@@ -1379,7 +1379,7 @@ input:focus,select:focus{outline:none;border-color:var(--gold3)}
             </div>
             <div id="dmPaneSingle" style="display:none">
               <div class="field"><label>看哪个技能</label><div class="val"><select id="dmSkill" style="max-width:170px"></select></div></div>
-              <div class="field" title="静电层数：仅闪电伤害，每层 +5%，最多 10 层；与易伤加算进同一括号"><label>静电层数（0–10）</label><div class="val">
+              <div class="field" title="静电层数：仅闪电伤害，1.0.4 真源每层 +10%，最多 10 层；与易伤加算进同一括号"><label>静电层数（0–10）</label><div class="val">
                 <input type="number" id="dmElectro" min="0" max="10" step="1" style="width:64px">
                 <button class="btn ghost" id="dmElectroAuto" style="padding:3px 8px;font-size:10.5px">自动</button>
               </div></div>
@@ -1393,7 +1393,12 @@ input:focus,select:focus{outline:none;border-color:var(--gold3)}
               <label class="fitem"><span>脆裂层数（0–100）</span><input type="number" id="brittleStacks" min="0" max="100" step="1" value="0" title="敌人身上的脆裂层数，每层+5%受到暴击伤害；真源SO max=100，本地构筑默认10"></label>
               <label class="fitem"><span>脆裂归属</span><select id="brittleZone" title="脆裂归属：暴击区（真源文案方向，推断，默认）/ 受伤区（与易伤同通道）/ 不启用；也可到「未决项」裁决"><option value="crit">暴击区（推断）</option><option value="taken">受伤区（与易伤同通道）</option><option value="off">不启用</option></select></label>
             </div>
-            <div class="note" style="margin-top:8px">每层 +5% 受到暴击伤害来自本地化文案；真源 SO 中 <code>Behaviors:[]</code> 无数值，归属无实证，默认按暴击乘区计入并标为推断，可在「未决项」中裁决。</div>
+            <div class="note" style="margin-top:8px">1.0.4 真源：脆裂状态本身 <code>Behaviors:[]</code> 无伤害；+5%/层来自传奇戒指 <code>LegendaryRing8CritDamage</code> 的 ConditionalCritDamage，进暴伤池 <code>1+cc×(cd+0.05×层数)</code>。</div>
+            <div class="grouphead" style="margin-top:12px">清算锤 · 武器伤害乘算（1.0.4 真源）</div>
+            <div class="fgrid narrow">
+              <label class="fitem"><span>清算层数（0–50）</span><input type="number" id="reckoningStacks" min="0" max="50" step="1" value="0" title="魔翼之锤/远古魔翼之锤：直接暴击时获得1层武器伤害乘算，持续3秒。层数需装备对应锤后手动录入，(1.01)^层或(1.0125)^层"></label>
+            </div>
+            <div class="note" style="margin-top:8px">魔翼之锤每层武器伤害 <b>×1.01</b>、远古版 <b>×1.0125</b>，最多 50 层（真源 PercentMult/Type:2 乘算层）。暴击触发的动态层数无法静态推算，请按实测/推算手动录入；未装备清算锤或填 0 时无效果。</div>
           </div>
         </div>
         <div class="panel">

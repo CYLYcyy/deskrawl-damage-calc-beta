@@ -196,7 +196,7 @@ ${rows}
 
 /* ---------------- 05 传奇装备 ---------------- */
 {
-  let body = `# 传奇装备（全 64 件）
+  let body = `# 传奇装备（全 ${D.LEGENDARIES.length} 件）
 
 12 个部位：武器 / 头盔 / 肩甲 / 胸甲 / 手套 / 腰带 / 护腿 / 靴子 / 项链 / 戒指×2 / 披风。
 **披风是纯外观**：没有基础属性、没有词条、没有被动。
@@ -211,7 +211,7 @@ ${rows}
     body += `\n## ${slot}（${list.length}）\n\n| 名称 | 等级 | 职业 | 被动 | 数值口径 |\n| --- | --- | --- | --- | --- |\n`;
     for (const L of list) {
       const cls = L.cls ? L.cls.map(k => D.CLASSES[k].name).join('/') : '通用';
-      const conf = { official: '官方数值', modeled: '按覆盖率折算', none: '无被动' }[L.conf] || '';
+      const conf = { official: '官方数值', modeled: '按覆盖率折算', mechanism: '机制依赖覆盖率/敌人数，需手动换算', none: '无被动' }[L.conf] || '';
       body += `| ${L.name} | ${L.lvl > 1 ? 'Lv' + L.lvl : '—'} | ${cls} | ${L.text.replace(/\|/g, '/')} | ${conf} |\n`;
     }
   }

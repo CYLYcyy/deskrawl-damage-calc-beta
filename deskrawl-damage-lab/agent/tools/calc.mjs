@@ -64,7 +64,8 @@ if (has('help') || argv.length === 0) {
 --minion     id --minion-level 1-10 --reins --minion-gear none|atk|sup|def
 --electro    静电层数 0-10
 --brittle    脆裂层数（1.0.4 真源：进暴伤池 +5%/层，来自传奇戒指，默认 0）
---brittle-zone crit|taken|off                    脆裂归属（默认 crit=暴击区；文案方向，推断）
+--brittle-zone crit|taken|off                    脆裂归属（默认 crit=暴击区；1.0.4 真源进暴伤池）
+--reckoning  清算锤叠层数 0-50（需先在 --legendaries 装备 divinemace2/ancientdivinemace2）
 --affix      部位（weapon/helm/ring…）输出词条 Top8
 --hit        技能 id，输出单跳乘区（默认瞬时口径：条件项按命中瞬间 0/1）
 --hit-coverage  --hit 改用周期口径（易伤/健康/受伤等按覆盖率加权，非单跳瞬时）
@@ -193,6 +194,7 @@ const c = {
   electroStacks: arg('electro') != null ? parseInt(arg('electro'), 10) : undefined,
   brittleStacks: arg('brittle') != null ? parseInt(arg('brittle'), 10) : 0,
   brittleZone: arg('brittle-zone', 'crit'),
+  reckoningStacks: arg('reckoning') != null ? parseInt(arg('reckoning'), 10) : 0,
   skillLevels,
   runes,
   takenMode,

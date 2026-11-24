@@ -40,6 +40,7 @@
     electroStacks: null,
     brittleStacks: 0,
     brittleZone: 'crit',
+    reckoningStacks: 0,   // 清算锤叠层数（1.0.4 真源，暴击触发动态层，用户录入）
     enemy: { hp: 2400000, baseHp: 2400000, armor: 0, mr: 0, count: 1, elite: true, distant: 5, vuln: 45, slow: 10, immob: 25, healthy: 20, injured: 20, critdr: 0, name: '区域首领 (L70)' },
     encounter: null,
     diff: 6,
@@ -70,7 +71,7 @@
 
   const PERSIST_KEYS = ['classKey', 'element', 'primaryType', 'gear', 'skills', 'talents', 'setId', 'setCount',
     'legendaries', 'minionId', 'minionLevel', 'minionReins', 'minionGear', 'minionGearGate', 'minionGearBuild', 'minionStars',
-    'electroStacks', 'brittleStacks', 'brittleZone', 'enemy', 'encounter', 'diff', 'duration', 'gcd', 'preset', 'slot', 'decisions'];
+    'electroStacks', 'brittleStacks', 'brittleZone', 'reckoningStacks', 'enemy', 'encounter', 'diff', 'duration', 'gcd', 'preset', 'slot', 'decisions'];
 
   function snapshot() { return Store.normalize(state); }
 
@@ -281,6 +282,7 @@
     setVal('#zElectro', state.electroStacks != null ? state.electroStacks : (state._result && state._result.electroStacks) || 0);
     setVal('#brittleStacks', state.brittleStacks || 0);
     setVal('#brittleZone', pendingVal('brittleZone') || 'crit');
+    setVal('#reckoningStacks', state.reckoningStacks || 0);
     $$('#gearPreset button').forEach(b => b.classList.toggle('on', b.dataset.p === state._preset));
 
     const sel = $('#setSelect');
@@ -388,6 +390,17 @@
       });
       bs.addEventListener('blur', e => {
         if (parseInt(e.target.value, 10) !== state.brittleStacks) e.target.value = state.brittleStacks;
+      });
+    }
+    const rk = $('#reckoningStacks');
+    if (rk) {
+      rk.addEventListener('input', e => {
+        const raw = parseInt(e.target.value, 10);
+        state.reckoningStacks = isFinite(raw) ? Math.max(0, Math.min(50, raw)) : 0;
+        state._cache = {}; recomputeAll();
+      });
+      rk.addEventListener('blur', e => {
+        if (parseInt(e.target.value, 10) !== state.reckoningStacks) e.target.value = state.reckoningStacks;
       });
     }
     const bz = $('#brittleZone');
@@ -796,6 +809,7 @@
       electroStacks: state.electroStacks,
       brittleStacks: state.brittleStacks || 0,
       brittleZone: pendingVal('brittleZone') || 'crit',
+      reckoningStacks: state.reckoningStacks || 0,
       enemy: {
         hp: state.enemy.hp, armor: state.enemy.armor, mr: state.enemy.mr, count: state.enemy.count,
         elite: state.enemy.elite, distant: (state.enemy.distant || 0) / 100,

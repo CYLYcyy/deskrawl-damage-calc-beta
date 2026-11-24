@@ -49,6 +49,8 @@ window.Engine = (function () {
     vs: { healthy: 0, injured: 0, slowed: 0, immobilized: 0, elite: 0, bleeding: 0, poisoned: 0, burning: 0, distant: 0, vulnerable: 0 },
     cdr: 0, costRed: 0, costAdd: 0, manaMax: 0, manaRegen: 0, genFlat: 0, genPct: 0,
     flatDmg: 0, thorns: 0, dodge: 0,
+    // 武器伤害乘算层（1.0.4 真源 PercentMult/Type:2）：清算锤暴击叠层 ×(1+per)^stacks，默认 1=不生效
+    weaponDamageMult: 1,
     ccBasic: 0, ccLightning: 0, ccPhysical: 0,
     cdBasic: 0, cdStrong: 0, cdLightning: 0, cdPhysical: 0,
     // 元素/类型条件暴击（奥术之刃护胫这类"某系技能暴伤"必须走这里，
@@ -355,6 +357,9 @@ window.Engine = (function () {
     const add = (k, v) => { s[k] = (s[k] || 0) + v; };
     if (fx.stat) for (const k in fx.stat) add(k, fx.stat[k] * up);
     if (fx.dmg) for (const k in fx.dmg) add(k, fx.dmg[k] * up);
+    // 棱彩之心：HighestElementalDamageBonus +X%，归到玩家主元素并进元素加算池。
+    // 真源取「玩家最高的元素伤害加成」，单主元素 build 下等价于主元素 +X（见 data.js note）。
+    if (fx.ele) add(cfg.element, fx.ele * up);
     if (fx.type) for (const k in fx.type) add(k, fx.type[k] * up);
     if (fx.vs) for (const k in fx.vs) s.vs[k] += fx.vs[k] * up;
     if (fx.dot) add('dot', fx.dot * up);
@@ -377,6 +382,16 @@ window.Engine = (function () {
     if (fx.multiTarget) for (const k in fx.multiTarget) s.multiTarget[k] = Math.max(s.multiTarget[k] || 1, fx.multiTarget[k]);
     if (fx.manaFree) for (const k in fx.manaFree) s.manaFree[k] = 1 - (1 - (s.manaFree[k] || 0)) * (1 - fx.manaFree[k]);
     if (fx.perSummon) for (const k in fx.perSummon) s.perSummon[k] = (s.perSummon[k] || 0) + fx.perSummon[k];
+    // 清算锤：暴击触发的武器伤害乘算层。层数由用户录入 cfg.reckoningStacks（默认0），
+    // 不自动按暴击频率推算（真源工具链亦未建模，避免脑补稳态层数）。(1+per)^层数 连乘。
+    if (fx.weaponDamageMult) {
+      const w = fx.weaponDamageMult;
+      const per = w.perStack || 0;
+      const rawStacks = cfg.reckoningStacks != null ? cfg.reckoningStacks : 0;
+      const stacks = Math.max(0, Math.min(w.maxStacks || 50, rawStacks));
+      s.weaponDamageMult = (s.weaponDamageMult || 1) * Math.pow(1 + per, stacks);
+      s._reckoning = { per, stacks, max: w.maxStacks || 50 };
+    }
 
     // 条件不满足时整条回退（不是按覆盖率，而是直接失效）
     const miss = (fx.cond === 'elite' && !cfg.enemy.elite) ||
@@ -384,6 +399,7 @@ window.Engine = (function () {
     if (miss) {
       if (fx.stat) for (const k in fx.stat) s[k] -= fx.stat[k] * up;
       if (fx.dmg) for (const k in fx.dmg) s[k] -= fx.dmg[k] * up;
+      if (fx.ele) s[cfg.element] -= fx.ele * up;
     }
   }
 
@@ -534,7 +550,7 @@ window.Engine = (function () {
     return {
       cc, cd, crit, attr, ele: eleM, vs, type, ab: abm, aoe: 1, taken, mit,
       list: [
-        { id: 'base', name: '基础武器伤害', mult: 1, value: agg.weaponDamage + agg.flatDmg, note: '武器伤害 + 平伤' },
+        { id: 'base', name: '基础武器伤害', mult: agg.weaponDamageMult || 1, value: wdOf(agg), note: '武器伤害 + 平伤' + (agg._reckoning ? ' ×清算' + Math.pow(1 + agg._reckoning.per, agg._reckoning.stacks).toFixed(2) : '') },
         { id: 'ability', name: '技能倍率', mult: pct / 100, value: pct / 100, note: (ab.name || '') + ' ' + pct + '%' },
         { id: 'attr', name: '主属性', mult: attr, value: attr, note: '1 + 主属性/100' },
         { id: 'element', name: '元素 + 全伤', mult: eleM, value: eleM, note: '加算：1 + 元素伤% + 全伤%' },
@@ -553,7 +569,7 @@ window.Engine = (function () {
     // B2: 技能按 cfg.skillLevels 成长（N=10 时等价于原 ab.pct，保持向后兼容）
     const pct = pctAtLevel(ab, agg._cfg, ab.id);
     if (!pct) return { total: 0, hits: 0, zones: [], cc: 0, cd: 0, parts: [] };
-    const wd = agg.weaponDamage + agg.flatDmg;
+    const wd = wdOf(agg);
     const parts = [{ ele: ab.ele, pct }];
     if (ab.extra && (ctx.count || 1) > 1) {
       parts.push({ ele: ab.extra.ele, pct: pctAtLevel({ pct: ab.extra.pct, perLevel: ab.extra.perLevel }, agg._cfg, ab.id) });
@@ -578,7 +594,7 @@ window.Engine = (function () {
   function dotTick(agg, dot, ctx) {
     // B2: DoT 倍率随来源技能等级成长（无 src 时按 10 级，与旧版一致）
     const pct = pctAtLevel(dot, agg._cfg, dot.src || dot.id);
-    const wd = agg.weaponDamage + agg.flatDmg;
+    const wd = wdOf(agg);
     const dps = wd * (pct / 100) / Math.max(0.1, dot.dur);
     let d = dps * (1 + attrOf(agg) / 100);
     d *= eleMultOf(agg, dot.ele);
@@ -596,6 +612,10 @@ window.Engine = (function () {
   }
 
   function attrOf(agg) { return agg.str + agg.dex + agg.int; }
+
+  /* 武器伤害基项：白字(stat20) + 平伤，再乘武器伤害乘算层（清算锤 PercentMult）。
+     所有伤害来源（直击/DoT/触发/地狱风暴）统一走这里，保证口径一致。 */
+  function wdOf(agg) { return (agg.weaponDamage + agg.flatDmg) * (agg.weaponDamageMult || 1); }
 
   /* 仆从自身技能的元素：取被动里第一个具体元素，否则物理 */
   function guessEle(min) {
@@ -876,7 +896,7 @@ window.Engine = (function () {
       // 持续型传奇副伤（愤怒壁垒每 3 秒 210%、无尽流之器每秒 160% 等）
       (agg.procDps || []).forEach(pr => {
         const up = pr.uptime != null ? pr.uptime : 1;
-        let dd = (agg.weaponDamage + agg.flatDmg) * (pr.pct / 100) * dt * up;
+        let dd = wdOf(agg) * (pr.pct / 100) * dt * up;
         dd *= 1 + attrOf(agg) / 100;
         dd *= eleMultOf(agg, pr.ele);
         dd *= vsMultiplier(agg, ctx) * takenMultiplier(agg, pr.ele, ctx);
@@ -955,7 +975,7 @@ window.Engine = (function () {
             st.stacks.charge = (st.stacks.charge || 0) + 1;
             if (st.stacks.charge >= 10) {
               st.stacks.charge = 0;
-              const d = (agg.weaponDamage + agg.flatDmg) * 10 * (1 + attrOf(agg) / 100) * (1 + (agg.lightning || 0) / 100) * (1 + (agg.all || 0) / 100);
+              const d = wdOf(agg) * 10 * (1 + attrOf(agg) / 100) * (1 + (agg.lightning || 0) / 100) * (1 + (agg.all || 0) / 100);
               st.total += d; abInfo('地狱风暴').dmg += d; st.targetHp -= d;
             }
           }
