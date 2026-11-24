@@ -390,7 +390,9 @@ window.Engine = (function () {
     s.electroStacks = cfg.electroStacks != null ? cfg.electroStacks : 0;
     s.minion = minionInfo;
     // B2/B4: 把等级/口径配置带在 agg 上，供 hitZones/dotTick/takenMultiplier 读取（轻量引用，避免循环）
-    s._cfg = { skillLevels: cfg.skillLevels, takenMode: cfg.takenMode };
+    // 职业主属性键（真源 Player.fak 返回 STR/DEX/INT 中英雄对应的那一个，
+    // 攻击伤害 ×(1+Final(主属性)/100) 只吃这一个，不是三者之和）
+    s._cfg = { skillLevels: cfg.skillLevels, takenMode: cfg.takenMode, classStat: c.stat };
     return s;
   }
 
@@ -656,7 +658,13 @@ window.Engine = (function () {
       : 1 + ((agg[ele] || 0) + agg.all) / 100;
   }
 
-  function attrOf(agg) { return agg.str + agg.dex + agg.int; }
+  /* 职业主属性（真源 bjr：×(1+Final(职业主属性)/100)，只吃 STR/DEX/INT 中对应的那一个）。
+     Player.fak() 按英雄职业返回；默认回退到三者之和仅为兼容 agg 未带 _cfg 的旧调用。 */
+  function attrOf(agg) {
+    const cs = agg._cfg && agg._cfg.classStat;
+    if (cs && agg[cs] != null) return agg[cs];
+    return agg.str + agg.dex + agg.int;
+  }
 
   /* 武器伤害基项：白字(stat20) + 平伤，再乘武器伤害乘算层（清算锤 PercentMult）。
      所有伤害来源（直击/DoT/触发/地狱风暴）统一走这里，保证口径一致。 */
@@ -1229,5 +1237,61 @@ window.Engine = (function () {
     return bestR;
   }
 
-  return { GEAR_PRESETS, FLEX_SLOTS, MECHANICS: MED, aggregate, simulate, perHitTable, rankAffixes, autoTalents, hitDamage, hitZones, zoneSet, takenMultiplier, findAb };
+  /* 宝石最优镶嵌求解：逐孔贪心，候选 = 空 + 6 家族 × 1..maxGrade。
+     评分 = 当前引擎 lite simulate DPS；元素伤只被同元素技能吃，故贪心会自然
+     选主技能元素的最高品级；护甲槽按职业主属性/CDR 择优；饰品槽不进 DPS 保持空。
+     opts: { maxGrade=7, slots=[1,3,4,7,8], duration=20, onlyDps=true }
+     返回 { gems, baseDps, bestDps, delta, pct, detail:[{slot,idx,fam,lv,label,gain}] } */
+  function solveGems(cfg, opts) {
+    const G = D.GEMS;
+    const o = opts || {};
+    if (!G) return { gems: {}, baseDps: 0, bestDps: 0, delta: 0, pct: 0, detail: [] };
+    const maxGrade = Math.max(1, Math.min(G.GRADES.length, o.maxGrade || G.GRADES.length));
+    const slots = (o.slots || [1, 3, 4, 7, 8]).filter(s => (G.SLOT_CAP[s] || 0) > 0);
+    const dur = o.duration || 20;
+    const gems = {};
+    const score = () => { try { return simulate(Object.assign({}, cfg, { gems }), { duration: dur, lite: true }).dps; } catch (e) { return 0; } };
+    let prev = score();
+    const baseDps = prev;
+    const detail = [];
+    const famKeys = Object.keys(G.FAMILIES);
+    for (const slot of slots) {
+      const cap = G.SLOT_CAP[slot];
+      const type = G.SLOT_TYPE[slot];
+      const arr = [];
+      gems[slot] = arr;
+      for (let idx = 0; idx < cap; idx++) {
+        let best = null, bestDps = prev, bestLabel = '空';
+        // 候选：先空，再全家族×品级；饰品槽不进 DPS，直接跳过（保持空）
+        const cand = [{ fam: null, lv: 0 }];
+        if (type !== 'accessory') {
+          for (const fk of famKeys) for (let lv = 1; lv <= maxGrade; lv++) cand.push({ fam: fk, lv });
+        }
+        for (const c of cand) {
+          const trial = arr.slice();
+          trial[idx] = c.fam ? { fam: c.fam, lv: c.lv } : null;
+          const saved = gems[slot];
+          gems[slot] = trial;
+          const d = score();
+          gems[slot] = saved;
+          if (d > bestDps * 1.0002) {
+            bestDps = d; best = c.fam ? { fam: c.fam, lv: c.lv } : null;
+            bestLabel = c.fam ? (G.name(c.fam, c.lv)) : '空';
+          }
+        }
+        arr[idx] = best;
+        const gain = bestDps - prev;
+        if (gain > 0) detail.push({ slot, idx, fam: best.fam, lv: best.lv, label: bestLabel, gain, gainPct: gain / prev * 100 });
+        prev = bestDps;
+      }
+    }
+    const bestDps = prev;
+    return {
+      gems, baseDps, bestDps, delta: bestDps - baseDps,
+      pct: baseDps ? (bestDps - baseDps) / baseDps * 100 : 0,
+      detail
+    };
+  }
+
+  return { GEAR_PRESETS, FLEX_SLOTS, MECHANICS: MED, aggregate, simulate, perHitTable, rankAffixes, autoTalents, solveGems, hitDamage, hitZones, zoneSet, takenMultiplier, findAb };
 })();

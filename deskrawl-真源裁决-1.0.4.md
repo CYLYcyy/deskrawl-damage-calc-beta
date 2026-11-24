@@ -146,3 +146,30 @@
 | 缰绳推动 | `UI.SlaveEmpowerDesc` 缰绳赋能所有技能+N级 | 成长等级用 `eff`（含缰绳+5、可超10；继承槽固定10不吃缰绳）。南瓜王 vs受伤 L1=50%→L10=95%→L15缰绳=120% |
 
 > 至此数据/代码层面无剩余未决项。唯一仍需用户本地 2×2 木桩实测的是「静电×易伤结构」（加算 vs 相乘），真源两种 Behavior 无合并证据，引擎默认加算 + 相乘敏感性对照。
+
+## 11. 二轮产品升级：职业主属性 bug 修复 + 宝石最优求解 + 无障碍加固（2026-11-25）
+
+### 11.1 【正确性 bug 修复】职业主属性只吃对应那一个
+
+| 项 | 发现 | 修复 |
+|---|---|---|
+| 症状 | 宝石求解时发现法师镶红宝石（力量）也涨 DPS——引擎 `attrOf = str+dex+int` 把三个主属性加总 | 真源 `docs/04` §6.2.0/§552：`Player.bjr` 的 `主属性 = Player.fak()` 返回**英雄职业对应的那一个**（战士力量/法师智力/猎人与武僧敏捷），其余属性经 StatConversion 转 |
+| 修复 | `aggregate` 在 `_cfg` 带 `classStat`；`attrOf(agg)` 改读 `agg[agg._cfg.classStat]`，无 `_cfg` 时才回退三者之和 | 4 个调用点（hitZones/dotTick/procDps/地狱风暴）无需改，只改 attrOf 一处 |
+| 验证 | 法师/战士/猎人镶各自主属性宝石 +3.2%，镶副属性宝石 = 基线（无白拿）；CLI 自检基准仍 183541、PASS | 修复符合真源，消除"全属性词条让法师白拿力量"的隐藏高估 |
+
+### 11.2 宝石最优镶嵌求解器
+
+- `engine.js solveGems(cfg, opts)`：逐孔贪心，候选=空+6家族×品级上限，评分=lite simulate DPS；饰品槽不进 DPS 保持空。
+- 前端装备页「⚡ 一键最优镶嵌」按钮，点击试算并写入 state；CLI `--gem-solve` / `--gem-grade N`。
+- 求解器忠实反映真实技能轴：战士默认轴火技能占比高→武器选红宝石（火伤）；猎人毒技能→绿宝石；护甲一律选职业主属性宝石。
+- 验证：战士基线 18.7万→最优 39.9万（+113.3%）；浏览器点击后 146.9万→268.9万（+82.8%），0 JS 错误。
+
+### 11.3 无障碍 / 主题规范加固（Web Interface Guidelines 审查）
+
+| 项 | 修复 |
+|---|---|
+| 深色主题原生控件白底 | `<html color-scheme:dark>` + select/input/button color-scheme + `<meta theme-color>` |
+| 键盘焦点不可见（6 处 outline:none） | 全局 `:focus-visible` 金色描边；`input:focus` 只改边框，焦点描述交给 `:focus-visible` |
+| 移动端双击缩放延迟 | `touch-action:manipulation` + `-webkit-tap-highlight-color` |
+| 动画无降级 | `@media (prefers-reduced-motion:reduce)` 全部动画/过渡归零 |
+| 图标按钮无标签 | 宝石清除按钮、存档/未决关闭按钮补 `aria-label` |

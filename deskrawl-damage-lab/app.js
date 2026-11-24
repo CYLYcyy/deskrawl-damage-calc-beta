@@ -1272,7 +1272,7 @@
           <span style="font-size:10px;color:var(--dim);width:22px">孔${i+1}</span>
           <select class="gem-fam" data-slot="${slot}" data-idx="${i}" style="flex:1;max-width:110px">${g?'':'<option value="">— 空 —</option>'}${famSel}</select>
           <select class="gem-lv" data-slot="${slot}" data-idx="${i}" style="flex:1">${g?lvSel:'<option value="">—</option>'}</select>
-          <button class="gem-clr" data-slot="${slot}" data-idx="${i}" title="取下宝石" style="padding:2px 7px">×</button>
+          <button class="gem-clr" data-slot="${slot}" data-idx="${i}" title="取下宝石" aria-label="取下${slotNames[slot]}第 ${i + 1} 孔宝石" style="padding:2px 7px">×</button>
         </div>`;
       }
       card.innerHTML = h;
@@ -1336,6 +1336,32 @@
       <div><b class="gold">护甲槽（进属性）</b>：${statParts.length ? statParts.join(' · ') : '<span class="dim">未镶嵌护甲宝石</span>'}</div>
       <div><b>减伤（生存向，不进 DPS）</b>：${drParts.length ? drParts.join(' · ') : '<span class="dim">—</span>'}</div>
     </div>`;
+  }
+
+  /* 一键最优镶嵌：调用引擎逐孔试算 DPS，选家族+品级；结果写入 state 并刷新。
+     饰品槽减伤不进 DPS，求解器保持其为空，用户可手动补。 */
+  function bindGemSolve() {
+    const btn = $('#gemSolve');
+    if (!btn || typeof E.solveGems !== 'function') return;
+    btn.onclick = () => {
+      const hint = $('#gemSolveHint');
+      if (hint) hint.textContent = '试算中…';
+      // 让浏览器先绘制 hint，再做同步求解（约 0.2–0.5 秒）
+      setTimeout(() => {
+        try {
+          const res = E.solveGems(cfg(), { maxGrade: 7, duration: 20, slots: [1, 3, 4, 7, 8] });
+          // 只写有 DPS 增益的槽；清理旧宝石后写入最优
+          state.gems = {};
+          for (const s in res.gems) if (res.gems[s] && res.gems[s].some(Boolean)) state.gems[s] = res.gems[s];
+          state._cache = {}; state._gearKey = null;
+          recomputeAll();
+          if (hint) hint.innerHTML = `已优化 <b class="gold">+${res.pct.toFixed(1)}%</b>（${Math.round(res.baseDps).toLocaleString()} → ${Math.round(res.bestDps).toLocaleString()}）`;
+        } catch (e) {
+          if (hint) hint.textContent = '求解失败';
+          showError('宝石求解', e);
+        }
+      }, 30);
+    };
   }
 
   function renderGear() {
@@ -3173,6 +3199,7 @@
     // 全局兜底：任何未捕获错误都不该把页面变成白屏
     window.addEventListener('error', e => showError('脚本错误', (e && (e.error || e.message)) || '未知'));
     window.addEventListener('unhandledrejection', e => showError('异步错误', (e && e.reason) || '未知'));
+    safeRun('宝石求解按钮', bindGemSolve);
 
     // 存储健康自检：不可用 / 损坏时明确提示，不静默失败
     safeRun('存储自检', () => {

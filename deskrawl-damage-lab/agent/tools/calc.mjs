@@ -68,6 +68,7 @@ if (has('help') || argv.length === 0) {
 --brittle-zone crit|taken|off                    脆裂归属（默认 crit=暴击区；1.0.4 真源进暴伤池）
 --reckoning  清算锤叠层数 0-50（需先在 --legendaries 装备 divinemace2/ancientdivinemace2）
 --gems       JSON 宝石镶嵌 '{"槽位":[{"fam":"家族","lv":1-7}]}'；家族 diamond/ruby/sapphire/topaz/emerald/amethyst；槽位1武器/2头/3胸/7戒/8链
+--gem-solve  自动求解最优镶嵌（逐孔试算 DPS）；--gem-grade N 限制最高品级；可配 --json
 --affix      部位（weapon/helm/ring…）输出词条 Top8
 --hit        技能 id，输出单跳乘区（默认瞬时口径：条件项按命中瞬间 0/1）
 --hit-coverage  --hit 改用周期口径（易伤/健康/受伤等按覆盖率加权，非单跳瞬时）
@@ -259,6 +260,18 @@ if (has('check')) {
     dps: Math.round(r.dps),
     selfCheck: (err < 1e-9 && levelCheckError === 0) ? 'PASS' : 'FAIL'
   }, null, 1));
+  process.exit(0);
+}
+
+if (has('gem-solve')) {
+  if (typeof E.solveGems !== 'function') { console.error('当前引擎不支持宝石求解'); process.exit(1); }
+  const r = E.solveGems(c, { maxGrade: arg('gem-grade') ? parseInt(arg('gem-grade'), 10) : 7, duration: arg('duration') || 20 });
+  if (has('json')) { console.log(JSON.stringify(r, null, 1)); process.exit(0); }
+  console.log(`\n宝石最优镶嵌（${classKey} / ${element}）`);
+  console.log(`  基线 ${fmt(r.baseDps)} → 最优 ${fmt(r.bestDps)}　+${r.pct.toFixed(1)}%\n`);
+  const GN = D.GEMS.name, ST = { 1:'武器', 2:'头盔', 3:'胸甲', 4:'护腿', 7:'戒指', 8:'项链' };
+  r.detail.forEach(d => console.log(`  ${ST[d.slot] || ('槽' + d.slot)}孔${d.idx + 1}: ${d.label.padEnd(14)} +${d.gainPct.toFixed(1)}%`));
+  console.log('\n  注：饰品槽减伤不进 DPS，求解器保持为空，可手动镶。\n');
   process.exit(0);
 }
 

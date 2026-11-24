@@ -3,8 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#080706" />
 <title>桌面破坏神 · 伤害计算专家</title>
 <style>
+/* ---- 无障碍 / 主题合规（Web Interface Guidelines 2026-11 审查加固） ---- */
+html{color-scheme:dark}
+*{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--gold2);outline-offset:2px;border-radius:2px}
+select,input,button{color-scheme:dark}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
 :root{
   --bg:#080706; --bg2:#0d0b09; --panel:#12100d; --panel2:#171310; --panel3:#1d1813;
   --line:#2b2318; --line2:#3a2f1f; --gold:#c9a24d; --gold2:#e8cd8a; --gold3:#8a6d33;
@@ -479,7 +488,8 @@ select option{background:#12100d}
 .talentgrid .field{padding:3px 0}
 .talentgrid input{width:46px;font-size:11px;padding:2px 4px}
 input,select{background:#0a0908;border:1px solid var(--line2);color:var(--text);font-family:inherit;border-radius:0}
-input:focus,select:focus{outline:none;border-color:var(--gold3)}
+input:focus,select:focus{border-color:var(--gold3)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold2);outline-offset:1px}
 /* ---- 最优解页 ---- */
 .svtabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 14px}
 .svtab{background:#100d0a;border:1px solid var(--line2);color:var(--muted);font-family:inherit;font-size:11px;letter-spacing:.5px;padding:7px 11px;cursor:pointer;transition:.16s;position:relative}
@@ -1031,7 +1041,9 @@ input:focus,select:focus{outline:none;border-color:var(--gold3)}
       </div>
     </div>
     <div class="panel" style="margin-bottom:16px" id="gemPanel">
-      <div class="ph"><h3>宝石镶嵌</h3><div class="hint">真源 GemData：武器槽元素伤进元素加算池 · 护甲槽主属性 · 饰品槽减伤（不进 DPS）· L30 开放</div></div>
+      <div class="ph"><h3>宝石镶嵌</h3><div class="hint">真源 GemData：武器槽元素伤进元素加算池 · 护甲槽主属性 · 饰品槽减伤（不进 DPS）· L30 开放
+        <button id="gemSolve" class="hbtn" style="margin-left:10px;padding:3px 10px" title="按当前构筑逐孔试算 DPS，自动选最优家族与品级">⚡ 一键最优镶嵌</button>
+        <span id="gemSolveHint" style="margin-left:6px"></span></div></div>
       <div class="pb">
         <div id="gemSlots" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px"></div>
         <div id="gemSummary" style="margin-top:14px"></div>
@@ -1485,7 +1497,7 @@ input:focus,select:focus{outline:none;border-color:var(--gold3)}
 <aside class="drawer" id="saveDrawer">
   <div class="dh">
     <h3>配置存档</h3>
-    <button class="x" id="saveClose">×</button>
+    <button class="x" id="saveClose" aria-label="关闭存档面板">×</button>
   </div>
   <div class="db">
     <div class="savebox">
@@ -1509,7 +1521,7 @@ input:focus,select:focus{outline:none;border-color:var(--gold3)}
 <aside class="drawer" id="pendDrawer">
   <div class="dh">
     <h3>未决项裁决</h3>
-    <button class="x" id="pendClose">×</button>
+    <button class="x" id="pendClose" aria-label="关闭未决项面板">×</button>
   </div>
   <div class="db">
     <div class="dhint" id="pendIntro">这些口径没有定论。系统默认只是临时占位，不冒充权威。你可以三选一：用默认、用另一口径，或录入自己的游戏实测——实测优先于默认值并进入计算。</div>
