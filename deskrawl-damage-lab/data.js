@@ -538,16 +538,11 @@ window.DESKRAWL_DATA = (function () {
       levelMin: 1,
       levelMax: 10,          // 技能等级上限，需要同副本堆叠
       reinsBonus: 5,         // 传奇缰绳强化：自身技能 +5 级，可超上限（48h）
-      gearStar: 5,           // 5 级解锁仆从装备
-      selfBasePct: 30,       // 仆从自身技能：1 级时约等于 30% 武器伤害/秒（模型估算）
-      selfPerLevelPct: 4,    // 每级 +4 个百分点
-      gearOptions: [
-        { id: 'none', name: '不装备', fx: {} },
-        { id: 'atk', name: '攻击型（+12% 仆从技能伤害）', fx: { selfPct: 12 } },
-        { id: 'sup', name: '辅助型（+8% 全伤害）', fx: { dmg: { all: 8 } } },
-        { id: 'def', name: '守护型（-8% 受到伤害）', fx: { takenDR: 8 } }
-      ],
-      source: 'gaugedb 1.1.11 补丁说明（Minion Empowerment）'
+      gearStar: 5,           // 5 级解锁仆从装备（真源 SlaveData：非"第13件装备"）
+      synergyStar: 10,       // 10 星解锁协同被动槽：可带一个已练到 10 级的其他仆从被动
+      // 主动技能见 minion-data.js ABILITIES（真源 16 只有 Abilities，倍率未展开，不计 DPS）
+      // 已移除旧版编造的 selfBasePct/selfPerLevelPct 与"攻击/辅助/守护"三类 gearOptions
+      source: 'Deskrawl-Reverse 1.0.4 SlaveData.json（Abilities/Passives）+ gaugedb 1.1.11 补丁说明'
     },
 
     caps: { cc: 85, cdr: 80, dr: 90 },

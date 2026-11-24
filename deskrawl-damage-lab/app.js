@@ -26,17 +26,21 @@
     element: 'fire',
     primaryType: 'strong',
     gear: Object.assign({}, E.GEAR_PRESETS.mid),
+    gearBuild: null,            // 目标装分生成的装备词条（存在时引擎优先于 gear 预设）
     skills: { basic: 'w_val', strong: 'w_flame', special1: 'w_hook', special2: 'w_molten' },
     talents: {},
     setId: 'w_eye',
     setCount: 4,
+    runeSlots: [null, null, null, null, null, null],  // 6 槽逐槽自由配置 { id, level } | null
     legendaries: ['vigor', 'draught', 'serrated', 'kabuto'],
     minionId: 'raptor',
     minionLevel: 10,
     minionReins: false,
     minionGear: 'none',
-    minionGearGate: true,       // 第13件装备是否遵守训练等级门槛
-    minionGearBuild: null,      // 第13件装备 gearBuild（由 affix.js 词条池构造）
+    minionGearGate: true,       // 仆从装备是否遵守训练等级门槛（5级解锁）
+    minionGearBuild: null,      // 仆从装备 gearBuild（由 affix.js 词条池构造）
+    minionStars: 10,            // 仆从星级，10 星解锁协同被动槽
+    minionSynergy: null,        // 协同被动 { slave, stat }：10星主仆从带另一个10级仆从的被动
     electroStacks: null,
     brittleStacks: 0,
     brittleZone: 'crit',
@@ -70,8 +74,8 @@
     };
   })();
 
-  const PERSIST_KEYS = ['classKey', 'element', 'primaryType', 'gear', 'skills', 'talents', 'setId', 'setCount',
-    'legendaries', 'minionId', 'minionLevel', 'minionReins', 'minionGear', 'minionGearGate', 'minionGearBuild', 'minionStars',
+  const PERSIST_KEYS = ['classKey', 'element', 'primaryType', 'gear', 'gearBuild', 'skills', 'talents', 'setId', 'setCount', 'runeSlots',
+    'legendaries', 'minionId', 'minionLevel', 'minionReins', 'minionGear', 'minionGearGate', 'minionGearBuild', 'minionStars', 'minionSynergy',
     'electroStacks', 'brittleStacks', 'brittleZone', 'reckoningStacks', 'gems', 'enemy', 'encounter', 'diff', 'duration', 'gcd', 'preset', 'slot', 'decisions'];
 
   function snapshot() { return Store.normalize(state); }
@@ -200,6 +204,7 @@
     state.talents = Object.assign({}, DEFAULT_TALENTS[key]);
     state.legendaries = ui.legs.slice();
     state.gear = Object.assign({}, E.GEAR_PRESETS.mid);
+    state.gearBuild = null;       // 换职业清掉目标装分词条（避免跨职业串配置）
     state.electroStacks = null;   // 静电是推算值，换职业重新推
     state._preset = 'mid';
     state.slot = 'weapon';
@@ -210,9 +215,10 @@
 
   /* ------------------------------------------------------------ nav */
   const RENDER_ON_ENTER = {
-    gear: renderGear, talents: renderTalents, solver: renderSolver, minions: renderMinions,
+    gear: () => { safeRun('装备特效图标', renderLegendaryIcons); safeRun('装备页', renderGear); },
+    talents: renderTalents, solver: renderSolver, minions: renderMinions,
     model: renderModel, rotation: renderRotation, agent: renderAgent,
-    damage: renderDamage, compare: renderCompare
+    damage: renderDamage, compare: renderCompare, character: renderRuneSlots, builder: renderBuilder
   };
 
   function goto(tab) {
@@ -421,6 +427,7 @@
       if (!p) return;
       state._preset = b.dataset.p;
       state.gear = Object.assign({}, p);
+      state.gearBuild = null;   // 切回预设装备时清掉目标装分覆盖
       state._cache = {}; state._gearKey = null;
       syncAllInputs(); recomputeAll();
     });
@@ -532,6 +539,49 @@
     });
   }
 
+  /* 装备页：按部位排序的传奇特效图标网格（点击装备/卸下，戒指可 2 件） */
+  const LEG_SLOT_ORDER = ['武器', '头盔', '肩甲', '胸甲', '手套', '腰带', '护腿', '靴子', '项链', '戒指', '披风', '仆从装备'];
+  function renderLegendaryIcons() {
+    const grid = $('#legIconGrid');
+    if (!grid) return;
+    const avail = (D.LEGENDARIES || []).filter(L => !L.cls || L.cls.includes(state.classKey));
+    const bySlot = {};
+    avail.forEach(L => { (bySlot[L.slot] || (bySlot[L.slot] = [])).push(L); });
+    const slots = LEG_SLOT_ORDER.filter(s => bySlot[s] && bySlot[s].length);
+    Object.keys(bySlot).forEach(s => { if (slots.indexOf(s) < 0) slots.push(s); });
+    grid.innerHTML = '';
+    slots.forEach(slot => {
+      const row = el('div', 'lslot-row');
+      const name = el('div', 'lslot-name'); name.textContent = slot;
+      const icons = el('div', 'lslot-icons');
+      bySlot[slot].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh')).forEach((L, idx) => {
+        const on = state.legendaries.indexOf(L.id) >= 0;
+        const ic = el('div', 'lgi c-' + (L.conf || 'none') + (on ? ' on' : ''));
+        ic.title = L.name + (L.lvl > 1 ? ' · Lv' + L.lvl : '') + '\n' + (L.text || '') + '\n' + (CONF_LABEL[L.conf] || '');
+        ic.innerHTML = `<div class="lgib"></div><span class="lgidx">${idx + 1}</span>`;
+        ic.onclick = () => {
+          const cap = L.slot === '戒指' ? 2 : 1;
+          if (state.legendaries.indexOf(L.id) >= 0) {
+            state.legendaries = state.legendaries.filter(x => x !== L.id);
+          } else {
+            const same = state.legendaries.filter(id => {
+              const x = (D.LEGENDARIES || []).find(y => y.id === id);
+              return x && x.slot === L.slot;
+            });
+            if (same.length >= cap) state.legendaries = state.legendaries.filter(id => id !== same[0]);
+            state.legendaries.push(L.id);
+          }
+          state._cache = {}; state._gearKey = null; state._affixCache = null;
+          safeRun('装备特效', renderLegendaryIcons); recomputeAll();
+        };
+        icons.appendChild(ic);
+      });
+      row.appendChild(name); row.appendChild(icons); grid.appendChild(row);
+    });
+    const cnt = $('#legIconCount');
+    if (cnt) cnt.textContent = `按部位排列 · 已装 ${state.legendaries.length} 件 · 戒指可带 2 件`;
+  }
+
   function bindLegTools() {
     const q = $('#legSearch');
     if (q) {
@@ -558,6 +608,10 @@
       const f = el('div', 'field');
       f.innerHTML = `<label>${label}</label>`;
       const sel = el('select');
+      // "不装备"选项：为提高周期伤害可主动留空（如冰法只带冰普攻）
+      const none = el('option'); none.value = ''; none.selected = !state.skills[key];
+      none.textContent = '— 不装备 —';
+      sel.appendChild(none);
       list.filter(filter || (() => true)).forEach(a => {
         const o = el('option'); o.value = a.id; o.selected = state.skills[key] === a.id;
         o.textContent = `${a.name}${a.mana ? ' · ' + a.mana + ' 法力' : ''}${a.cd ? ' · ' + a.cd + 's' : ''}`;
@@ -567,10 +621,80 @@
       f.appendChild(sel);
       $('#slotBox').appendChild(f);
     };
+    // 基础攻击与强力攻击各自可留空；两个特殊槽双向互斥且都可留空
     mk('基础攻击', 'basic', c.basics);
     mk('强力攻击', 'strong', c.strongs);
-    mk('特殊技能 1', 'special1', c.specials);
+    mk('特殊技能 1', 'special1', c.specials, a => a.id !== state.skills.special2);
     mk('特殊技能 2', 'special2', c.specials, a => a.id !== state.skills.special1);
+  }
+
+  /* ------------------------------------------------------------ 符文六槽 */
+  const RUNE_CLS = { warrior: 1, sorcerer: 2, hunter: 4, monk: 8 };
+  const RUNE_TYPE_LABEL = { common: '蓝', rare: '金', legendary: '大金', grand: '大金', set: '套装' };
+  function renderRuneSlots() {
+    const box = $('#runeSlotsBox');
+    if (!box) return;
+    const RD = window.RuneData;
+    box.innerHTML = '';
+    if (!RD || !RD.RUNES) { box.innerHTML = '<div class="empty">符文数据未加载</div>'; return; }
+    const clsBit = RUNE_CLS[state.classKey] || 1;
+    const pool = RD.RUNES.filter(r => (r.cls === clsBit || r.cls === 15));
+    const byId = {}; RD.RUNES.forEach(r => { byId[r.id] = r; });
+    const slots = state.runeSlots || [];
+    for (let i = 0; i < 6; i++) {
+      const cur = slots[i];
+      const row = el('div', 'field');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+      const lab = el('label'); lab.style.cssText = 'width:52px;flex:none'; lab.textContent = '槽 ' + (i + 1);
+      const sel = el('select'); sel.style.flex = '1';
+      const none = el('option'); none.value = ''; none.textContent = '— 空槽 —'; sel.appendChild(none);
+      // 按类型分组：蓝/金/大金/套装
+      const groups = {};
+      pool.forEach(r => {
+        const g = r.type || 'other';
+        (groups[g] || (groups[g] = [])).push(r);
+      });
+      Object.keys(groups).forEach(g => {
+        const og = el('optgroup'); og.label = RUNE_TYPE_LABEL[g] || g;
+        groups[g].forEach(r => {
+          const o = el('option'); o.value = r.id;
+          o.textContent = r.name + (r.setId ? '（套）' : '');
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+      sel.value = cur && cur.id ? cur.id : '';
+      const lvSel = el('select'); lvSel.style.cssText = 'width:64px;flex:none';
+      for (let L = 1; L <= 6; L++) {
+        const o = el('option'); o.value = L; o.textContent = 'L' + L; lvSel.appendChild(o);
+      }
+      lvSel.value = cur ? (cur.level || 1) : 1;
+      lvSel.disabled = !cur || !cur.id;
+      const onChange = () => {
+        const id = sel.value;
+        state.runeSlots[i] = id ? { id, level: parseInt(lvSel.value, 10) || 1 } : null;
+        lvSel.disabled = !id;
+        state._cache = {}; recomputeAll();
+        safeRun('符文六槽', renderRuneSlots);
+      };
+      sel.onchange = onChange;
+      lvSel.onchange = onChange;
+      row.appendChild(lab); row.appendChild(sel); row.appendChild(lvSel);
+      box.appendChild(row);
+    }
+    // 摘要：套装件数
+    const cnt = {};
+    slots.forEach(s => { if (s && s.id && byId[s.id] && byId[s.id].setId) { const k = byId[s.id].setId; cnt[k] = (cnt[k] || 0) + 1; } });
+    const sum = $('#runeSlotsSummary');
+    if (sum) {
+      const parts = Object.keys(cnt).map(k => {
+        const set = (RD.SETS || []).find(x => x.id === k);
+        const n = cnt[k];
+        const active = [2, 4, 6].filter(t => n >= t).join('/');
+        return `${set ? set.name : k} ×${n}${active ? '（触发 ' + active + ' 件）' : ''}`;
+      });
+      sum.innerHTML = parts.length ? '已装符文套装：' + parts.join('；') : '尚未配置符文六槽（使用下方简化模式）。';
+    }
   }
 
   /* ------------------------------------------------------------ enemy calc */
@@ -787,20 +911,37 @@
 
   /* ------------------------------------------------------------ config for engine */
   function cfg() {
+    // 符文六槽 -> cfg.runes（单件属性/技能等级）+ cfg.equippedSets（套装件数自动统计）
+    const runeSlots = state.runeSlots || [];
+    const runes = runeSlots.filter(Boolean).map(x => ({ id: x.id, level: x.level }));
+    const equippedSets = [];
+    if (runes.length && window.RuneData && window.RuneData.RUNES) {
+      const byId = {}; window.RuneData.RUNES.forEach(r => { byId[r.id] = r; });
+      const cnt = {};
+      runes.forEach(r => { const def = byId[r.id]; if (def && def.setId) cnt[def.setId] = (cnt[def.setId] || 0) + 1; });
+      Object.keys(cnt).forEach(setId => equippedSets.push({ setId, count: cnt[setId] }));
+    }
+    // 用了逐槽符文时，职业套装位（旧 setId/setCount）置空，避免两套套装叠加双计
+    const useSlots = runes.length > 0;
     return {
       classKey: state.classKey,
       element: state.element,
       primaryType: state.primaryType,
       gear: state.gear,
+      gearBuild: state.gearBuild || null,
       skills: state.skills,
       talents: state.talents,
-      setId: state.setId,
-      setCount: state.setCount,
+      runes,
+      equippedSets,
+      setId: useSlots ? null : state.setId,
+      setCount: useSlots ? 0 : state.setCount,
       legendaries: state.legendaries,
       minionId: state.minionId,
       minionReins: state.minionReins,
       minionGear: state.minionGear,
-      // 第13件装备：引擎按 trainLv >= gearStar 解锁；关闭门槛开关时按达标等级计入
+      minionStars: state.minionStars,
+      minionSynergy: state.minionSynergy,
+      // 仆从装备（真源 5 级解锁）：关闭门槛开关时按达标等级计入
       minionLevel: (state.minionGearBuild && state.minionGearGate === false &&
         state.minionLevel < D.MECHANICS.minion.gearStar)
         ? D.MECHANICS.minion.gearStar : state.minionLevel,
@@ -888,9 +1029,9 @@
     if (onPage('rotation')) safeRun('技能轴', renderRotation);
     if (onPage('damage')) safeRun('伤害计算页', renderDamage);
     if (onPage('talents')) safeRun('天赋页', renderTalents);
-    if (onPage('gear')) safeRun('装备页', renderGear);
+    if (onPage('gear')) { safeRun('装备特效图标', renderLegendaryIcons); safeRun('装备页', renderGear); }
     if (onPage('minions')) safeRun('仆从详情', renderMinionPanel);
-    if (onPage('character')) safeRun('对敌折算', renderEnemyCalc);
+    if (onPage('character')) { safeRun('符文六槽', renderRuneSlots); safeRun('对敌折算', renderEnemyCalc); }
     const ze = $('#zElectro');
     if (ze && state.electroStacks == null) ze.value = r.electroStacks;
     scheduleDraft();
@@ -1063,7 +1204,7 @@
     const tp = Object.values(state.talents).reduce((a, b) => a + b, 0);
     const min = D.MINIONS.find(m => m.id === state.minionId);
     const rows = [
-      ['技能轴', `${AB(state.skills.basic).name} → ${AB(state.skills.strong).name} → ${AB(state.skills.special1).name} / ${AB(state.skills.special2).name}`],
+      ['技能轴', [state.skills.basic, state.skills.strong, state.skills.special1, state.skills.special2].map(id => abName(id)).filter(Boolean).join(' → ') || '（全部留空）'],
       ['符文', `${set ? set.name : '—'} ${state.setCount} 件`],
       ['天赋', `${tp} / 70 点`],
       ['仆从', min ? min.name : '—'],
@@ -1779,7 +1920,7 @@
         ${[0, 1, 2, 3].map(i => `<div class="field"><label>主词条 ${i + 1}</label><div class="val">${affixSelect(side, 'm' + i, [0, 4, 5, 2][i])}</div></div>`).join('')}
         <div class="field"><label>副词条</label><div class="val">${affixSelect(side, 'sub', 32)}</div></div>
       </div>`;
-      h = `<div class="note" style="margin-bottom:12px">两件装备各填装分、稀有度、掷骰档和 4 主 + 1 副；数值由 <b>AffixMath.buildGear</b> 换算后各跑一次 simulate。仆从第 13 件装备（无宝石孔）属二期，暂不支持。</div>
+      h = `<div class="note" style="margin-bottom:12px">两件装备各填装分、稀有度、掷骰档和 4 主 + 1 副；数值由 <b>AffixMath.buildGear</b> 换算后各跑一次 simulate。仆从装备（5 级解锁）在仆从页配置。</div>
         <div class="grid2" style="grid-template-columns:1fr 1fr">${col('A', 700, 'legendary', 1)}${col('B', 850, 'legendary', 1.15)}</div>`;
     } else if (_cmpMode === 'talent') {
       const c = D.CLASSES[state.classKey] || {};
@@ -1990,6 +2131,12 @@
     txt('#phTpCls', c.name || '—');
     txt('#phTpPts', total + ' / 70');
     const tree = $('#talentTree'); tree.innerHTML = '';
+    // 点数预算条（70 点上限，满额高亮）
+    const budget = el('div', 'tp-budget');
+    const pct = Math.min(100, total / 70 * 100);
+    budget.innerHTML = `<div class="lbl"><span>天赋点数</span><span><b>${total}</b> / 70</span></div>
+      <div class="bar"><i class="${total >= 70 ? 'full' : ''}" style="width:${pct}%"></i></div>`;
+    tree.appendChild(budget);
     c.talents.forEach(row => {
       const locked = total < row.at;
       const isCap = [10, 30, 60].includes(row.at);
@@ -2343,7 +2490,86 @@
     }
   }
 
+  /* ------------------------------------------------------------ 组合最优解 */
+  let _comboResult = null;
+  function renderComboBoxes() {
+    const box = $('#comboSystems');
+    if (!box || !window.ComboSolver) return;
+    const SYS = window.ComboSolver.SYSTEMS;
+    const LABEL = window.ComboSolver.SYS_LABEL;
+    box.innerHTML = '';
+    SYS.forEach(sys => {
+      const on = state._comboUnlock ? (state._comboUnlock.indexOf(sys) >= 0) : true;
+      const lbl = el('label', 'switchrow');
+      lbl.style.cssText = 'font-size:10.5px;border:1px solid var(--line2);padding:4px 8px;background:#0c0a07';
+      lbl.innerHTML = `<input type="checkbox" data-combo-sys="${sys}" ${on ? 'checked' : ''}><span>${LABEL[sys] || sys}</span>`;
+      box.appendChild(lbl);
+    });
+  }
+  function bindCombo() {
+    renderComboBoxes();
+    const run = $('#comboRun');
+    if (run) run.onclick = () => {
+      if (!window.ComboSolver) { toast('组合求解模块未加载', true); return; }
+      const unlock = $$('[data-combo-sys]').filter(x => x.checked).map(x => x.dataset.comboSys);
+      const locked = [];
+      if ($('#comboKeepSkills') && $('#comboKeepSkills').checked) { locked.push('skills'); const i = unlock.indexOf('skills'); if (i >= 0) unlock.splice(i, 1); }
+      if ($('#comboKeepTalents') && $('#comboKeepTalents').checked) { locked.push('talents'); const i = unlock.indexOf('talents'); if (i >= 0) unlock.splice(i, 1); }
+      if (!unlock.length) { toast('至少勾选一个要优化的系统', true); return; }
+      state._comboUnlock = unlock;
+      const resBox = $('#comboResult');
+      if (resBox) resBox.innerHTML = '<div class="note">求解中… 交替优化 ' + unlock.length + ' 个系统，逐一黑盒试算中</div>';
+      const applyBtn = $('#comboApply'); if (applyBtn) applyBtn.disabled = true;
+      // 让浏览器先画出"求解中"
+      setTimeout(() => {
+        try {
+          const t0 = Date.now();
+          const res = window.ComboSolver.solveCombo({
+            cfg: cfg(), unlock, locked, rounds: 2, duration: Math.min(20, state.duration),
+            onProgress: p => { const b = $('#comboResult'); if (b) b.innerHTML = `<div class="note">${p.stage} · ${p.pct}% · 当前 ${fmt(p.dps)}</div>`; }
+          });
+          _comboResult = res;
+          const sysNames = unlock.map(s => (window.ComboSolver.SYS_LABEL[s] || s)).join('、');
+          if (resBox) resBox.innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)">
+              <div style="background:var(--panel);padding:10px 12px"><div class="k" style="font-size:9.5px;color:var(--dim)">起始秒伤</div><div class="num" style="font-size:17px">${fmt(res.startDps)}</div></div>
+              <div style="background:var(--panel);padding:10px 12px"><div class="k" style="font-size:9.5px;color:var(--dim)">优化后</div><div class="num gold" style="font-size:17px">${fmt(res.dps)}</div></div>
+              <div style="background:var(--panel);padding:10px 12px"><div class="k" style="font-size:9.5px;color:var(--dim)">提升</div><div class="num green" style="font-size:17px">+${res.gainPct.toFixed(1)}%</div></div>
+            </div>
+            <div class="note" style="margin-top:8px;font-size:10px;line-height:1.7">优化系统：${sysNames} · 锁定：${locked.length ? locked.map(s => window.ComboSolver.SYS_LABEL[s] || s).join('、') : '无'} · ${res.history.length - 1} 步 · ${Date.now() - t0}ms<br>${res.note}</div>`;
+          if (applyBtn) applyBtn.disabled = false;
+        } catch (e) {
+          const b = $('#comboResult'); if (b) b.innerHTML = '<div class="note red">求解失败：' + String(e.message || e) + '</div>';
+        }
+      }, 60);
+    };
+    const apply = $('#comboApply');
+    if (apply) apply.onclick = () => {
+      if (!_comboResult) return;
+      const r = _comboResult;
+      // 把结果 cfg 的相关字段写回 state
+      const c = r.cfg;
+      if (c.legendaries) state.legendaries = c.legendaries.slice();
+      if (c.gems) state.gems = c.gems;
+      if (c.minionId !== undefined) state.minionId = c.minionId;
+      if (c.minionSynergy !== undefined) state.minionSynergy = c.minionSynergy;
+      if (c.runeSlots) state.runeSlots = c.runeSlots;
+      if (c.runes !== undefined) { /* runeSlots 已含，cfg 会重建 */ }
+      if (c.talents && state._comboUnlock && state._comboUnlock.indexOf('talents') >= 0) state.talents = c.talents;
+      if (c.gearBuild && state._comboUnlock && state._comboUnlock.indexOf('affix') >= 0) {
+        state.gearBuild = c.gearBuild;
+        if (c.targetIlvl) state.gear = Object.assign(state.gear, { name: '目标装分 ' + c.targetIlvl });
+      }
+      // 技能仅当未锁定时应用
+      if (c.skills && !(($('#comboKeepSkills') || {}).checked)) state.skills = c.skills;
+      syncAllInputs(); safeRun('技能槽', renderSlots); safeRun('符文六槽', renderRuneSlots); safeRun('仆从', renderMinions);
+      state._cache = {}; state._affixCache = null; state._gearKey = null;
+      recomputeAll(); toast('已应用组合最优解');
+    };
+  }
+
   function bindSolver() {
+    safeRun('组合求解', bindCombo);
     if ($('#svTierQuick')) $('#svTierQuick').onclick = () => {
       if (svHandle) return; svTier = 'quick'; renderSolver(); selectTemplate(svActiveId);
     };
@@ -2454,6 +2680,50 @@
       if (sec.map(String).indexOf(String(keepSec)) >= 0) secSel.value = String(keepSec);
     }
   }
+  /* 协同被动槽（真源 SlaveData.Passives）：10 级有效技能等级解锁。
+     主仆从可带一个"已培养至 10 级的其他仆从的被动"，按 Base+PerLevel×9 注入。 */
+  function renderSynergy() {
+    const sel = $('#mnSynergy');
+    if (!sel) return;
+    const MD = window.MinionData;
+    const eff = (() => {
+      const M = D.MECHANICS.minion;
+      const lv = Math.max(M.levelMin, Math.min(M.levelMax, state.minionLevel != null ? state.minionLevel : M.levelMax));
+      return lv + (state.minionReins ? M.reinsBonus : 0);
+    })();
+    const unlocked = eff >= (D.MECHANICS.minion.synergyStar || 10);
+    const hint = $('#mnSynStarHint');
+    if (hint) hint.textContent = unlocked ? '已解锁' : `需有效等级 10（当前 ${eff}）`;
+    sel.innerHTML = '<option value="">— 不带协同被动 —</option>';
+    if (!MD || !MD.PASSIVES) return;
+    // 按仆从分组，组内按 statName
+    const bySlave = {};
+    MD.PASSIVES.forEach((p, idx) => {
+      const k = p.slave + '|' + p.stat;
+      (bySlave[p.slaveZh] || (bySlave[p.slaveZh] = [])).push({ k, p, idx });
+    });
+    Object.keys(bySlave).forEach(zname => {
+      const og = el('optgroup'); og.label = zname;
+      bySlave[zname].forEach(x => {
+        const o = el('option'); o.value = x.k;
+        o.textContent = x.p.statName + ' · ' + x.p.text.replace(x.p.statName + ' ', '');
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    const cur = state.minionSynergy;
+    const curKey = cur && cur.slave != null ? (cur.slave + '|' + cur.stat) : '';
+    if (curKey) sel.value = curKey;
+    sel.disabled = !unlocked;
+    const desc = $('#mnSynDesc');
+    if (desc && cur && (MD.PASSIVES || []).length) {
+      const p = MD.PASSIVES.find(x => x.slave === cur.slave && x.stat === cur.stat);
+      desc.innerHTML = p && unlocked
+        ? `<b class="gold">${p.slaveZh} · ${p.statName}</b>：${p.text}（真源 Base+PerLevel×9，10 级固定值）`
+        : '10 星（有效等级 10）主仆从可额外携带一个已培养至 10 级的其他仆从的被动。';
+    }
+  }
+
   function renderMn13() {
     const AF = window.AffixMath;
     const preview = $('#mn13Preview');
@@ -2525,17 +2795,8 @@
     $('#mnLevelVal').textContent = lv;
     $('#mnReins').checked = !!state.minionReins;
 
-    const sel = $('#mnGear');
-    if (sel && sel.dataset.lv !== String(eff)) {
-      sel.innerHTML = '';
-      M.gearOptions.forEach(g => {
-        const o = el('option'); o.value = g.id; o.textContent = g.name; o.selected = state.minionGear === g.id;
-        sel.appendChild(o);
-      });
-      sel.dataset.lv = String(eff);
-    }
-    if (sel) sel.disabled = eff < M.gearStar;
     renderMn13();
+    renderSynergy();
 
     const stars = [];
     for (let i = 1; i <= M.levelMax; i++) stars.push(i);
@@ -2545,23 +2806,30 @@
       </div>
       <div class="note" style="font-size:10.5px;line-height:1.8">
         <div>${eff >= M.gearStar ? '<b class="gold">5 级</b>：已解锁仆从装备' : '<span class="dim">5 级：解锁仆从装备</span>'}</div>
+        <div>${eff >= M.synergyStar ? '<b class="gold">10 级</b>：已解锁协同被动槽' : '<span class="dim">10 级：解锁协同被动槽</span>'}</div>
         <div class="dim" style="margin-top:6px">缰绳的 +${M.reinsBonus} 级对每个被动/主动技能都生效，可超过等级上限。</div>
       </div>`;
 
     if (!info) { $('#mnDetail').innerHTML = '<div class="note">未选择仆从。</div>'; return; }
-    const selfDps = (r.agg.weaponDamage) * info.selfPct / 100;
     const growth = curMin && curMin.bonusPerLevel ? curMin.bonusPerLevel : 0;
     const baseTxt = bonusText(curMin);
     const lvTxt = bonusTextAtLevel(curMin, info.eff);
     const grew = growth > 0 && info.eff > 1;
+    const abil = info.ability || [];
+    const abilTxt = abil.length ? abil.map(a => `${a.zh}<span class="tag ${a.kind === 'buff' ? 'b' : 'sp'}">${a.kind === 'buff' ? '增益' : '伤害'}</span>`).join('、') : '无主动技能（多数仆从只有被动）';
+    const synTxt = info.synergy ? `${info.synergy.slaveZh} · ${info.synergy.text}` : '—';
     $('#mnDetail').innerHTML = `
       <div class="field"><label>被动加成（${grew ? 'L' + info.eff + ' 成长后' : '1 级基准'}</label><span class="num">${grew ? lvTxt : baseTxt}</span></div>
       ${grew ? `<div class="field"><label>被动成长系数</label><span class="num">每级 +${(growth * 100).toFixed(growth < 0.1 ? 2 : 1)}%（相对 1 级）· 真源 PerLevel/Base</span></div>
       <div class="field"><label>1 级基准值</label><span class="num dim">${baseTxt}</span></div>` : ''}
       <div class="field"><label>技能等级 / 强化后</label><span class="num">${info.level} → ${info.eff}${state.minionReins ? '（缰绳 +' + M.reinsBonus + '）' : ''}</span></div>
-      <div class="field"><label>仆从装备</label><span class="num">${info.gear === 'custom' ? '第13件（自定义词条）' : (info.gear && info.gear !== 'none' ? (M.gearOptions.find(g => g.id === info.gear) || {}).name : '—')}</span></div>
-      <div class="field"><label>自身技能输出</label><span class="num gold">${fmt(selfDps)} / 秒</span></div>
-      <div class="note" style="margin-top:10px">被动随有效技能等级成长（真源 <b>Base + PerLevel×(L-1)</b>），缰绳 +${M.reinsBonus} 级同样作用于被动。自身输出不吃你的天赋与装备乘区，单列显示。</div>`;
+      <div class="field"><label>主动技能</label><span class="num">${abilTxt}</span></div>
+      <div class="field"><label>协同被动（10 级）</label><span class="num gold">${synTxt}</span></div>
+      <div class="field"><label>仆从装备</label><span class="num">${info.gear === 'custom' ? '自定义词条（5 级解锁）' : '—'}</span></div>
+      <div class="note" style="margin-top:10px">
+        仆从只有被动稳定作用于角色；<b>主动技能多数是给角色加增益/状态</b>（治愈/顺风/护壳/法力…），
+        真源 Effects 未展开伤害倍率，故<b>不计入 DPS</b>，仅作机制标注。被动随有效等级成长（真源 <b>Base + PerLevel×(L-1)</b>）。
+      </div>`;
   }
 
   function bindMinions() {
@@ -2581,8 +2849,19 @@
       state.minionGear = e.target.value;
       state._cache = {}; recomputeAll();
     });
+    const synSel = $('#mnSynergy');
+    if (synSel) synSel.addEventListener('change', e => {
+      const v = e.target.value;
+      if (!v) state.minionSynergy = null;
+      else {
+        const [slave, stat] = v.split('|');
+        state.minionSynergy = { slave, stat: parseInt(stat, 10) };
+      }
+      state._cache = {}; recomputeAll();
+      safeRun('协同被动', renderSynergy);
+    });
     const m13on = $('#mn13On'), m13gate = $('#mn13Gate');
-    if (m13on) m13on.addEventListener('change', () => { mn13Apply(); toast(m13on.checked ? '第13件装备已启用' : '第13件装备已关闭'); });
+    if (m13on) m13on.addEventListener('change', () => { mn13Apply(); toast(m13on.checked ? '仆从装备已启用' : '仆从装备已关闭'); });
     if (m13gate) m13gate.addEventListener('change', () => { mn13Apply(); toast(m13gate.checked ? '遵守训练等级门槛' : '已忽略训练等级门槛（按达标等级计入）'); });
     [['#mn13Slot', 'change'], ['#mn13Rarity', 'change'], ['#mn13Ilvl', 'change'],
      ['#mn13Main', 'change'], ['#mn13Sec', 'change'], ['#mn13Roll', 'input']].forEach(pair => {
@@ -2798,9 +3077,10 @@
           <div class="kv">
             <span>被动</span><span>${bonusText(D.MINIONS.find(m => m.id === info.id))}</span>
             <span>5 级装备槽</span><span>${info.eff >= M.gearStar ? '已解锁' : '未解锁'}</span>
-            <span>自身输出</span><span>${fmt(agg.weaponDamage * info.selfPct / 100)} / 秒</span>
+            <span>协同被动</span><span>${info.synergy ? info.synergy.text : '未配置'}</span>
+            <span>主动技能</span><span>${(info.ability || []).map(a => a.zh).join('、') || '无'}</span>
           </div>
-          注意：<b>被动随技能等级成长</b>，缰绳的 +${M.reinsBonus} 级对每个被动/主动技能都生效；仆从自身输出单列于下，不吃你的天赋与装备乘区。
+          注意：<b>被动随技能等级成长</b>，缰绳的 +${M.reinsBonus} 级对每个被动/主动技能都生效；仆从主动技能多数是给角色加增益，真源未展开伤害倍率，故不计入 DPS。
           <div class="src">只有召唤中的那只生效，换仆从要回城</div>`,
         trace
       };
@@ -2943,6 +3223,198 @@
     return [c.name, set ? set.name : '', preset].filter(Boolean).join(' · ').slice(0, 40);
   }
 
+  /* 构筑指纹：比裸 DPS 更有意义的存档标记——脱离场景也稳定。
+     格式：职业 · 套装N件 · 核心技能 · 天赋N点 · 装分档。
+     裸 DPS 之所以会"存档显示≠载入后首页"，是因为它依赖保存那一刻的 duration /
+     未决项裁决，而载入会用当前口径重算。指纹只描述构筑本身，不随场景漂移。 */
+  function buildFingerprint(snap) {
+    const s = snap || {};
+    const c = D.CLASSES[s.classKey] || {};
+    const all = [...(c.basics || []), ...(c.strongs || []), ...(c.specials || [])];
+    const nm = id => { const a = all.find(x => x.id === id); return a ? a.name : null; };
+    const set = ((c.sets) || []).find(x => x.id === s.setId);
+    const sk = s.skills || {};
+    const core = [nm(sk.basic), nm(sk.strong)].filter(Boolean).slice(0, 2).join('/') || '无技能';
+    const tp = Object.values(s.talents || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+    const preset = ({ starter: '起步', mid: '中配', end: '毕业' })[s.preset] || '中配';
+    const bits = [c.name || s.classKey || '—'];
+    if (set) bits.push(set.name + (s.setCount ? s.setCount + '件' : ''));
+    bits.push(core, tp + '点', preset);
+    return bits.filter(Boolean).join(' · ').slice(0, 52);
+  }
+
+  /* ============================================================ 构筑方案
+     每个板块独立保存多套预设，总方案 = 各板块各选一套的组合。 */
+  const BUILDER_META = {
+    skills:  { tab: 'character', icon: 'sword',   desc: '普攻/强攻/两个特殊技能（可留空）' },
+    effects: { tab: 'character', icon: 'star',    desc: '传奇装备特效（最多 4 件）' },
+    affix:   { tab: 'gear',      icon: 'shield',  desc: '装备数值 / 套装件数 / 目标装分' },
+    gems:    { tab: 'gear',      icon: 'gem',     desc: '宝石镶嵌（6 家族 × 孔位）' },
+    minion:  { tab: 'minions',   icon: 'paw',     desc: '出战仆从 / 协同被动 / 仆从装备' },
+    talents: { tab: 'talents',   icon: 'tree',    desc: '天赋页（70 点分配）' },
+    runes:   { tab: 'character', icon: 'rune',    desc: '符文六槽 + 套装件数' }
+  };
+  const BUILDER_ICONS = {
+    sword: '<path d="M18 3l3 3-9 9-3-3zM9 12l-4 1 1-4z" stroke="currentColor" fill="none" stroke-width="1.5"/>',
+    star: '<path d="M12 3l2.5 6h6l-5 4 2 6-5.5-4-5.5 4 2-6-5-4h6z" stroke="currentColor" fill="none" stroke-width="1.4"/>',
+    shield: '<path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6z" stroke="currentColor" fill="none" stroke-width="1.4"/>',
+    gem: '<path d="M12 3l6 6-6 12-6-12z" stroke="currentColor" fill="none" stroke-width="1.4"/>',
+    paw: '<circle cx="8" cy="9" r="2"/><circle cx="16" cy="9" r="2"/><circle cx="12" cy="6" r="2"/><path d="M12 12c-3 0-5 2-5 4s2 3 5 3 5-1 5-3-2-4-5-4z" stroke="currentColor" fill="none" stroke-width="1.3"/>',
+    tree: '<path d="M12 21V8M12 12L7 7M12 14l5-5M7 7l-2-3M7 7l2-3M17 9l-2-3M17 9l2-3" stroke="currentColor" fill="none" stroke-width="1.3"/>',
+    rune: '<path d="M12 2l8 10-8 10L4 12z" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="M9 12h6M12 9v6" stroke="currentColor" stroke-width="1.3"/>'
+  };
+  function captureBlock(kind) {
+    switch (kind) {
+      case 'skills': return { skills: JSON.parse(JSON.stringify(state.skills)) };
+      case 'effects': return { legendaries: state.legendaries.slice() };
+      case 'affix': return { gear: JSON.parse(JSON.stringify(state.gear)), setId: state.setId, setCount: state.setCount, preset: state._preset, gearBuild: state.gearBuild || null };
+      case 'gems': return { gems: JSON.parse(JSON.stringify(state.gems || {})) };
+      case 'minion': return {
+        minionId: state.minionId, minionLevel: state.minionLevel, minionReins: state.minionReins,
+        minionStars: state.minionStars, minionSynergy: state.minionSynergy ? JSON.parse(JSON.stringify(state.minionSynergy)) : null,
+        minionGear: state.minionGear, minionGearGate: state.minionGearGate,
+        minionGearBuild: state.minionGearBuild ? JSON.parse(JSON.stringify(state.minionGearBuild)) : null
+      };
+      case 'talents': return { talents: JSON.parse(JSON.stringify(state.talents)) };
+      case 'runes': return { runeSlots: JSON.parse(JSON.stringify(state.runeSlots || [])) };
+      default: return {};
+    }
+  }
+  function applyBlock(kind, data) {
+    if (!data) return;
+    const set = (k, v) => { if (v !== undefined) state[k] = v; };
+    switch (kind) {
+      case 'skills': set('skills', data.skills); break;
+      case 'effects': set('legendaries', data.legendaries); break;
+      case 'affix':
+        set('gear', data.gear); set('setId', data.setId); set('setCount', data.setCount); set('gearBuild', data.gearBuild);
+        if (data.preset) state._preset = data.preset; break;
+      case 'gems': set('gems', data.gems); break;
+      case 'minion':
+        ['minionId', 'minionLevel', 'minionReins', 'minionStars', 'minionSynergy', 'minionGear', 'minionGearGate', 'minionGearBuild'].forEach(k => set(k, data[k])); break;
+      case 'talents': set('talents', data.talents); break;
+      case 'runes': set('runeSlots', data.runeSlots); break;
+    }
+  }
+  function blockPreview(kind, data) {
+    if (!data) return '';
+    const nm = id => abName(id);
+    switch (kind) {
+      case 'skills': { const s = data.skills || {}; return [s.basic, s.strong, s.special1, s.special2].map(nm).filter(Boolean).join(' → ') || '全空'; }
+      case 'effects': return (data.legendaries || []).length + ' 件传奇特效';
+      case 'affix': return (data.gear && data.gear.name) || '装备数值';
+      case 'gems': { let n = 0; Object.values(data.gems || {}).forEach(a => { n += (a || []).length; }); return n + ' 颗宝石'; }
+      case 'minion': { const m = D.MINIONS.find(x => x.id === data.minionId); return (m ? m.name : '无仆从') + (data.minionSynergy ? ' · 协同' : ''); }
+      case 'talents': return Object.values(data.talents || {}).reduce((a, b) => a + (b || 0), 0) + ' 点天赋';
+      case 'runes': { const n = (data.runeSlots || []).filter(Boolean).length; return n + ' / 6 符文槽'; }
+      default: return '';
+    }
+  }
+  function renderBuilder() {
+    const grid = $('#builderGrid');
+    if (!grid) return;
+    const db = Store.readBlocks ? Store.readBlocks() : {};
+    const bp = Store.getBlueprint ? Store.getBlueprint() : {};
+    const kinds = Store.BLOCK_KINDS || Object.keys(BUILDER_META);
+    grid.innerHTML = '';
+    kinds.forEach(kind => {
+      const meta = BUILDER_META[kind] || {};
+      const list = (db[kind] || []);
+      const chosenId = bp[kind];
+      const chosen = list.find(x => x.id === chosenId);
+      const card = el('div', 'bcard' + (chosen ? ' on' : ''));
+      const ic = `<svg viewBox="0 0 24 24">${BUILDER_ICONS[meta.icon] || BUILDER_ICONS.rune}</svg>`;
+      const selOpts = ['<option value="">— 未选 —</option>'].concat(list.map(x => `<option value="${x.id}"${x.id === chosenId ? ' selected' : ''}>${x.name}</option>`)).join('');
+      card.innerHTML = `
+        <div class="bh"><span class="ic">${ic}</span><h4>${Store.BLOCK_LABEL[kind] || kind}</h4><span class="cnt">${list.length} 套</span></div>
+        <div class="cur">${chosen ? blockPreview(kind, chosen.data) : (meta.desc || '')}</div>
+        <select data-bsel="${kind}">${selOpts}</select>
+        <div class="bops">
+          <button data-bact="save" data-kind="${kind}">保存当前</button>
+          <button data-bact="edit" data-kind="${kind}">去编辑</button>
+          <button data-bact="rename" data-kind="${kind}" class="del" title="重命名选中方案">✎</button>
+          <button data-bact="del" data-kind="${kind}" class="del" title="删除选中方案">×</button>
+        </div>`;
+      card.onclick = e => {
+        const btn = e.target.closest('button[data-bact]');
+        const sel = e.target.closest('select[data-bsel]');
+        if (sel) return;
+        if (!btn) return;
+        const act = btn.dataset.bact, k = btn.dataset.kind;
+        if (act === 'edit') { goto(meta.tab || 'character'); return; }
+        if (act === 'save') {
+          const defName = (Store.BLOCK_LABEL[k] || k) + ' ' + (list.length + 1);
+          const name = window.prompt('给这套「' + (Store.BLOCK_LABEL[k] || k) + '」起名', defName);
+          if (!name || !name.trim()) return;
+          const entry = Store.saveBlock(k, name.trim(), captureBlock(k));
+          bp[k] = entry.id; Store.setBlueprint(bp);
+          toast('已保存「' + name.trim() + '」'); safeRun('构筑方案', renderBuilder);
+        } else if (act === 'rename') {
+          const cur = list.find(x => x.id === bp[k]);
+          if (!cur) { toast('请先选择一个方案', true); return; }
+          const name = window.prompt('新名称', cur.name);
+          if (name && name.trim()) { Store.renameBlock(k, cur.id, name.trim()); safeRun('构筑方案', renderBuilder); }
+        } else if (act === 'del') {
+          const cur = list.find(x => x.id === bp[k]);
+          if (!cur) { toast('请先选择一个方案', true); return; }
+          if (!window.confirm('删除方案「' + cur.name + '」？')) return;
+          Store.removeBlock(k, cur.id); delete bp[k]; Store.setBlueprint(bp);
+          safeRun('构筑方案', renderBuilder);
+        }
+      };
+      const sel = card.querySelector('select[data-bsel]');
+      sel.onchange = e => {
+        const v = e.target.value;
+        if (v) bp[kind] = v; else delete bp[kind];
+        Store.setBlueprint(bp);
+        safeRun('构筑方案', renderBuilder);
+      };
+      grid.appendChild(card);
+    });
+    // 总方案摘要
+    const chosen = kinds.filter(k => bp[k]);
+    if ($('#bpCount')) $('#bpCount').textContent = chosen.length + ' / ' + kinds.length;
+    if ($('#bpDps') && state._result) $('#bpDps').textContent = fmt(state._result.dps);
+    const sum = $('#bpSummary');
+    if (sum) {
+      sum.innerHTML = chosen.length
+        ? chosen.map(k => { const l = (db[k] || []).find(x => x.id === bp[k]); return (Store.BLOCK_LABEL[k] || k) + '：<b class="gold">' + (l ? l.name : '?') + '</b>'; }).join('<br>')
+        : '尚未选择任何板块预设。';
+    }
+  }
+
+  function bindBuilder() {
+    const apply = $('#bpApply');
+    if (apply) apply.onclick = () => {
+      const db = Store.readBlocks ? Store.readBlocks() : {};
+      const bp = Store.getBlueprint ? Store.getBlueprint() : {};
+      const kinds = Store.BLOCK_KINDS || [];
+      let n = 0;
+      kinds.forEach(k => {
+        const id = bp[k];
+        if (!id) return;
+        const entry = (db[k] || []).find(x => x.id === id);
+        if (entry) { applyBlock(k, entry.data); n++; }
+      });
+      syncAllInputs(); safeRun('职业卡片', renderClassCards); safeRun('技能槽', renderSlots);
+      safeRun('符文六槽', renderRuneSlots); safeRun('仆从', renderMinions);
+      state._cache = {}; state._affixCache = null; state._gearKey = null;
+      recomputeAll(); safeRun('构筑方案', renderBuilder);
+      toast('已应用 ' + n + ' 个板块预设');
+    };
+    const saveFull = $('#bpSaveFull');
+    if (saveFull) saveFull.onclick = () => {
+      const name = ($('#bpName') && $('#bpName').value.trim()) || autoName() + '·组合';
+      const entry = Store.save(snapshot(), { name, dps: state._result ? state._result.dps : 0 });
+      toast(entry ? '已存为完整配置「' + name + '」' : '保存失败');
+    };
+    const clear = $('#bpClear');
+    if (clear) clear.onclick = () => {
+      if (!window.confirm('清空所有板块的预设选择？（不会删除已保存的预设）')) return;
+      Store.setBlueprint({}); safeRun('构筑方案', renderBuilder); toast('已清空板块选择');
+    };
+  }
+
   function renderSaveList() {
     const box = $('#saveList');
     if (!box) return;
@@ -2964,8 +3436,7 @@
           ${stale ? `<span class="badge warn">${item.game}</span>` : ''}
         </div>
         <div class="m">
-          <span>${c.name || item.cls || '—'}</span>
-          <span>秒伤 <b>${fmt(item.dps)}</b></span>
+          <span class="fp">${buildFingerprint(item.snap)}</span>
           <span>${tsLabel(item.ts)}</span>
         </div>
         <div class="ops">
@@ -3224,6 +3695,7 @@
     safeRun('天赋', bindTalents);
     safeRun('最优解', bindSolver);
     safeRun('仆从', bindMinions);
+    safeRun('构筑方案', bindBuilder);
     safeRun('伤害计算', bindDamage);
     safeRun('未决项', bindPending);
     safeRun('装备取舍', bindCompare);

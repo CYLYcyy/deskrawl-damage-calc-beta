@@ -118,8 +118,42 @@ main{padding-top:22px}
 .saveitem .nm{font-size:12.5px;color:var(--text);font-weight:500}
 .saveitem .badge{font-size:9px;letter-spacing:.8px;padding:0 5px;border:1px solid var(--line2);color:var(--dim)}
 .saveitem .badge.warn{color:#d9a05a;border-color:#5a4324}
-.saveitem .m{display:flex;gap:10px;margin-top:4px;font-size:10.5px;color:var(--dim)}
+.saveitem .m{display:flex;gap:10px;align-items:baseline;justify-content:space-between;margin-top:5px;font-size:10.5px;color:var(--dim)}
 .saveitem .m b{color:var(--gold2);font-weight:500}
+.saveitem .m .fp{flex:1;min-width:0;color:var(--muted);font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+/* 构筑方案：板块卡片 */
+.builder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.bcard{border:1px solid var(--line);background:#100e0a;padding:12px 13px;position:relative;transition:.16s}
+.bcard:hover{border-color:var(--line2)}
+.bcard.on{border-color:var(--gold3);background:#17120b}
+.bcard .bh{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.bcard .bh .ic{width:26px;height:26px;flex:none;display:grid;place-items:center;border:1px solid var(--line2);background:#0a0806;color:var(--gold2)}
+.bcard .bh .ic svg{width:16px;height:16px}
+.bcard .bh h4{font-size:12.5px;font-weight:600;color:var(--text);margin:0;flex:1}
+.bcard .bh .cnt{font-size:9.5px;color:var(--dim)}
+.bcard .cur{font-size:10.5px;color:var(--muted);margin-bottom:7px;min-height:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bcard select{width:100%;font-size:11px;margin-bottom:8px}
+.bcard .bops{display:flex;gap:5px}
+.bcard .bops button{flex:1;font-size:10px;padding:4px 6px;background:#0a0806;border:1px solid var(--line2);color:var(--muted);cursor:pointer;font-family:inherit;transition:.14s}
+.bcard .bops button:hover{color:var(--gold2);border-color:var(--gold3)}
+.bcard .bops button.del{flex:none;padding:4px 8px}
+.bcard .bops button.del:hover{color:var(--red2);border-color:#7a3226}
+/* 装备特效图标网格 */
+.legend-slots{display:flex;flex-direction:column;gap:10px}
+.lslot-row{display:flex;align-items:flex-start;gap:10px}
+.lslot-name{width:42px;flex:none;font-size:10.5px;color:var(--dim);padding-top:6px;text-align:right}
+.lslot-icons{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.lslot-icons::after{content:'';flex:1;min-width:0}/* 保持行高 */
+.lgi{width:38px;height:38px;flex:none;border:1px solid var(--line2);background:#0c0a07;position:relative;cursor:pointer;transition:.14s;display:grid;place-items:center}
+.lgi:hover{border-color:var(--gold3);background:#16110a;z-index:2}
+.lgi.on{border-color:var(--gold);background:#241a0c;box-shadow:0 0 0 1px rgba(201,162,77,.25) inset}
+.lgi.c-official .lgib{border-bottom-color:#7ba05b}
+.lgi.c-modeled .lgib{border-bottom-color:#c9a24d}
+.lgi.c-none .lgib{border-bottom-color:#6b6255}
+.lgib{width:20px;height:20px;border:1.5px solid var(--gold2);border-bottom-width:3px;transform:rotate(45deg);opacity:.85}
+.lgi.on .lgib{opacity:1}
+.lgi .lgidx{position:absolute;bottom:1px;right:3px;font-size:8px;color:var(--dim)}
+.lgi.on .lgidx{color:var(--gold2)}
 .saveitem .ops{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:.3;transition:.14s}
 .saveitem:hover .ops{opacity:1}
 .saveitem .ops button{background:#0a0806;border:1px solid var(--line2);color:var(--muted);font-size:10px;padding:2px 6px;cursor:pointer;font-family:inherit}
@@ -332,6 +366,19 @@ select option{background:#12100d}
 .pips{display:flex;gap:2px;margin-top:5px}
 .pips i{width:100%;height:2px;background:#2a2218}
 .pips i.f{background:var(--gold3)}
+/* 天赋 UI 升级 */
+.tal{padding:10px 11px;min-height:64px}
+.tal .n{font-size:12px;font-weight:500}
+.tal .r{font-size:11px;font-weight:600}
+.tal.on{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 0 18px rgba(201,162,77,.06)}
+.trow.caprow .tmeta b{color:var(--gold)}
+.trow.caprow .tmeta::after{content:'三选一';display:inline-block;margin-top:4px;font-size:8px;letter-spacing:.5px;color:#d9a05a;border:1px solid #5a4324;padding:0 3px}
+.tp-budget{margin-bottom:14px}
+.tp-budget .bar{height:6px;background:#1a1713;border:1px solid var(--line2);overflow:hidden;margin-top:6px}
+.tp-budget .bar i{display:block;height:100%;background:linear-gradient(90deg,#7a6228,var(--gold));transition:width .2s}
+.tp-budget .bar i.full{background:linear-gradient(90deg,#a8523a,#d9a05a)}
+.tp-budget .lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted)}
+.tp-budget .lbl b{color:var(--gold2);font-weight:600}
 
 /* minions */
 .mingrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
@@ -626,6 +673,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
     </div>
     <div class="navgroup">
       <span class="nglabel">构筑</span>
+      <button data-tab="builder" title="方案：像游戏一样分板块保存配置，自由组合成总方案">方案</button>
       <button data-tab="character" title="角色：面板、对敌模型与传奇特效">角色</button>
       <button data-tab="gear" title="装备：词条边际收益与 12 部位推荐">装备</button>
       <button data-tab="talents" title="天赋：按门槛解锁，每点收益用引擎实测">天赋</button>
@@ -736,6 +784,36 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
     </div>
   </section>
 
+  <!-- ================= 构筑方案（分板块保存 / 自由组合） ================= -->
+  <section class="page" id="page-builder">
+    <div class="pagehead">
+      <h2>构筑方案</h2>
+      <div class="desc">像游戏内"天赋页保存"一样，每个板块独立存多套；总方案 = 各板块各选一套的组合</div>
+      <div class="aside">
+        <span class="kv"><span class="k">当前秒伤</span><span class="v gold" id="bpDps">—</span></span>
+        <span class="kv"><span class="k">已选板块</span><span class="v" id="bpCount">0 / 7</span></span>
+      </div>
+    </div>
+    <div class="note" style="font-size:10.5px;line-height:1.8;margin-bottom:14px">
+      <b>用法</b>：先在对应页面（技能/角色/装备/符文/天赋/仆从）调好一个板块 → 回到这里点该板块的「保存当前」命名存档 →
+      以后从下拉里切换不同方案即可瞬间换配。点「应用到构筑」把当前各板块选择合成一套完整配置。
+      这套机制让你能像游戏里管理天赋页一样管理每一块 build。
+    </div>
+    <div class="builder-grid" id="builderGrid"></div>
+    <div class="panel" style="margin-top:16px">
+      <div class="ph"><h3>总方案</h3><div class="hint">各板块预设的组合</div></div>
+      <div class="pb">
+        <div class="field"><label>方案名</label><div class="val"><input type="text" id="bpName" placeholder="例如：冰法·纯普攻毕业" maxlength="40"></div></div>
+        <div class="inlinebtns" style="margin-top:10px;flex-wrap:wrap">
+          <button class="btn gold" id="bpApply">应用到构筑</button>
+          <button class="btn ghost" id="bpSaveFull">存为完整配置</button>
+          <button class="btn ghost" id="bpClear">清空板块选择</button>
+        </div>
+        <div class="note" id="bpSummary" style="margin-top:10px;font-size:10.5px;line-height:1.7">尚未选择任何板块预设。</div>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= 角色 ================= -->
   <section class="page" id="page-character">
     <div class="pagehead">
@@ -826,7 +904,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
 
         <div>
           <div class="panel" style="margin-bottom:16px">
-            <div class="ph"><h3>符文套装</h3><div class="hint">2/4/6 件逐档生效</div></div>
+            <div class="ph"><h3>符文六槽</h3><div class="hint">真源 RuneSlotUnlockLevels · 6 槽逐槽自由配置</div></div>
+            <div class="pb">
+              <div class="note" style="font-size:10.5px;line-height:1.7;margin-bottom:10px">
+                每槽独立选符文与等级；同套装符文按件数自动触发 <b>2/4/6</b> 件效果。留空即不装。
+                <b>启用六槽后</b>，下方"符文套装"简化模式不叠加（避免双计）。
+              </div>
+              <div id="runeSlotsBox"></div>
+              <div class="note" id="runeSlotsSummary" style="font-size:10.5px;line-height:1.7;margin-top:10px">—</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom:16px">
+            <div class="ph"><h3>符文套装（简化模式）</h3><div class="hint">不配六槽时生效 · 2/4/6 件</div></div>
             <div class="pb">
               <div class="field"><label>套装</label><select id="setSelect"></select></div>
               <div class="field"><label>件数</label>
@@ -1025,6 +1115,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
       </div>
     </div>
     <div class="panel" style="margin-bottom:16px">
+      <div class="ph"><h3>装备特效（传奇）</h3><div class="hint" id="legIconCount">按部位排列 · 点击图标装备/卸下 · 戒指可带 2 件</div></div>
+      <div class="pb">
+        <div class="legend-slots" id="legIconGrid"></div>
+        <div class="note" style="font-size:10.5px;line-height:1.7;margin-top:8px">绿色=官方数值，金色=需覆盖率折算；悬停看效果原文。更细的筛选见「角色 → 传奇特效」。</div>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
       <div class="ph"><h3>词条边际收益</h3><div class="hint" id="gearHint">在当前面板下，追加一条 ilvl700 传奇中值词条的提升</div></div>
       <div class="pb">
         <div class="subtabs" id="slotTabs"></div>
@@ -1127,6 +1224,23 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
         <span class="kv"><span class="k">数据版本</span><span class="v" id="svVer">—</span></span>
       </div>
     </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="ph"><h3>组合最优解（任意板块排列组合）</h3><div class="hint">勾选要优化的系统，未勾选的保持锁定</div></div>
+      <div class="pb">
+        <div class="note" style="font-size:10.5px;line-height:1.7;margin-bottom:10px">
+          例：你已有满意的天赋页和技能轴 → 只勾「装备特效/宝石/仆从/符文」，系统会锁定天赋与技能，求其余全局最优。
+          交替坐标上升 · 每系统黑盒候选试算 · <b>近似最优非严格全局</b>。
+        </div>
+        <div id="comboSystems" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px"></div>
+        <div class="inlinebtns" style="flex-wrap:wrap">
+          <label class="switchrow" style="font-size:10.5px"><input type="checkbox" id="comboKeepSkills" checked><span>锁定技能（只优化其余）</span></label>
+          <label class="switchrow" style="font-size:10.5px"><input type="checkbox" id="comboKeepTalents" checked><span>锁定天赋</span></label>
+          <button class="btn gold" id="comboRun">求组合最优</button>
+          <button class="btn ghost" id="comboApply" disabled>应用到构筑</button>
+        </div>
+        <div id="comboResult" style="margin-top:12px"></div>
+      </div>
+    </div>
     <div class="grid2" style="grid-template-columns:360px 1fr">
       <div class="panel">
         <div class="ph"><h3>求解设置</h3><div class="hint">各模板同口径可比</div></div>
@@ -1167,7 +1281,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
   <section class="page" id="page-minions">
     <div class="pagehead">
       <h2>仆从</h2>
-      <div class="desc">星级决定仆从装备槽是否解锁；被动随技能等级成长</div>
+      <div class="desc">只有召唤中的那只生效 · 被动随技能等级成长 · 5 级解锁仆从装备 · 10 星解锁协同被动</div>
       <div class="aside">
         <span class="kv"><span class="k">出战</span><span class="v" id="phMinion">—</span></span>
         <span class="kv"><span class="k">有效等级</span><span class="v" id="phMinionLv">—</span></span>
@@ -1185,10 +1299,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
           <label class="switchrow" style="margin-top:12px">
             <input type="checkbox" id="mnReins"><span>传奇缰绳强化（+5 级，48 小时）</span>
           </label>
-          <div class="field" style="margin-top:10px"><label>仆从装备（抽象）</label><div class="val"><select id="mnGear"></select></div></div>
           <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line2)">
-            <div style="font-size:10px;letter-spacing:1.6px;color:var(--dim);margin-bottom:8px">第 13 件装备（真实词条池）</div>
-            <label class="switchrow"><input type="checkbox" id="mn13On"><span>启用第 13 件装备</span></label>
+            <div style="font-size:10px;letter-spacing:1.6px;color:var(--dim);margin-bottom:8px">协同被动槽（10 星解锁）</div>
+            <div class="field"><label>协同被动 <span class="num" id="mnSynStarHint">需 10 星</span></label>
+              <div class="val"><select id="mnSynergy"></select></div>
+              <div class="note" id="mnSynDesc" style="font-size:10px;line-height:1.6;margin-top:5px">10 星主仆从可额外携带一个已培养至 10 级的其他仆从的被动，按真源 10 级值生效。</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line2)">
+            <div style="font-size:10px;letter-spacing:1.6px;color:var(--dim);margin-bottom:8px">仆从装备（5 级解锁 · 真实词条池）</div>
+            <label class="switchrow"><input type="checkbox" id="mn13On"><span>启用仆从装备</span></label>
             <label class="switchrow"><input type="checkbox" id="mn13Gate" checked><span>遵守训练等级门槛（≥ <span id="mn13Star">5</span> 级）</span></label>
             <div class="svgeargrid" style="margin-top:8px">
               <div class="field"><label>部位</label><div class="val"><select id="mn13Slot"></select></div></div>
@@ -1210,7 +1330,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
     </div>
     <div class="mingrid" id="minionGrid"></div>
     <div class="note" style="margin-top:14px">
-      当前收录 <b>31 只主力仆从</b>（覆盖全部有伤害/生存价值的被动）。完整 67 只可在 <b>data.js</b> 的 <b>MINIONS</b> 直接追加：字段为 <b>bonus</b>（被动，键位与装备一致）、<b>cap</b>（车厢容量）、<b>selfEle</b>（自身技能元素）。
+      当前收录 <b>39 只仆从</b>（按 1.0.4 真源 SlaveData 收录全部有 DPS/生存价值被动者）。被动与协同来自真源 <b>Passives</b>（Base+PerLevel×等级）；16 只有主动技能者标注于 <b>minion-data.js ABILITIES</b>，但真源未展开伤害倍率，<b>不计入 DPS</b>。可在 <b>data.js MINIONS</b> 追加仆从：字段 <b>bonus</b>（被动）、<b>bonusPerLevel</b>（每级成长）、<b>cap</b>（车厢容量）。
     </div>
   </section>
 
@@ -1534,12 +1654,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
 <div id="toast"></div>
 
 <script src="./data.js"></script>
+<script src="./minion-data.js"></script>
 <script src="./engine.js"></script>
 <script src="./affix.js"></script>
 <script src="./runes.js"></script>
 <script src="./agent/kb-data.js"></script>
 <script src="./store.js"></script>
 <script src="./solver.js"></script>
+<script src="./combo-solver.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

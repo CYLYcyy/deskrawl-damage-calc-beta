@@ -118,8 +118,42 @@ main{padding-top:22px}
 .saveitem .nm{font-size:12.5px;color:var(--text);font-weight:500}
 .saveitem .badge{font-size:9px;letter-spacing:.8px;padding:0 5px;border:1px solid var(--line2);color:var(--dim)}
 .saveitem .badge.warn{color:#d9a05a;border-color:#5a4324}
-.saveitem .m{display:flex;gap:10px;margin-top:4px;font-size:10.5px;color:var(--dim)}
+.saveitem .m{display:flex;gap:10px;align-items:baseline;justify-content:space-between;margin-top:5px;font-size:10.5px;color:var(--dim)}
 .saveitem .m b{color:var(--gold2);font-weight:500}
+.saveitem .m .fp{flex:1;min-width:0;color:var(--muted);font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+/* 构筑方案：板块卡片 */
+.builder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.bcard{border:1px solid var(--line);background:#100e0a;padding:12px 13px;position:relative;transition:.16s}
+.bcard:hover{border-color:var(--line2)}
+.bcard.on{border-color:var(--gold3);background:#17120b}
+.bcard .bh{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.bcard .bh .ic{width:26px;height:26px;flex:none;display:grid;place-items:center;border:1px solid var(--line2);background:#0a0806;color:var(--gold2)}
+.bcard .bh .ic svg{width:16px;height:16px}
+.bcard .bh h4{font-size:12.5px;font-weight:600;color:var(--text);margin:0;flex:1}
+.bcard .bh .cnt{font-size:9.5px;color:var(--dim)}
+.bcard .cur{font-size:10.5px;color:var(--muted);margin-bottom:7px;min-height:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bcard select{width:100%;font-size:11px;margin-bottom:8px}
+.bcard .bops{display:flex;gap:5px}
+.bcard .bops button{flex:1;font-size:10px;padding:4px 6px;background:#0a0806;border:1px solid var(--line2);color:var(--muted);cursor:pointer;font-family:inherit;transition:.14s}
+.bcard .bops button:hover{color:var(--gold2);border-color:var(--gold3)}
+.bcard .bops button.del{flex:none;padding:4px 8px}
+.bcard .bops button.del:hover{color:var(--red2);border-color:#7a3226}
+/* 装备特效图标网格 */
+.legend-slots{display:flex;flex-direction:column;gap:10px}
+.lslot-row{display:flex;align-items:flex-start;gap:10px}
+.lslot-name{width:42px;flex:none;font-size:10.5px;color:var(--dim);padding-top:6px;text-align:right}
+.lslot-icons{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.lslot-icons::after{content:'';flex:1;min-width:0}/* 保持行高 */
+.lgi{width:38px;height:38px;flex:none;border:1px solid var(--line2);background:#0c0a07;position:relative;cursor:pointer;transition:.14s;display:grid;place-items:center}
+.lgi:hover{border-color:var(--gold3);background:#16110a;z-index:2}
+.lgi.on{border-color:var(--gold);background:#241a0c;box-shadow:0 0 0 1px rgba(201,162,77,.25) inset}
+.lgi.c-official .lgib{border-bottom-color:#7ba05b}
+.lgi.c-modeled .lgib{border-bottom-color:#c9a24d}
+.lgi.c-none .lgib{border-bottom-color:#6b6255}
+.lgib{width:20px;height:20px;border:1.5px solid var(--gold2);border-bottom-width:3px;transform:rotate(45deg);opacity:.85}
+.lgi.on .lgib{opacity:1}
+.lgi .lgidx{position:absolute;bottom:1px;right:3px;font-size:8px;color:var(--dim)}
+.lgi.on .lgidx{color:var(--gold2)}
 .saveitem .ops{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:.3;transition:.14s}
 .saveitem:hover .ops{opacity:1}
 .saveitem .ops button{background:#0a0806;border:1px solid var(--line2);color:var(--muted);font-size:10px;padding:2px 6px;cursor:pointer;font-family:inherit}
@@ -332,6 +366,19 @@ select option{background:#12100d}
 .pips{display:flex;gap:2px;margin-top:5px}
 .pips i{width:100%;height:2px;background:#2a2218}
 .pips i.f{background:var(--gold3)}
+/* 天赋 UI 升级 */
+.tal{padding:10px 11px;min-height:64px}
+.tal .n{font-size:12px;font-weight:500}
+.tal .r{font-size:11px;font-weight:600}
+.tal.on{transform:translateY(-1px);box-shadow:0 2px 10px rgba(0,0,0,.35),inset 0 0 18px rgba(201,162,77,.06)}
+.trow.caprow .tmeta b{color:var(--gold)}
+.trow.caprow .tmeta::after{content:'三选一';display:inline-block;margin-top:4px;font-size:8px;letter-spacing:.5px;color:#d9a05a;border:1px solid #5a4324;padding:0 3px}
+.tp-budget{margin-bottom:14px}
+.tp-budget .bar{height:6px;background:#1a1713;border:1px solid var(--line2);overflow:hidden;margin-top:6px}
+.tp-budget .bar i{display:block;height:100%;background:linear-gradient(90deg,#7a6228,var(--gold));transition:width .2s}
+.tp-budget .bar i.full{background:linear-gradient(90deg,#a8523a,#d9a05a)}
+.tp-budget .lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted)}
+.tp-budget .lbl b{color:var(--gold2);font-weight:600}
 
 /* minions */
 .mingrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
@@ -626,6 +673,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
     </div>
     <div class="navgroup">
       <span class="nglabel">构筑</span>
+      <button data-tab="builder" title="方案：像游戏一样分板块保存配置，自由组合成总方案">方案</button>
       <button data-tab="character" title="角色：面板、对敌模型与传奇特效">角色</button>
       <button data-tab="gear" title="装备：词条边际收益与 12 部位推荐">装备</button>
       <button data-tab="talents" title="天赋：按门槛解锁，每点收益用引擎实测">天赋</button>
@@ -736,6 +784,36 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
     </div>
   </section>
 
+  <!-- ================= 构筑方案（分板块保存 / 自由组合） ================= -->
+  <section class="page" id="page-builder">
+    <div class="pagehead">
+      <h2>构筑方案</h2>
+      <div class="desc">像游戏内"天赋页保存"一样，每个板块独立存多套；总方案 = 各板块各选一套的组合</div>
+      <div class="aside">
+        <span class="kv"><span class="k">当前秒伤</span><span class="v gold" id="bpDps">—</span></span>
+        <span class="kv"><span class="k">已选板块</span><span class="v" id="bpCount">0 / 7</span></span>
+      </div>
+    </div>
+    <div class="note" style="font-size:10.5px;line-height:1.8;margin-bottom:14px">
+      <b>用法</b>：先在对应页面（技能/角色/装备/符文/天赋/仆从）调好一个板块 → 回到这里点该板块的「保存当前」命名存档 →
+      以后从下拉里切换不同方案即可瞬间换配。点「应用到构筑」把当前各板块选择合成一套完整配置。
+      这套机制让你能像游戏里管理天赋页一样管理每一块 build。
+    </div>
+    <div class="builder-grid" id="builderGrid"></div>
+    <div class="panel" style="margin-top:16px">
+      <div class="ph"><h3>总方案</h3><div class="hint">各板块预设的组合</div></div>
+      <div class="pb">
+        <div class="field"><label>方案名</label><div class="val"><input type="text" id="bpName" placeholder="例如：冰法·纯普攻毕业" maxlength="40"></div></div>
+        <div class="inlinebtns" style="margin-top:10px;flex-wrap:wrap">
+          <button class="btn gold" id="bpApply">应用到构筑</button>
+          <button class="btn ghost" id="bpSaveFull">存为完整配置</button>
+          <button class="btn ghost" id="bpClear">清空板块选择</button>
+        </div>
+        <div class="note" id="bpSummary" style="margin-top:10px;font-size:10.5px;line-height:1.7">尚未选择任何板块预设。</div>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= 角色 ================= -->
   <section class="page" id="page-character">
     <div class="pagehead">
@@ -826,7 +904,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
 
         <div>
           <div class="panel" style="margin-bottom:16px">
-            <div class="ph"><h3>符文套装</h3><div class="hint">2/4/6 件逐档生效</div></div>
+            <div class="ph"><h3>符文六槽</h3><div class="hint">真源 RuneSlotUnlockLevels · 6 槽逐槽自由配置</div></div>
+            <div class="pb">
+              <div class="note" style="font-size:10.5px;line-height:1.7;margin-bottom:10px">
+                每槽独立选符文与等级；同套装符文按件数自动触发 <b>2/4/6</b> 件效果。留空即不装。
+                <b>启用六槽后</b>，下方"符文套装"简化模式不叠加（避免双计）。
+              </div>
+              <div id="runeSlotsBox"></div>
+              <div class="note" id="runeSlotsSummary" style="font-size:10.5px;line-height:1.7;margin-top:10px">—</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom:16px">
+            <div class="ph"><h3>符文套装（简化模式）</h3><div class="hint">不配六槽时生效 · 2/4/6 件</div></div>
             <div class="pb">
               <div class="field"><label>套装</label><select id="setSelect"></select></div>
               <div class="field"><label>件数</label>
@@ -1025,6 +1115,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
       </div>
     </div>
     <div class="panel" style="margin-bottom:16px">
+      <div class="ph"><h3>装备特效（传奇）</h3><div class="hint" id="legIconCount">按部位排列 · 点击图标装备/卸下 · 戒指可带 2 件</div></div>
+      <div class="pb">
+        <div class="legend-slots" id="legIconGrid"></div>
+        <div class="note" style="font-size:10.5px;line-height:1.7;margin-top:8px">绿色=官方数值，金色=需覆盖率折算；悬停看效果原文。更细的筛选见「角色 → 传奇特效」。</div>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
       <div class="ph"><h3>词条边际收益</h3><div class="hint" id="gearHint">在当前面板下，追加一条 ilvl700 传奇中值词条的提升</div></div>
       <div class="pb">
         <div class="subtabs" id="slotTabs"></div>
@@ -1127,6 +1224,23 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
         <span class="kv"><span class="k">数据版本</span><span class="v" id="svVer">—</span></span>
       </div>
     </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="ph"><h3>组合最优解（任意板块排列组合）</h3><div class="hint">勾选要优化的系统，未勾选的保持锁定</div></div>
+      <div class="pb">
+        <div class="note" style="font-size:10.5px;line-height:1.7;margin-bottom:10px">
+          例：你已有满意的天赋页和技能轴 → 只勾「装备特效/宝石/仆从/符文」，系统会锁定天赋与技能，求其余全局最优。
+          交替坐标上升 · 每系统黑盒候选试算 · <b>近似最优非严格全局</b>。
+        </div>
+        <div id="comboSystems" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px"></div>
+        <div class="inlinebtns" style="flex-wrap:wrap">
+          <label class="switchrow" style="font-size:10.5px"><input type="checkbox" id="comboKeepSkills" checked><span>锁定技能（只优化其余）</span></label>
+          <label class="switchrow" style="font-size:10.5px"><input type="checkbox" id="comboKeepTalents" checked><span>锁定天赋</span></label>
+          <button class="btn gold" id="comboRun">求组合最优</button>
+          <button class="btn ghost" id="comboApply" disabled>应用到构筑</button>
+        </div>
+        <div id="comboResult" style="margin-top:12px"></div>
+      </div>
+    </div>
     <div class="grid2" style="grid-template-columns:360px 1fr">
       <div class="panel">
         <div class="ph"><h3>求解设置</h3><div class="hint">各模板同口径可比</div></div>
@@ -1167,7 +1281,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
   <section class="page" id="page-minions">
     <div class="pagehead">
       <h2>仆从</h2>
-      <div class="desc">星级决定仆从装备槽是否解锁；被动随技能等级成长</div>
+      <div class="desc">只有召唤中的那只生效 · 被动随技能等级成长 · 5 级解锁仆从装备 · 10 星解锁协同被动</div>
       <div class="aside">
         <span class="kv"><span class="k">出战</span><span class="v" id="phMinion">—</span></span>
         <span class="kv"><span class="k">有效等级</span><span class="v" id="phMinionLv">—</span></span>
@@ -1185,10 +1299,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
           <label class="switchrow" style="margin-top:12px">
             <input type="checkbox" id="mnReins"><span>传奇缰绳强化（+5 级，48 小时）</span>
           </label>
-          <div class="field" style="margin-top:10px"><label>仆从装备（抽象）</label><div class="val"><select id="mnGear"></select></div></div>
           <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line2)">
-            <div style="font-size:10px;letter-spacing:1.6px;color:var(--dim);margin-bottom:8px">第 13 件装备（真实词条池）</div>
-            <label class="switchrow"><input type="checkbox" id="mn13On"><span>启用第 13 件装备</span></label>
+            <div style="font-size:10px;letter-spacing:1.6px;color:var(--dim);margin-bottom:8px">协同被动槽（10 星解锁）</div>
+            <div class="field"><label>协同被动 <span class="num" id="mnSynStarHint">需 10 星</span></label>
+              <div class="val"><select id="mnSynergy"></select></div>
+              <div class="note" id="mnSynDesc" style="font-size:10px;line-height:1.6;margin-top:5px">10 星主仆从可额外携带一个已培养至 10 级的其他仆从的被动，按真源 10 级值生效。</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line2)">
+            <div style="font-size:10px;letter-spacing:1.6px;color:var(--dim);margin-bottom:8px">仆从装备（5 级解锁 · 真实词条池）</div>
+            <label class="switchrow"><input type="checkbox" id="mn13On"><span>启用仆从装备</span></label>
             <label class="switchrow"><input type="checkbox" id="mn13Gate" checked><span>遵守训练等级门槛（≥ <span id="mn13Star">5</span> 级）</span></label>
             <div class="svgeargrid" style="margin-top:8px">
               <div class="field"><label>部位</label><div class="val"><select id="mn13Slot"></select></div></div>
@@ -1210,7 +1330,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px soli
     </div>
     <div class="mingrid" id="minionGrid"></div>
     <div class="note" style="margin-top:14px">
-      当前收录 <b>31 只主力仆从</b>（覆盖全部有伤害/生存价值的被动）。完整 67 只可在 <b>data.js</b> 的 <b>MINIONS</b> 直接追加：字段为 <b>bonus</b>（被动，键位与装备一致）、<b>cap</b>（车厢容量）、<b>selfEle</b>（自身技能元素）。
+      当前收录 <b>39 只仆从</b>（按 1.0.4 真源 SlaveData 收录全部有 DPS/生存价值被动者）。被动与协同来自真源 <b>Passives</b>（Base+PerLevel×等级）；16 只有主动技能者标注于 <b>minion-data.js ABILITIES</b>，但真源未展开伤害倍率，<b>不计入 DPS</b>。可在 <b>data.js MINIONS</b> 追加仆从：字段 <b>bonus</b>（被动）、<b>bonusPerLevel</b>（每级成长）、<b>cap</b>（车厢容量）。
     </div>
   </section>
 
@@ -2074,16 +2194,11 @@ window.DESKRAWL_DATA = (function () {
       levelMin: 1,
       levelMax: 10,          // 技能等级上限，需要同副本堆叠
       reinsBonus: 5,         // 传奇缰绳强化：自身技能 +5 级，可超上限（48h）
-      gearStar: 5,           // 5 级解锁仆从装备
-      selfBasePct: 30,       // 仆从自身技能：1 级时约等于 30% 武器伤害/秒（模型估算）
-      selfPerLevelPct: 4,    // 每级 +4 个百分点
-      gearOptions: [
-        { id: 'none', name: '不装备', fx: {} },
-        { id: 'atk', name: '攻击型（+12% 仆从技能伤害）', fx: { selfPct: 12 } },
-        { id: 'sup', name: '辅助型（+8% 全伤害）', fx: { dmg: { all: 8 } } },
-        { id: 'def', name: '守护型（-8% 受到伤害）', fx: { takenDR: 8 } }
-      ],
-      source: 'gaugedb 1.1.11 补丁说明（Minion Empowerment）'
+      gearStar: 5,           // 5 级解锁仆从装备（真源 SlaveData：非"第13件装备"）
+      synergyStar: 10,       // 10 星解锁协同被动槽：可带一个已练到 10 级的其他仆从被动
+      // 主动技能见 minion-data.js ABILITIES（真源 16 只有 Abilities，倍率未展开，不计 DPS）
+      // 已移除旧版编造的 selfBasePct/selfPerLevelPct 与"攻击/辅助/守护"三类 gearOptions
+      source: 'Deskrawl-Reverse 1.0.4 SlaveData.json（Abilities/Passives）+ gaugedb 1.1.11 补丁说明'
     },
 
     caps: { cc: 85, cdr: 80, dr: 90 },
@@ -2483,6 +2598,23 @@ window.DESKRAWL_DATA = (function () {
 })();
 
 </script>
+<script data-src="./minion-data.js">
+/* 仆从主动技能与被动库 · 由 Deskrawl-Reverse SO dump 自动生成（1.0.4）
+   来源：data/so_dump/SlaveData.json（Abilities/Passives）、AbilityData.json、loc/abilities_zh.json
+   口径：Stat 与 affix.js 的 STAT_NAMES 同一套；百分比类 base/per 已 ×100 转显示单位。
+   诚实声明：
+   - 主动技能 Effects 在 SO dump 中是托管引用（未展开数值），倍率无实证，故【不计入 DPS】，
+     仅作展示与机制标注。kind=damage/buff 依据技能中文名推断，非真源字段。
+   - 被动数值来自 Modifier.Value.Base/PerLevel 真源，Value(L)=Base+PerLevel×(L-1)。
+   - 协同被动槽：10 星主仆从可带一个"已培养至 10 级的其他仆从的被动"（用户实测机制），
+     从本库 PASSIVES 选择，按 field 映射到引擎 mods，等级固定 10。 */
+(function(){ const D={ABILITIES:[{"slave": "BeachTurtleBoss", "dataName": "海龟首领", "skill": "BeachTurtleSlaveSpit", "zh": "盐卤喷吐", "cd": 12.0, "kind": "damage", "nEff": 1}, {"slave": "BigTreant", "dataName": "远古橡木树精", "skill": "SlaveBigTreantHeal", "zh": "治愈之灵", "cd": 12.0, "kind": "buff", "nEff": 1}, {"slave": "DefiledKeepReaper", "dataName": "白骨收割者", "skill": "SlaveReaperSoulArc", "zh": "魂电弧", "cd": 8.0, "kind": "damage", "nEff": 1}, {"slave": "DesertHarpy", "dataName": "沙暴鹰身女王", "skill": "SlaveHarpyWind", "zh": "顺风", "cd": 12.0, "kind": "buff", "nEff": 1}, {"slave": "DesertManticoraBoss", "dataName": "沙丘蝎狮", "skill": "SlaveManticoraSting", "zh": "蝎狮之刺", "cd": 2.0, "kind": "damage", "nEff": 1}, {"slave": "FishingWaterDragon", "dataName": "飞鱼王", "skill": "SlaveWaterDragonManaSurge", "zh": "法力季风", "cd": 20.0, "kind": "buff", "nEff": 1}, {"slave": "ForestSpiderKing", "dataName": "蜘蛛", "skill": "SlaveSpiderQueenMana", "zh": "法力注入", "cd": 10.0, "kind": "buff", "nEff": 1}, {"slave": "RedDesertAirWarlord", "dataName": "赤岩领主", "skill": "SlaveAirWarlordBuff", "zh": "红岩领主之力", "cd": 12.0, "kind": "buff", "nEff": 1}, {"slave": "RedForestDragon", "dataName": "绯红谷领主", "skill": "SlaveCrimsonValeSpikes", "zh": "大地尖刺", "cd": 12.0, "kind": "damage", "nEff": 1}, {"slave": "RedForestHobgoblin", "dataName": "食人魔", "skill": "SlaveGoblinGiantSmash", "zh": "巨棒砸击", "cd": 8.0, "kind": "damage", "nEff": 3}, {"slave": "SnowHillFrostDragon", "dataName": "霜龙", "skill": "SlaveFrostDragonIceShard", "zh": "冰川碎片", "cd": 6.0, "kind": "damage", "nEff": 1}, {"slave": "SnowHillIceHound", "dataName": "冰霜猎犬", "skill": "SlaveIceHoundCapacitorShell", "zh": "蓄能护壳", "cd": 24.0, "kind": "buff", "nEff": 1}, {"slave": "VolcanoDemonLord", "dataName": "灰烬领主", "skill": "SlaveCinderLordWrath", "zh": "灰烬之怒", "cd": 12.0, "kind": "damage", "nEff": 1}, {"slave": "VolcanoDragon", "dataName": "烬牙", "skill": "SlaveEmberfangBreath", "zh": "余烬吐息", "cd": 4.0, "kind": "damage", "nEff": 1}, {"slave": "Werewolf", "dataName": "血月狼人", "skill": "SlaveWerewolfHowl", "zh": "血月嚎叫", "cd": 10.0, "kind": "buff", "nEff": 1}, {"slave": "WorldBossPumpkin", "dataName": "南瓜王", "skill": "SlavePumpkinHarvestFury", "zh": "丰收之怒", "cd": 15.0, "kind": "damage", "nEff": 1}],
+PASSIVES:[{"slave": "Bull", "slaveZh": "Bull", "dataName": "Bull", "stat": 57, "field": "ms", "statName": "移动速度", "base": 5.0, "per": 0.5, "title": "Fast Travel I", "text": "移动速度 +5.0%（1级）→ 9.5%（10级）", "pct": true}, {"slave": "ArmoredHorse", "slaveZh": "ArmoredHorse", "dataName": "ArmoredHorse", "stat": 57, "field": "ms", "statName": "移动速度", "base": 15.0, "per": 1.5, "title": "Fast Travel III", "text": "移动速度 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "ArmoredHorse", "slaveZh": "ArmoredHorse", "dataName": "ArmoredHorse", "stat": 44, "field": "armorPct", "statName": "护甲", "base": 5.0, "per": 0.5, "title": "Thick Skin I", "text": "护甲 +5.0%（1级）→ 9.5%（10级）", "pct": true}, {"slave": "BeachCrabBoss", "slaveZh": "怒潮蟹王", "dataName": "怒潮蟹王", "stat": 5, "field": "cd", "statName": "暴击伤害", "base": 40.0, "per": 4.0, "title": "Massive Crab Claws", "text": "暴击伤害 +40.0%（1级）→ 76.0%（10级）", "pct": true}, {"slave": "BeachCrabBoss", "slaveZh": "怒潮蟹王", "dataName": "怒潮蟹王", "stat": 53, "field": "dr.cold", "statName": "冰霜减伤", "base": 20.0, "per": 2.0, "title": "Thicker Shell", "text": "冰霜减伤 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "BeachCrabBoss", "slaveZh": "怒潮蟹王", "dataName": "怒潮蟹王", "stat": 52, "field": "dr.fire", "statName": "火焰减伤", "base": 20.0, "per": 2.0, "title": "Heatproof Shell", "text": "火焰减伤 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "BeachHermitCrab", "slaveZh": "BeachHermitCrab", "dataName": "BeachHermitCrab", "stat": 53, "field": "dr.cold", "statName": "冰霜减伤", "base": 20.0, "per": 2.0, "title": "Thick Shell", "text": "冰霜减伤 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "BeachNaga", "slaveZh": "BeachNaga", "dataName": "BeachNaga", "stat": 47, "field": "manaRegen", "statName": "法力回复", "base": 6.0, "per": 0.6, "title": "Mana Regen", "text": "法力回复 6", "pct": false}, {"slave": "BeachSerpent", "slaveZh": "BeachSerpent", "dataName": "BeachSerpent", "stat": 25, "field": "cold", "statName": "冰霜伤害", "base": 25.0, "per": 2.5, "title": "Frost Tongue", "text": "冰霜伤害 +25.0%（1级）→ 47.5%（10级）", "pct": true}, {"slave": "BeachSquid", "slaveZh": "BeachSquid", "dataName": "BeachSquid", "stat": 35, "field": "manaOnKill", "statName": "击杀回蓝", "base": 6.0, "per": 0.6, "title": "Ink Siphon", "text": "击杀回蓝 6", "pct": false}, {"slave": "BeachTurtleBoss", "slaveZh": "海龟首领", "dataName": "海龟首领", "stat": 44, "field": "armorPct", "statName": "护甲", "base": 35.0, "per": 3.5, "title": "Thick Skin III", "text": "护甲 +35.0%（1级）→ 66.5%（10级）", "pct": true}, {"slave": "BeachTurtleBoss", "slaveZh": "海龟首领", "dataName": "海龟首领", "stat": 57, "field": "ms", "statName": "移动速度", "base": -10.0, "per": 1.0, "title": "Turtle Speed", "text": "移动速度 -10.0%（1级）→ -1.0%（10级）", "pct": true}, {"slave": "BigTreant", "slaveZh": "远古橡木树精", "dataName": "远古橡木树精", "stat": 42, "field": "hpPct", "statName": "最大生命", "base": 20.0, "per": 2.0, "title": "Health Increase", "text": "最大生命 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "BlackHorse", "slaveZh": "BlackHorse", "dataName": "BlackHorse", "stat": 57, "field": "ms", "statName": "移动速度", "base": 15.0, "per": 1.5, "title": "Fast Travel III", "text": "移动速度 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "BlueMammoth", "slaveZh": "蓝猛犸", "dataName": "蓝猛犸", "stat": 44, "field": "armorPct", "statName": "护甲", "base": 15.0, "per": 1.5, "title": "Thick Skin III", "text": "护甲 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "BlueMammoth", "slaveZh": "蓝猛犸", "dataName": "蓝猛犸", "stat": 57, "field": "ms", "statName": "移动速度", "base": 5.0, "per": 0.5, "title": "Fast Travel I", "text": "移动速度 +5.0%（1级）→ 9.5%（10级）", "pct": true}, {"slave": "Boar", "slaveZh": "Boar", "dataName": "Boar", "stat": 7, "field": "hp", "statName": "最大生命", "base": 150.0, "per": 15.0, "title": "Vitality I", "text": "最大生命 150", "pct": false}, {"slave": "BrownPony", "slaveZh": "BrownPony", "dataName": "BrownPony", "stat": 57, "field": "ms", "statName": "移动速度", "base": 10.0, "per": 1.0, "title": "Fast Travel II", "text": "移动速度 +10.0%（1级）→ 19.0%（10级）", "pct": true}, {"slave": "DarkElfMage", "slaveZh": "暗精灵法师", "dataName": "暗精灵法师", "stat": 14, "field": "manaMax", "statName": "最大法力", "base": 0.5, "per": 0.025, "title": "Mana Increase", "text": "最大法力 0", "pct": false}, {"slave": "DarkElfMage", "slaveZh": "暗精灵法师", "dataName": "暗精灵法师", "stat": 24, "field": "fire", "statName": "火焰伤害", "base": 30.0, "per": 3.0, "title": "Witchfire", "text": "火焰伤害 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "DarkElfMage", "slaveZh": "暗精灵法师", "dataName": "暗精灵法师", "stat": 28, "field": "arcane", "statName": "奥术伤害", "base": 30.0, "per": 3.0, "title": "Arcane Affinity", "text": "奥术伤害 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "DefaultHorse", "slaveZh": "DefaultHorse", "dataName": "DefaultHorse", "stat": 57, "field": "ms", "statName": "移动速度", "base": 5.0, "per": 0.5, "title": "Fast Travel I", "text": "移动速度 +5.0%（1级）→ 9.5%（10级）", "pct": true}, {"slave": "DefiledKeepAxemaster", "slaveZh": "DefiledKeepAxemaster", "dataName": "DefiledKeepAxemaster", "stat": 23, "field": "physical", "statName": "物理伤害", "base": 25.0, "per": 2.5, "title": "Grave Cleaver", "text": "物理伤害 +25.0%（1级）→ 47.5%（10级）", "pct": true}, {"slave": "DefiledKeepDragon", "slaveZh": "DefiledKeepDragon", "dataName": "DefiledKeepDragon", "stat": 36, "field": "hpRegen", "statName": "生命回复", "base": 1.0, "per": 0.05, "title": "Everliving Blood", "text": "生命回复 1", "pct": false}, {"slave": "DefiledKeepDragon", "slaveZh": "DefiledKeepDragon", "dataName": "DefiledKeepDragon", "stat": 59, "field": "unknown59", "statName": "未知", "base": 1.0, "per": 0.05, "title": "Sepulchral Scales", "text": "未知 1", "pct": false}, {"slave": "DefiledKeepOoze", "slaveZh": "DefiledKeepOoze", "dataName": "DefiledKeepOoze", "stat": 51, "field": "dr.physical", "statName": "物理减伤", "base": 10.0, "per": 1.0, "title": "Viscous Hide", "text": "物理减伤 +10.0%（1级）→ 19.0%（10级）", "pct": true}, {"slave": "DefiledKeepReaper", "slaveZh": "白骨收割者", "dataName": "白骨收割者", "stat": 26, "field": "lightning", "statName": "闪电伤害", "base": 30.0, "per": 3.0, "title": "Storm of Souls", "text": "闪电伤害 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "DefiledKeepScarab", "slaveZh": "DefiledKeepScarab", "dataName": "DefiledKeepScarab", "stat": 16, "field": "magicFind", "statName": "魔法装备获取", "base": 15.0, "per": 1.5, "title": "Gravedigger", "text": "魔法装备获取 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "DefiledKeepSuccubus", "slaveZh": "腐化魅魔", "dataName": "腐化魅魔", "stat": 58, "field": "vs.distant", "statName": "对远处敌人", "base": 30.0, "per": 3.0, "title": "Beguiling Whisper", "text": "对远处敌人 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "DesertEagle", "slaveZh": "DesertEagle", "dataName": "DesertEagle", "stat": 22, "field": "dodge", "statName": "闪避", "base": 5.0, "per": 0.5, "title": "DesertEagle", "text": "闪避 +5.0%（1级）→ 9.5%（10级）", "pct": true}, {"slave": "DesertHarpy", "slaveZh": "沙暴鹰身女王", "dataName": "沙暴鹰身女王", "stat": 31, "field": "vs.slowed", "statName": "对减速敌人", "base": 30.0, "per": 3.0, "title": "DesertHarpy", "text": "对减速敌人 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "DesertKoboldThief", "slaveZh": "DesertKoboldThief", "dataName": "DesertKoboldThief", "stat": 45, "field": "vs.bleeding", "statName": "对流血敌人", "base": 20.0, "per": 2.0, "title": "DesertKoboldThief", "text": "对流血敌人 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "DesertKoboldWarrior", "slaveZh": "DesertKoboldWarrior", "dataName": "DesertKoboldWarrior", "stat": 44, "field": "armorPct", "statName": "护甲", "base": 15.0, "per": 1.5, "title": "DesertKoboldWarrior", "text": "护甲 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "DesertManticoraBoss", "slaveZh": "沙丘蝎狮", "dataName": "沙丘蝎狮", "stat": 27, "field": "poison", "statName": "毒素伤害", "base": 30.0, "per": 3.0, "title": "DesertManticora", "text": "毒素伤害 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "DesertWasp", "slaveZh": "DesertWasp", "dataName": "DesertWasp", "stat": 46, "field": "vs.poisoned", "statName": "对中毒敌人", "base": 20.0, "per": 2.0, "title": "DesertWasp", "text": "对中毒敌人 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "FishingWaterDragon", "slaveZh": "飞鱼王", "dataName": "飞鱼王", "stat": 37, "field": "costRed", "statName": "法力消耗缩减", "base": 10.0, "per": 0.5, "title": "Ocean's Providence", "text": "法力消耗缩减 +10.0%（1级）→ 14.5%（10级）", "pct": true}, {"slave": "ForestSpiderKing", "slaveZh": "蜘蛛", "dataName": "蜘蛛", "stat": 49, "field": "dr.poison", "statName": "毒素减伤", "base": 40.0, "per": 4.0, "title": "PoisonArmor", "text": "毒素减伤 +40.0%（1级）→ 76.0%（10级）", "pct": true}, {"slave": "GoblinWarrior", "slaveZh": "GoblinWarrior", "dataName": "GoblinWarrior", "stat": 15, "field": "goldFind", "statName": "金币获取", "base": 15.0, "per": 1.5, "title": "Gold Increase I", "text": "金币获取 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "Ogre", "slaveZh": "食人魔", "dataName": "食人魔", "stat": 43, "field": "vs.immobilized", "statName": "对定身敌人", "base": 40.0, "per": 4.0, "title": "Damage to Stunned III", "text": "对定身敌人 +40.0%（1级）→ 76.0%（10级）", "pct": true}, {"slave": "Ogre", "slaveZh": "食人魔", "dataName": "食人魔", "stat": 51, "field": "dr.physical", "statName": "物理减伤", "base": 15.0, "per": 1.5, "title": "Iron Hide", "text": "物理减伤 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "OrcWarrior", "slaveZh": "OrcWarrior", "dataName": "OrcWarrior", "stat": 0, "field": "str", "statName": "力量", "base": 0.1, "per": 0.01, "title": "Strength I", "text": "力量 0", "pct": false}, {"slave": "PoisonSpider", "slaveZh": "PoisonSpider", "dataName": "PoisonSpider", "stat": 14, "field": "manaMax", "statName": "最大法力", "base": 25.0, "per": 2.5, "title": "Mana I", "text": "最大法力 25", "pct": false}, {"slave": "Raptor", "slaveZh": "迅猛龙", "dataName": "迅猛龙", "stat": 62, "field": "dot", "statName": "持续伤害", "base": 30.0, "per": 3.0, "title": "Serrated Talons", "text": "持续伤害 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "Raptor", "slaveZh": "迅猛龙", "dataName": "迅猛龙", "stat": 4, "field": "cc", "statName": "暴击率", "base": 3.0, "per": 0.3, "title": "Keen Instinct", "text": "暴击率 +3.0%（1级）→ 5.7%（10级）", "pct": true}, {"slave": "Raptor", "slaveZh": "迅猛龙", "dataName": "迅猛龙", "stat": 5, "field": "cd", "statName": "暴击伤害", "base": 25.0, "per": 2.5, "title": "Killing Precision", "text": "暴击伤害 +25.0%（1级）→ 47.5%（10级）", "pct": true}, {"slave": "RedDesertAirWarlord", "slaveZh": "RedDesertAirWarlord", "dataName": "赤岩领主", "stat": 34, "field": "strong", "statName": "强力攻击伤害", "base": 30.0, "per": 3.0, "title": "RedDesertAirWarlord", "text": "强力攻击伤害 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "RedDesertCrocodile", "slaveZh": "RedDesertCrocodile", "dataName": "RedDesertCrocodile", "stat": 30, "field": "vs.injured", "statName": "对受伤敌人", "base": 25.0, "per": 2.5, "title": "RedDesertCrocodile", "text": "对受伤敌人 +25.0%（1级）→ 47.5%（10级）", "pct": true}, {"slave": "RedDesertImp", "slaveZh": "RedDesertImp", "dataName": "RedDesertImp", "stat": 24, "field": "fire", "statName": "火焰伤害", "base": 20.0, "per": 2.0, "title": "RedDesertImp", "text": "火焰伤害 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "RedDesertRockGolem", "slaveZh": "RedDesertRockGolem", "dataName": "RedDesertRockGolem", "stat": 60, "field": "critDR", "statName": "暴伤减免", "base": 20.0, "per": 2.0, "title": "RedDesertRockGolem", "text": "暴伤减免 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "RedDesertSatyr", "slaveZh": "RedDesertSatyr", "dataName": "RedDesertSatyr", "stat": 33, "field": "basic", "statName": "基础攻击伤害", "base": 20.0, "per": 2.0, "title": "RedDesertSatyr", "text": "基础攻击伤害 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "RedDesertSerparmat", "slaveZh": "RedDesertSerparmat", "dataName": "RedDesertSerparmat", "stat": 45, "field": "vs.bleeding", "statName": "对流血敌人", "base": 40.0, "per": 4.0, "title": "RedDesertSerparmat1", "text": "对流血敌人 +40.0%（1级）→ 76.0%（10级）", "pct": true}, {"slave": "RedDesertSerparmat", "slaveZh": "RedDesertSerparmat", "dataName": "RedDesertSerparmat", "stat": 12, "field": "lifeOnKill", "statName": "击杀回血", "base": 30.0, "per": 3.0, "title": "RedDesertSerparmat2", "text": "击杀回血 30", "pct": false}, {"slave": "RedForestBear", "slaveZh": "RedForestBear", "dataName": "RedForestBear", "stat": 36, "field": "hpRegen", "statName": "生命回复", "base": 8.0, "per": 0.8, "title": "Deep Slumber", "text": "生命回复 8", "pct": false}, {"slave": "RedForestDragon", "slaveZh": "绯红谷领主", "dataName": "绯红谷领主", "stat": 40, "field": "vs.vulnerable", "statName": "对易伤敌人", "base": 30.0, "per": 3.0, "title": "Crimson Dominion", "text": "对易伤敌人 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "RedForestFaeDragon", "slaveZh": "RedForestFaeDragon", "dataName": "RedForestFaeDragon", "stat": 28, "field": "arcane", "statName": "奥术伤害", "base": 25.0, "per": 2.5, "title": "Arcane Wing", "text": "奥术伤害 +25.0%（1级）→ 47.5%（10级）", "pct": true}, {"slave": "RedForestGiant", "slaveZh": "RedForestGiant", "dataName": "RedForestGiant", "stat": 38, "field": "goldFind", "statName": "金币获取", "base": 200.0, "per": 30.0, "title": "Stoneheart", "text": "金币获取 +200.0%（1级）→ 470.0%（10级）", "pct": true}, {"slave": "RedForestHobgoblin", "slaveZh": "食人魔", "dataName": "食人魔", "stat": 15, "field": "goldFind", "statName": "金币获取", "base": 40.0, "per": 4.0, "title": "Goblin Hoard", "text": "金币获取 +40.0%（1级）→ 76.0%（10级）", "pct": true}, {"slave": "RedForestTiger", "slaveZh": "RedForestTiger", "dataName": "RedForestTiger", "stat": 29, "field": "vs.healthy", "statName": "对健康敌人", "base": 25.0, "per": 2.5, "title": "Ambush", "text": "对健康敌人 +25.0%（1级）→ 47.5%（10级）", "pct": true}, {"slave": "SkeletonArcher", "slaveZh": "SkeletonArcher", "dataName": "SkeletonArcher", "stat": 4, "field": "cc", "statName": "暴击率", "base": 3.0, "per": 0.3, "title": "Critical Hit Chance I", "text": "暴击率 +3.0%（1级）→ 5.7%（10级）", "pct": true}, {"slave": "SkeletonWarrior", "slaveZh": "SkeletonWarrior", "dataName": "SkeletonWarrior", "stat": 23, "field": "physical", "statName": "物理伤害", "base": 15.0, "per": 1.5, "title": "Physical Damage I", "text": "物理伤害 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "SnowHillFrostDragon", "slaveZh": "霜龙", "dataName": "霜龙", "stat": 58, "field": "vs.distant", "statName": "对远处敌人", "base": 40.0, "per": 4.0, "title": "Frozen Reach", "text": "对远处敌人 +40.0%（1级）→ 76.0%（10级）", "pct": true}, {"slave": "SnowHillIceHound", "slaveZh": "冰霜猎犬", "dataName": "冰霜猎犬", "stat": 26, "field": "lightning", "statName": "闪电伤害", "base": 30.0, "per": 3.0, "title": "Thunderfang", "text": "闪电伤害 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "SnowHillIceHound", "slaveZh": "冰霜猎犬", "dataName": "冰霜猎犬", "stat": 25, "field": "cold", "statName": "冰霜伤害", "base": 30.0, "per": 3.0, "title": "Frostclaw", "text": "冰霜伤害 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "SnowHillRockElemental", "slaveZh": "SnowHillRockElemental", "dataName": "SnowHillRockElemental", "stat": 54, "field": "dr.lightning", "statName": "闪电减伤", "base": 20.0, "per": 2.0, "title": "Grounded Core", "text": "闪电减伤 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "SnowHillRockElemental", "slaveZh": "SnowHillRockElemental", "dataName": "SnowHillRockElemental", "stat": 55, "field": "dr.arcane", "statName": "奥术减伤", "base": 20.0, "per": 2.0, "title": "Runic Ward", "text": "奥术减伤 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "SnowHillSlime", "slaveZh": "SnowHillSlime", "dataName": "SnowHillSlime", "stat": 56, "field": "unknown56", "statName": "未知", "base": 0.1, "per": 0.01, "title": "Reconstituting Gel", "text": "未知 0", "pct": false}, {"slave": "SnowHillWhelp", "slaveZh": "SnowHillWhelp", "dataName": "SnowHillWhelp", "stat": 61, "field": "special", "statName": "特殊技能伤害", "base": 25.0, "per": 2.5, "title": "Budding Sorcery", "text": "特殊技能伤害 +25.0%（1级）→ 47.5%（10级）", "pct": true}, {"slave": "SnowHillZombieWarrior", "slaveZh": "SnowHillZombieWarrior", "dataName": "SnowHillZombieWarrior", "stat": 65, "field": "all", "statName": "全伤害", "base": 5.0, "per": 0.5, "title": "Frozen Might", "text": "全伤害 +5.0%（1级）→ 9.5%（10级）", "pct": true}, {"slave": "Spider", "slaveZh": "Spider", "dataName": "Spider", "stat": 27, "field": "poison", "statName": "毒素伤害", "base": 15.0, "per": 1.5, "title": "Poison Damage I", "text": "毒素伤害 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "Stumplin", "slaveZh": "Stumplin", "dataName": "Stumplin", "stat": 39, "field": "magicFind", "statName": "魔法装备获取", "base": 10.0, "per": 1.0, "title": "Thorn I", "text": "魔法装备获取 +10.0%（1级）→ 19.0%（10级）", "pct": true}, {"slave": "TazanCamel", "slaveZh": "TazanCamel", "dataName": "TazanCamel", "stat": 19, "field": "unknown19", "statName": "未知", "base": 0.3, "per": 0.03, "title": "Caravan Bearer", "text": "未知 0", "pct": false}, {"slave": "VolcanoCinderlash", "slaveZh": "VolcanoCinderlash", "dataName": "VolcanoCinderlash", "stat": 24, "field": "fire", "statName": "火焰伤害", "base": 25.0, "per": 2.5, "title": "Lash of Cinders", "text": "火焰伤害 +25.0%（1级）→ 47.5%（10级）", "pct": true}, {"slave": "VolcanoDemonLord", "slaveZh": "灰烬领主", "dataName": "灰烬领主", "stat": 13, "field": "cdr", "statName": "冷却缩减", "base": 12.0, "per": 0.8, "title": "Cinder Sovereign", "text": "冷却缩减 +12.0%（1级）→ 19.2%（10级）", "pct": true}, {"slave": "VolcanoDragon", "slaveZh": "烬牙", "dataName": "烬牙", "stat": 32, "field": "vs.elite", "statName": "对精英敌人", "base": 30.0, "per": 3.0, "title": "Tyrant's Bane", "text": "对精英敌人 +30.0%（1级）→ 57.0%（10级）", "pct": true}, {"slave": "VolcanoEmberBat", "slaveZh": "VolcanoEmberBat", "dataName": "VolcanoEmberBat", "stat": 52, "field": "dr.fire", "statName": "火焰减伤", "base": 20.0, "per": 2.0, "title": "Cinder Hide", "text": "火焰减伤 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "VolcanoHellguard", "slaveZh": "VolcanoHellguard", "dataName": "VolcanoHellguard", "stat": 44, "field": "armorPct", "statName": "护甲", "base": 20.0, "per": 2.0, "title": "Infernal Bulwark", "text": "护甲 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "VolcanoMagmaGolem", "slaveZh": "VolcanoMagmaGolem", "dataName": "VolcanoMagmaGolem", "stat": 42, "field": "hpPct", "statName": "最大生命", "base": 20.0, "per": 2.0, "title": "Molten Core", "text": "最大生命 +20.0%（1级）→ 38.0%（10级）", "pct": true}, {"slave": "Werewolf", "slaveZh": "血月狼人", "dataName": "血月狼人", "stat": 11, "field": "lifeOnHit", "statName": "击中回血", "base": 0.1, "per": 0.01, "title": "Bloodthirst I", "text": "击中回血 0", "pct": false}, {"slave": "Werewolf", "slaveZh": "血月狼人", "dataName": "血月狼人", "stat": 33, "field": "basic", "statName": "基础攻击伤害", "base": 15.0, "per": 1.5, "title": "Savage Strikes", "text": "基础攻击伤害 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "WhiteHorse", "slaveZh": "WhiteHorse", "dataName": "WhiteHorse", "stat": 57, "field": "ms", "statName": "移动速度", "base": 15.0, "per": 1.5, "title": "Fast Travel III", "text": "移动速度 +15.0%（1级）→ 28.5%（10级）", "pct": true}, {"slave": "Wolf", "slaveZh": "Wolf", "dataName": "Wolf", "stat": 6, "field": "as", "statName": "攻击速度", "base": 10.0, "per": 1.0, "title": "Attack Speed I", "text": "攻击速度 +10.0%（1级）→ 19.0%（10级）", "pct": true}, {"slave": "WorldBossPumpkin", "slaveZh": "南瓜王", "dataName": "南瓜王", "stat": 30, "field": "vs.injured", "statName": "对受伤敌人", "base": 50.0, "per": 5.0, "title": "Damage to Injured III", "text": "对受伤敌人 +50.0%（1级）→ 95.0%（10级）", "pct": true}, {"slave": "ZombieWolf", "slaveZh": "ZombieWolf", "dataName": "ZombieWolf", "stat": 11, "field": "lifeOnHit", "statName": "击中回血", "base": 15.0, "per": 1.5, "title": "Life On Hit I", "text": "击中回血 15", "pct": false}]
+};
+if (typeof window!=='undefined') window.MinionData=D;
+if (typeof module!=='undefined'&&module.exports) module.exports=D;
+})();
+</script>
 <script data-src="./engine.js">
 /* ==========================================================================
    桌面破坏神 · 伤害引擎
@@ -2526,6 +2658,33 @@ window.Engine = (function () {
   }
   function getRuneData() {
     return typeof window !== 'undefined' ? window.RuneData : globalThis.RuneData;
+  }
+  function getMinionData() {
+    return typeof window !== 'undefined' ? window.MinionData : globalThis.MinionData;
+  }
+
+  /* 真源 Stat field（minion-data.js 生成，如 'cc' / 'vs.elite' / 'dr.fire' / 'all'）
+     -> engine mods 增量。协同被动按真源 10 级值注入，不吃缰绳成长（协同槽固定 10 级）。 */
+  function applyStatField(s, field, value) {
+    if (!field || !value) return;
+    const setVs = (k, v) => { if (s.vs && k in s.vs) s.vs[k] += v; };
+    const setDr = (k, v) => { s.dr = s.dr || {}; s.dr[k] = (s.dr[k] || 0) + v; };
+    switch (field) {
+      case 'str': case 'dex': case 'int': case 'cc': case 'cd': case 'as':
+      case 'all': case 'physical': case 'fire': case 'cold': case 'lightning': case 'poison': case 'arcane':
+      case 'basic': case 'strong': case 'special': case 'dot': case 'cdr': case 'costRed':
+      case 'manaMax': case 'manaRegen': case 'genFlat': case 'genPct': case 'flatDmg':
+      case 'thorns': case 'dodge': case 'hpPct': case 'takenDR':
+        s[field] = (s[field] || 0) + value; break;
+      case 'hp': s.flatDmg += 0; s.hp = (s.hp || 0) + value; break; // 生存向，不进 DPS
+      case 'lifeOnHit': case 'lifeOnKill': case 'hpRegen': case 'manaOnKill':
+      case 'goldFind': case 'magicFind': case 'ms': case 'critDR':
+        s[field] = (s[field] || 0) + value; break; // 生存/资源向，引擎不用于 DPS
+      default:
+        if (field.indexOf('vs.') === 0) setVs(field.slice(3), value);
+        else if (field.indexOf('dr.') === 0) setDr(field.slice(3), value);
+        else s['_' + field] = (s['_' + field] || 0) + value; // 未知字段保留，不丢数据
+    }
   }
 
   const emptyMods = () => ({
@@ -2745,80 +2904,74 @@ window.Engine = (function () {
       if (L) applyLegendary(s, L, cfg);
     });
 
-    // 仆从：被动随技能等级成长；缰绳 +5 作用于所有自身技能；继承槽固定 10 级；
-    // 第 13 件装备走 gearBuild（无宝石孔、需训练等级 ≥ gearStar）
+    /* 仆从（1.0.4 真源重构）：
+       - 只有召唤中的那一只生效；它的【被动】随技能等级成长（Base+PerLevel×(L-1)），
+         缰绳 +5 作用于所有自身技能（可超 10 级）。
+       - 【主动技能】：真源 68 只里 16 只有 Abilities，多数是给角色+增益/+状态
+         （治愈/顺风/护壳/法力…），只有少数是伤害型。SO dump 的 Effects 为托管引用、
+         未展开倍率，故主动技能【不计入 DPS】，仅作机制标注展示（避免伪造数字）。
+       - 【协同被动槽】：10 星主仆从可额外带一个"已培养至 10 级的其他仆从的被动"
+         （用户实测机制），按真源 Stat/Value 以固定 10 级值注入：Base+PerLevel×9。
+       - 【仆从装备】：5 级解锁，词条走 gearBuild（无宝石孔），属性并入玩家属性池。
+         不再有编造的"攻击型/辅助型/守护型"三类增益。 */
     const min = D.MINIONS.find(x => x.id === cfg.minionId);
     let minionInfo = null;
     if (min) {
       const MM = MED.minion;
-      // 训练等级：cfg.minionLevel 缺省取上限，夹在 [levelMin, levelMax]
       const trainLv = Math.max(MM.levelMin, Math.min(MM.levelMax, cfg.minionLevel != null ? cfg.minionLevel : MM.levelMax));
-      // B5: 被动成长等级读 cfg.minionSkillLevel，默认训练等级
       const skillLv = cfg.minionSkillLevel != null ? cfg.minionSkillLevel : trainLv;
-      // 缰绳 +5 作用于所有自身技能（可超上限）；继承槽技能固定 10 级、不吃 +5
       const reins = cfg.minionReins ? MM.reinsBonus : 0;
       const inherited = !!cfg.inheritedSkill;
       const eff = inherited ? 10 : skillLv + reins;
-      // 共鸣字段保留供 UI 展示；放大被动的旧语义仅在数据层仍提供 resonanceBonus 时生效，
-      // 数据层净化（移除 resonanceStar/resonanceBonus）后自动失效，等于删除该逻辑
-      const resonance = eff >= MM.resonanceStar;
-      const resonanceAmp = resonance && MM.resonanceBonus != null;
+      const stars = Math.max(1, Math.min(10, cfg.minionStars != null ? cfg.minionStars : 10));
 
-      // 被动 base
+      // 主仆从被动 base
       const bonus = JSON.parse(JSON.stringify(min.bonus || {}));
       if (min.bonus && min.bonus.statPct) {
         for (const k in min.bonus.statPct) s[k] = (s[k] || 0) * (1 + min.bonus.statPct[k] / 100);
       }
       mergeMods(s, bonus);
-      // 过渡保留：数据仍带 resonanceBonus 时维持旧行为；不再作为成长机制
-      if (resonanceAmp) {
-        const extra = JSON.parse(JSON.stringify(min.bonus || {}));
-        scaleMods(extra, MM.resonanceBonus / 100);
-        mergeMods(s, extra);
-      }
-      // B5: 被动随技能等级成长（真源 SlaveData.json 精确口径）
-      // 真源：Value(L) = Base + PerLevel × (L - 1)，Base 为 1 级值。
-      // data.js 的 bonus = Base×100（百分点），bonusPerLevel = PerLevel/Base（每级相对增量），
-      // 故 base × (1 + ratio×(L-1)) = base + PerLevel×100×(L-1)，与真源逐位一致。
-      // 2026-11-25 复核：真源 83 个被动 PerLevel≠0（此前"77/77 全 0"为误判，读了错误字段），
-      // 32 个已建模 DPS 仆从按 statId 精确匹配并灌入 ratio（绝大多数 0.10，灰烬领主 CDR 0.0667）。
-      // 成长等级用 eff（含缰绳 +5、可超 10；继承槽固定 10、不吃缰绳），与自身技能口径一致。
+      // 被动随有效等级成长（真源 Base+PerLevel×(L-1)）
       const perLv = min.bonusPerLevel;
       if (perLv && eff > 1) {
         const extra = JSON.parse(JSON.stringify(min.bonus || {}));
         scaleMods(extra, perLv * (eff - 1));
         mergeMods(s, extra);
       }
-      // 无 bonusPerLevel 的仆从（如 buff 类）被动保持 base，不静默外推。
 
-      // 第 13 件装备：优先 gearBuild（无宝石孔、训练等级 ≥ gearStar），属性并入玩家属性池
+      // 协同被动槽：需主仆从有效技能等级 ≥10（玩家称"10星"）；cfg.minionSynergy = { slave, stat }
+      let synergyInfo = null;
+      const syn = cfg.minionSynergy;
+      if (eff >= 10 && syn && syn.stat != null) {
+        const MD = getMinionData();
+        const cand = MD && (MD.PASSIVES || []).find(p => p.stat === syn.stat && (!syn.slave || p.slave === syn.slave));
+        if (cand) {
+          const v10 = (cand.base || 0) + (cand.per || 0) * 9;  // 协同被动固定 10 级
+          applyStatField(s, cand.field, v10);
+          synergyInfo = { slave: cand.slave, slaveZh: cand.slaveZh, stat: cand.stat, statName: cand.statName, field: cand.field, value: v10, text: cand.text };
+        }
+      }
+
+      // 仆从装备（5 级解锁）：优先 gearBuild，属性并入玩家属性池
       let minionGearLabel = null;
       if (trainLv >= MM.gearStar && cfg.minionGearBuild) {
         const AF = getAffixMath();
         if (AF && typeof AF.buildGear === 'function') {
           try {
             const mg = AF.buildGear(Object.assign({}, cfg, { gearBuild: cfg.minionGearBuild }));
-            if (mg) {
-              addMods(s, gearToMods(mg, cfg)); // 仆从装备无宝石孔：不并入 gem 相关字段
-              minionGearLabel = 'custom';
-            }
-          } catch (e) { /* 缺模块/数据异常时跳过仆从装备 */ }
+            if (mg) { addMods(s, gearToMods(mg, cfg)); minionGearLabel = 'custom'; }
+          } catch (e) { /* 缺模块/数据异常时跳过 */ }
         }
-      } else if (eff >= MM.gearStar && cfg.minionGear && cfg.minionGear !== 'none') {
-        // DEPRECATED: 旧 4 个抽象 gearOptions（none/atk/sup/def）fallback，新配置请用 minionGearBuild
-        const g = MM.gearOptions.find(x => x.id === cfg.minionGear);
-        if (g && g.fx) {
-          if (g.fx.dmg) for (const k in g.fx.dmg) s[k] = (s[k] || 0) + g.fx.dmg[k];
-          if (g.fx.takenDR) s.takenDR += g.fx.takenDR;
-          if (g.fx.selfPct) s.minionSelfPct = (s.minionSelfPct || 0) + g.fx.selfPct;
-        }
-        minionGearLabel = cfg.minionGear;
       }
+      // 主动技能：标注但不计 DPS（倍率真源未展开）
+      const MD = getMinionData();
+      const ability = MD && (MD.ABILITIES || []).filter(a => a.dataName === min.name || a.slave === min.srcName)
+        .map(a => ({ zh: a.zh, kind: a.kind, cd: a.cd, note: '伤害型倍率真源未展开，不计入 DPS' }));
+
       minionInfo = {
-        id: min.id, name: min.name, level: trainLv, skillLevel: skillLv, eff, resonance, inherited,
-        gear: (trainLv >= MM.gearStar || eff >= MM.gearStar) ? (minionGearLabel || 'none') : null,
-        selfPct: (MM.selfBasePct + MM.selfPerLevelPct * (eff - 1)) * (1 + (s.minionSelfPct || 0) / 100),
-        selfEle: min.selfEle || guessEle(min)
+        id: min.id, name: min.name, level: trainLv, skillLevel: skillLv, eff, stars, inherited,
+        gear: trainLv >= MM.gearStar ? (minionGearLabel || 'none') : null,
+        synergy: synergyInfo, ability: ability || []
       };
     }
 
@@ -3492,8 +3645,9 @@ window.Engine = (function () {
       if (st.castLock <= 0) castStrong();
 
       // 基础攻击：自动攻击，与动作条并行（仅被引导类技能打断）
-      if (st.t >= (st.channelUntil || 0)) {
-        const interval = Math.max(1 / ((1 + curAS() / 100) * agg.gear.speed), basic && basic.cd ? basic.cd : 0);
+      // 允许留空：basic 为 null 时不普攻、不回蓝，只靠法力自然回复。
+      if (basic && st.t >= (st.channelUntil || 0)) {
+        const interval = Math.max(1 / ((1 + curAS() / 100) * agg.gear.speed), basic.cd || 0);
         st.basicT -= dt;
         if (st.basicT <= 0) {
           st.basicT += interval;
@@ -3568,8 +3722,12 @@ window.Engine = (function () {
     };
   }
 
+  /* 技能查找：允许留空。id 为空/null/'none' 时返回 null（该槽不装备）。
+     不再强制回退到 c[key][0]——用户可选择不带技能以提高周期伤害
+     （典型：冰法 6 件套后只带冰普攻，强攻/特殊技能全空）。 */
   function findAb(c, id, key) {
-    const a = (c[key] || []).find(x => x.id === id) || c[key][0];
+    if (id === null || id === undefined || id === '' || id === 'none') return null;
+    const a = (c[key] || []).find(x => x.id === id) || null;
     if (a && a.channel && !a._prep) {
       a.hits = Math.max(1, Math.round(a.channel.dur / a.channel.interval));
       a._prep = true;
@@ -4107,8 +4265,47 @@ function buildGear(cfg) {
   return out;
 }
 
-if (typeof window !== "undefined") window.AffixMath = { RARITY_BONUS, PER_LEVEL, PERCENT_STATS, STAT_NAMES, affixValue, CLASS_EXCLUDE, SLOT_POOLS, SLOT_POOLS_DETAIL, DIVINE_FIXED, CLASS_BITS, buildGear };
-else globalThis.AffixMath = { RARITY_BONUS, PER_LEVEL, PERCENT_STATS, STAT_NAMES, affixValue, CLASS_EXCLUDE, SLOT_POOLS, SLOT_POOLS_DETAIL, DIVINE_FIXED, CLASS_BITS, buildGear };
+/* 由「目标装分（毕业程度）」生成 12 部位的 gearBuild。
+   每个部位 4 主 + 1 副，主词条按职业/流派优先级从真源主池挑选；数值随 ilvl 联动。
+   - primaryType: 'basic'|'strong'|'special'|'dot' 决定类型伤主词条优先（33/34/61/62）
+   - element: 决定元素伤主词条优先（23火/24? 见 ELE）
+   返回 { gearBuild, parts:[{slot,name,main:[statId],secondary:[statId],values}] }
+   供装备页"目标装分旋钮"、词条 UI 与第三轮词条最优解共用。 */
+function buildFullGear(targetIlvl, rarity, cls, element, primaryType, roll) {
+  const ilvl = Number(targetIlvl) || 700;
+  const rar = rarity || 'legendary';
+  const cbit = typeof cls === 'number' ? cls : (CLASS_BITS[String(cls || '').toLowerCase()] || 0);
+  const TYPE_STAT = { basic: 33, strong: 34, special: 61, dot: 62 };
+  const ELE_STAT = { physical: 23, fire: 24, cold: 25, lightning: 26, poison: 27, arcane: 28 };
+  const PREF_MAIN = [0, 1, 2]; // 主属性占位，buildGear 会按职业掩码过滤
+  const prefer = [];
+  if (TYPE_STAT[primaryType]) prefer.push(TYPE_STAT[primaryType]);
+  if (ELE_STAT[element]) prefer.push(ELE_STAT[element]);
+  prefer.push(65, 5, 4, 6, 3, 32, 40, 13, 7); // 全伤/暴伤/暴率/攻速/flat/精英/易伤/CDR/生命
+  const slots = [];
+  const parts = [];
+  const slotsOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  slotsOrder.forEach(slot => {
+    const pool = SLOT_POOLS[slot];
+    if (!pool || !pool.length) return; // 背部无词条
+    const available = pool.filter(st => !(cbit && CLASS_EXCLUDE[st] && (CLASS_EXCLUDE[st] & cbit)));
+    // 选 4 条主：优先表顺序，不足则用池中靠前词条补齐
+    const picked = [];
+    prefer.concat(available).forEach(st => { if (picked.length < 4 && available.indexOf(st) >= 0 && picked.indexOf(st) < 0) picked.push(st); });
+    available.forEach(st => { if (picked.length < 4 && picked.indexOf(st) < 0) picked.push(st); });
+    const secondary = (SLOT_POOLS[slot].secondary || []).slice(0, 1);
+    slots.push({ slot, main: picked, secondary });
+    const values = {};
+    picked.concat(secondary).forEach(st => { values[STAT_NAMES[st] || ('stat' + st)] = affixValue(ilvl, rar, st, roll == null ? 1 : roll); });
+    parts.push({ slot, name: SLOT_POOLS[slot].name || ('槽' + slot), main: picked, secondary, values });
+  });
+  const gearBuild = { name: '目标装分 ' + ilvl, ilvl, rarity: rar, roll: roll == null ? 1 : roll,
+    classKey: cls, element, slots, dps: ELE_STAT[element] ? 230 : 230 };
+  return { gearBuild, parts };
+}
+
+if (typeof window !== "undefined") window.AffixMath = { RARITY_BONUS, PER_LEVEL, PERCENT_STATS, STAT_NAMES, affixValue, CLASS_EXCLUDE, SLOT_POOLS, SLOT_POOLS_DETAIL, DIVINE_FIXED, CLASS_BITS, buildGear, buildFullGear };
+else globalThis.AffixMath = { RARITY_BONUS, PER_LEVEL, PERCENT_STATS, STAT_NAMES, affixValue, CLASS_EXCLUDE, SLOT_POOLS, SLOT_POOLS_DETAIL, DIVINE_FIXED, CLASS_BITS, buildGear, buildFullGear };
 
 </script>
 <script data-src="./runes.js">
@@ -4881,24 +5078,32 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     return g;
   }
 
-  /* 该职业的兜底技能组：取前三类各第一个 */
+  /* 该职业的兜底技能组：取前三类各第一个；特殊技能只有一个时第二槽留空（不重复带） */
   function fallbackSkills(classKey) {
     const c = D.CLASSES[classKey] || {};
     const b = (c.basics || [])[0], s = (c.strongs || [])[0], sp = (c.specials || [])[0], sp2 = (c.specials || [])[1];
-    return { basic: b && b.id, strong: s && s.id, special1: sp && sp.id, special2: (sp2 || sp) && (sp2 || sp).id };
+    return { basic: b && b.id, strong: s && s.id, special1: sp && sp.id, special2: (sp2 && sp2.id) || '' };
   }
 
+  /* 技能槽规范化：
+     - 显式 '' / null / 'none' = 该槽不装备（留空）；用于"为提高周期伤害不带技能"
+     - 未提供该键（旧存档）才回退到职业默认；无效 id 也回退
+     - 特殊技能双向去重：两个特殊槽不得装备同一个技能 */
   function sanitizeSkills(classKey, v) {
     const c = D.CLASSES[classKey] || {};
     const pool = { basic: (c.basics || []).map(a => a.id), strong: (c.strongs || []).map(a => a.id), special1: (c.specials || []).map(a => a.id), special2: (c.specials || []).map(a => a.id) };
     const fb = fallbackSkills(classKey);
     const out = {};
     ['basic', 'strong', 'special1', 'special2'].forEach(k => {
-      const want = v && v[k];
-      out[k] = pool[k].indexOf(want) >= 0 ? want : fb[k];
+      const has = v && Object.prototype.hasOwnProperty.call(v, k);
+      const want = has ? v[k] : undefined;
+      if (want === '' || want === null || want === 'none') out[k] = '';       // 显式留空
+      else if (pool[k].indexOf(want) >= 0) out[k] = want;                      // 合法技能
+      else out[k] = fb[k] || '';                                              // 缺省/无效回退
     });
-    if (out.special2 && out.special2 === out.special1 && pool.special2.length > 1) {
-      out.special2 = pool.special2.find(x => x !== out.special1) || out.special1;
+    // 双向去重：特殊槽 2 与特殊槽 1 相同则换一个，换不到则留空（绝不重复带）
+    if (out.special1 && out.special2 && out.special1 === out.special2) {
+      out.special2 = pool.special2.find(x => x !== out.special1) || '';
     }
     return out;
   }
@@ -4941,6 +5146,17 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       slotCount[L.slot]++;
       if (out.indexOf(id) < 0) out.push(id);
     });
+    return out;
+  }
+
+  /* 主装备 gearBuild（目标装分生成）：结构较深，宽松校验防类型污染即可 */
+  function sanitizeGearBuild(v) {
+    if (!v || typeof v !== 'object') return null;
+    const out = JSON.parse(JSON.stringify(v));
+    out.ilvl = int(out.ilvl, 700, 100, 1200);
+    out.rarity = pick(out.rarity, ['common', 'uncommon', 'rare', 'legendary', 'divine', 'blackMist', 'ancient', 'ancientDivine'], 'legendary');
+    out.roll = num(out.roll, 1, 0.5, 1.15);
+    if (Array.isArray(out.slots)) out.slots = out.slots.slice(0, 11);
     return out;
   }
 
@@ -5063,6 +5279,54 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
   }
   function clearPending() { raw.del(KEY_PENDING); }
 
+  /* 符文六槽：真源 RuneSlotUnlockLevels=[30,35,40,45,50,55]，6 槽逐槽自由配置。
+     每槽 { id: RuneData id, level: 1-6 } 或 null（空槽）。 */
+  const RUNE_UNLOCK = [30, 35, 40, 45, 50, 55];
+  function sanitizeRuneSlots(v) {
+    const out = [null, null, null, null, null, null];
+    if (!Array.isArray(v)) return out;
+    const validIds = {};
+    const RD = window.RuneData;
+    if (RD && Array.isArray(RD.RUNES)) RD.RUNES.forEach(r => { validIds[r.id] = true; });
+    for (let i = 0; i < 6; i++) {
+      const slot = v[i];
+      if (!slot || typeof slot !== 'object' || !slot.id) continue;
+      // 有 RuneData 时校验 id 合法性；无则保留（模块未加载不丢数据）
+      if (Object.keys(validIds).length && !validIds[slot.id]) continue;
+      out[i] = { id: String(slot.id).slice(0, 60), level: int(slot.level, 1, 1, 6) };
+    }
+    return out;
+  }
+
+  /* 协同被动槽：{ slave: 真源英文名, stat: Stat id }，需主仆从 10 星 */
+  function sanitizeSynergy(v) {
+    if (!v || typeof v !== 'object' || v.stat == null) return null;
+    const stat = int(v.stat, 0, 0, 100);
+    const slave = typeof v.slave === 'string' ? v.slave.slice(0, 60) : '';
+    return { slave, stat };
+  }
+
+  /* 宝石镶嵌 { [数字槽位]: [{ fam, lv }, ...] }，照真源 GemData 校验
+     槽位 1-11、家族 6 类、品级 1-7、每槽孔数不超过 GEM_SLOT_CAP。 */
+  const GEM_FAMS = ['diamond', 'ruby', 'sapphire', 'topaz', 'emerald', 'amethyst'];
+  const GEM_CAP = (window.DESKRAWL_DATA && window.DESKRAWL_DATA.GEM_SLOT_CAP) ||
+    { 1: 3, 2: 1, 3: 2, 4: 2, 5: 0, 6: 0, 7: 1, 8: 1, 9: 0, 10: 0, 11: 0 };
+  function sanitizeGems(v) {
+    const out = {};
+    if (!v || typeof v !== 'object') return out;
+    Object.keys(v).forEach(sk => {
+      const slot = parseInt(sk, 10);
+      if (!(slot >= 1 && slot <= 11) || !Array.isArray(v[sk])) return;
+      const cap = GEM_CAP[slot] || 0;
+      const gems = v[sk].slice(0, cap).map(g => ({
+        fam: pick(g && g.fam, GEM_FAMS, GEM_FAMS[0]),
+        lv: int(g && g.lv, 1, 1, 7)
+      }));
+      if (gems.length) out[slot] = gems;
+    });
+    return out;
+  }
+
   /* ---------------------------------------------------------------- snapshot */
   function defaults() {
     const cls = CLASS_KEYS[0] || 'warrior';
@@ -5071,10 +5335,12 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       element: ELEMENTS[0] || 'physical',
       primaryType: 'strong',
       gear: defaultGear('mid'),
+      gearBuild: null,
       skills: fallbackSkills(cls),
       talents: {},
       setId: null,
       setCount: 0,
+      runeSlots: [null, null, null, null, null, null],
       legendaries: [],
       minionId: (D.MINIONS && D.MINIONS[0] && D.MINIONS[0].id) || null,
       minionLevel: 10,
@@ -5083,9 +5349,12 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       minionGearGate: true,
       minionGearBuild: null,
       minionStars: 10,
+      minionSynergy: null,
       electroStacks: null,
       brittleStacks: 0,
       brittleZone: 'crit',
+      reckoningStacks: 0,
+      gems: {},
       enemy: sanitizeEnemy({}, 6),
       encounter: null,
       diff: 6,
@@ -5120,9 +5389,10 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     GEAR_KEYS.forEach(k => { if (k in g) gear[k] = num(g[k], gear[k], 0); });
     gear.dps = num(gear.dps, 200, 1);
     gear.speed = num(gear.speed, 1, 0.2, 4);
-    gear.name = typeof g.name === 'string' ? g.name : gear.name;
+      gear.name = typeof g.name === 'string' ? g.name : gear.name;
+      const gearBuild = sanitizeGearBuild(s.gearBuild || s.gb);
 
-    const encIds = (D.ENCOUNTERS || []).map(x => x.id);
+      const encIds = (D.ENCOUNTERS || []).map(x => x.id);
     const encRaw = s.encounter !== undefined ? s.encounter : s.ec;
     const encounter = encIds.indexOf(encRaw) >= 0 ? encRaw : null;
     const encDef = (D.ENCOUNTERS || []).find(x => x.id === encounter);
@@ -5140,10 +5410,12 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       element: element,
       primaryType: primaryType,
       gear: gear,
+      gearBuild: gearBuild,
       skills: sanitizeSkills(classKey, s.skills || s.s),
       talents: sanitizeTalents(classKey, s.talents || s.tl),
       setId: setId,
       setCount: setCount,
+      runeSlots: sanitizeRuneSlots(s.runeSlots || s.rs),
       legendaries: sanitizeLegendaries(classKey, s.legendaries || s.lg),
       minionId: minionId,
       minionLevel: int(s.minionLevel != null ? s.minionLevel : s.ml, 10, 1, 10),
@@ -5152,9 +5424,12 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       minionGearGate: bool(s.minionGearGate != null ? s.minionGearGate : s.m13g, true),
       minionGearBuild: sanitizeMinionGearBuild(s.minionGearBuild || s.m13),
       minionStars: stars,
+      minionSynergy: sanitizeSynergy(s.minionSynergy || s.mSyn),
       electroStacks: (s.electroStacks === undefined ? s.es : s.electroStacks) == null ? null : int(s.electroStacks !== undefined ? s.electroStacks : s.es, 0, 0, 10),
       brittleStacks: int(s.brittleStacks != null ? s.brittleStacks : s.bs, 0, 0, 100),
       brittleZone: pick(s.brittleZone || s.bz, ['crit', 'taken', 'off'], 'crit'),
+      reckoningStacks: int(s.reckoningStacks != null ? s.reckoningStacks : s.rk, 0, 0, 30),
+      gems: sanitizeGems(s.gems || s.gm),
       enemy: sanitizeEnemy(s.enemy || s.en, s.diff != null ? s.diff : s.df, encDef ? encDef.name : null),
       encounter: encounter,
       diff: num(s.diff != null ? s.diff : s.df, 6, 1, 20),
@@ -5393,6 +5668,57 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     return raw.set(KEY_PREF, JSON.stringify(o));
   }
 
+  /* ---------------------------------------------------------------- 板块预设
+     受游戏内置"天赋页保存"启发：每个板块（技能/装备特效/词条/宝石/仆从/天赋/符文）
+     独立保存多个命名方案；总配置方案 = 各板块各选一个预设的组合。
+     数据结构：{ skills:[{id,name,ts,data}], effects:[...], ... } */
+  const KEY_BLOCKS = 'deskrawl.lab.blocks.v1';
+  const BLOCK_KINDS = ['skills', 'effects', 'affix', 'gems', 'minion', 'talents', 'runes'];
+  const BLOCK_LABEL = {
+    skills: '技能配置', effects: '装备特效', affix: '装备词条', gems: '宝石镶嵌',
+    minion: '仆从配置', talents: '天赋页', runes: '符文页'
+  };
+  const bid = () => 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  function readBlocks() {
+    const o = parse(raw.get(KEY_BLOCKS));
+    const out = {};
+    BLOCK_KINDS.forEach(k => { out[k] = (o && Array.isArray(o[k])) ? o[k] : []; });
+    return out;
+  }
+  function writeBlocks(db) {
+    const clean = {};
+    BLOCK_KINDS.forEach(k => { clean[k] = Array.isArray(db[k]) ? db[k].slice(0, 30) : []; });
+    return raw.set(KEY_BLOCKS, JSON.stringify(clean));
+  }
+  function saveBlock(kind, name, data) {
+    if (BLOCK_KINDS.indexOf(kind) < 0) return null;
+    const db = readBlocks();
+    const entry = { id: bid(), name: String(name || '未命名').slice(0, 24), ts: Date.now(), data: data || {} };
+    db[kind].unshift(entry);
+    writeBlocks(db);
+    return entry;
+  }
+  function renameBlock(kind, id, name) {
+    const db = readBlocks();
+    const e = (db[kind] || []).find(x => x.id === id);
+    if (e) { e.name = String(name || e.name).slice(0, 24); writeBlocks(db); }
+    return e || null;
+  }
+  function removeBlock(kind, id) {
+    const db = readBlocks();
+    db[kind] = (db[kind] || []).filter(x => x.id !== id);
+    writeBlocks(db);
+    return db;
+  }
+  /* 总配置方案 = 各板块选中的预设 id 组合 */
+  function getBlueprint() {
+    const o = parse(raw.get(KEY_BLOCKS + '.blueprint')) || {};
+    return o; // { skills: id, effects: id, ... }
+  }
+  function setBlueprint(bp) {
+    return raw.set(KEY_BLOCKS + '.blueprint', JSON.stringify(bp || {}));
+  }
+
   /** 存储健康诊断：UI 用它在启动时给出友好提示，而不是静默失败 */
   function diagnose() {
     const draftRaw = raw.get(KEY_DRAFT);
@@ -5413,8 +5739,10 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     solveKey, getSolve, putSolve, clearSolve,
     exportFile, parseFile, toHash, fromHash,
     getPref, setPref, diagnose,
+    readBlocks, writeBlocks, saveBlock, renameBlock, removeBlock, getBlueprint, setBlueprint,
+    BLOCK_KINDS: BLOCK_KINDS.slice(), BLOCK_LABEL: BLOCK_LABEL,
     available: hasLS,
-    KEY: { saves: KEY_SAVES, draft: KEY_DRAFT, pending: KEY_PENDING, solve: KEY_SOLVE, pref: KEY_PREF }
+    KEY: { saves: KEY_SAVES, draft: KEY_DRAFT, pending: KEY_PENDING, solve: KEY_SOLVE, pref: KEY_PREF, blocks: KEY_BLOCKS }
   };
 })();
 
@@ -5890,6 +6218,257 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
+<script data-src="./combo-solver.js">
+/* ==========================================================================
+   组合最优解求解器 · 交替坐标上升（黑盒，非严格全局最优）
+   --------------------------------------------------------------------------
+   需求：各系统的最优解能任意排列组合——"给定天赋页 + 技能原型，求其余系统
+   的全局最优"。做法：把构筑拆成 7 个系统，每个系统有自己的单步最优求解器；
+   用户锁定任意系统，框架只对未锁系统交替优化（固定其他 → 优化一个 → 收敛）。
+
+   设计红线（与 solver.js 一致）：
+   - 只通过 score(cfg)=Engine.simulate(cfg).dps 黑盒接触目标，不读引擎公式；
+   - 每步用"候选生成 + 全试算取最大"，不假设凸性/梯度；
+   - 结果标注为"高质量近似，非严格全局最优"。
+
+   系统：skills / effects / affix / gems / minion / talents / runes
+   用法：
+     ComboSolver.solveCombo({ cfg, unlock:['skills','effects','gems'], rounds:2, duration:20 })
+   兼容：浏览器 window.ComboSolver / Node vm globalThis.ComboSolver。
+   ========================================================================== */
+(function (root) {
+  'use strict';
+  const D = root.DESKRAWL_DATA || {};
+  const E = root.Engine;
+  const AF = root.AffixMath;
+  const RD = root.RuneData;
+  const MD = root.MinionData;
+  const Solver = root.Solver;
+
+  const SYSTEMS = ['skills', 'effects', 'affix', 'gems', 'minion', 'talents', 'runes'];
+  const SYS_LABEL = {
+    skills: '技能配置', effects: '装备特效', affix: '装备词条', gems: '宝石镶嵌',
+    minion: '仆从配置', talents: '天赋页', runes: '符文页'
+  };
+  const clone = x => JSON.parse(JSON.stringify(x));
+  const score = (cfg, duration) => {
+    try { return E.simulate(cfg, { duration: duration || 20, lite: true }).dps; }
+    catch (e) { return -1; }
+  };
+
+  /* ---------- 各系统单步最优（返回 { patch, dps }，patch 是 cfg 字段的增量） ---------- */
+
+  /* 技能：枚举 basic×strong×(特殊1,特殊2) 组合，含留空；特殊不重复。
+     候选数 = (B+1)(S+1)(1+P+P*(P-1)/2...) 控制在阈值内，过大则贪心。 */
+  function optSkills(cfg, dur) {
+    const c = D.CLASSES[cfg.classKey];
+    if (!c) return null;
+    const basics = [''].concat((c.basics || []).map(a => a.id));
+    const strongs = [''].concat((c.strongs || []).map(a => a.id));
+    const specials = (c.specials || []).map(a => a.id);
+    // 特殊组合：空、单、有序对（去重），限制规模
+    const spSets = [['', '']];
+    specials.forEach(a => spSets.push([a, '']));
+    for (let i = 0; i < specials.length; i++)
+      for (let j = i + 1; j < specials.length; j++)
+        spSets.push([specials[i], specials[j]]);
+    let best = null;
+    const combos = basics.length * strongs.length * spSets.length;
+    for (const b of basics) for (const s of strongs) for (const sp of spSets) {
+      const skills = { basic: b, strong: s, special1: sp[0], special2: sp[1] };
+      const dps = score(Object.assign({}, cfg, { skills }), dur);
+      if (!best || dps > best.dps) best = { dps, patch: { skills } };
+    }
+    best.combos = combos;
+    return best;
+  }
+
+  /* 装备特效：从本职业可用传奇里贪心装/换（受槽位上限约束，戒指 2 件）。 */
+  function optEffects(cfg, dur) {
+    const pool = (D.LEGENDARIES || []).filter(L => !L.cls || L.cls.includes(cfg.classKey));
+    if (!pool.length) return null;
+    const capOf = L => (L.slot === '戒指' ? 2 : 1);
+    const byId = {}; pool.forEach(L => { byId[L.id] = L; });
+    // 规范化：去重 + 每槽不超上限
+    const normalize = ids => {
+      const out = [], m = {};
+      ids.forEach(id => {
+        const L = byId[id]; if (!L || out.indexOf(id) >= 0) return;
+        if ((m[L.slot] || 0) >= capOf(L)) return;
+        out.push(id); m[L.slot] = (m[L.slot] || 0) + 1;
+      });
+      return out;
+    };
+    let cur = normalize((cfg.legendaries || []).slice());
+    let bestDps = score(Object.assign({}, cfg, { legendaries: cur }), dur);
+    // 多轮：每个候选尝试"加入"或"替换同槽最弱的一个"（基于 trial 实时槽位统计）
+    for (let round = 0; round < 2; round++) {
+      let improved = false;
+      for (const L of pool) {
+        if (cur.indexOf(L.id) >= 0) continue;
+        const trial = cur.slice();
+        const m = {}; trial.forEach(id => { const x = byId[id]; if (x) m[x.slot] = (m[x.slot] || 0) + 1; });
+        if ((m[L.slot] || 0) >= capOf(L)) {
+          const victim = trial.find(id => byId[id] && byId[id].slot === L.slot);
+          if (!victim) continue;
+          trial.splice(trial.indexOf(victim), 1);
+        }
+        trial.push(L.id);
+        const d = score(Object.assign({}, cfg, { legendaries: trial }), dur);
+        if (d > bestDps + 1e-6) { cur = trial; bestDps = d; improved = true; }
+      }
+      if (!improved) break;
+    }
+    return { dps: bestDps, patch: { legendaries: cur } };
+  }
+
+  /* 装备词条（给定目标装分）：按职业/流派生成 12 部位 gearBuild 后试算。
+     可选多个装分档位取最优（近似：真实词条最优属第三轮独立求解）。 */
+  function optAffix(cfg, dur, targetIlvls) {
+    if (!AF || !AF.buildFullGear) return null;
+    const ilvls = targetIlvls && targetIlvls.length ? targetIlvls : [700, 850];
+    let best = null;
+    ilvls.forEach(ilvl => {
+      const { gearBuild } = AF.buildFullGear(ilvl, 'legendary', cfg.classKey, cfg.element, cfg.primaryType, 1);
+      const dps = score(Object.assign({}, cfg, { gearBuild }), dur);
+      if (!best || dps > best.dps) best = { dps, patch: { gearBuild, targetIlvl: ilvl }, gearBuild };
+    });
+    return best;
+  }
+
+  /* 宝石：调用引擎 solveGems（逐孔贪心）。 */
+  function optGems(cfg, dur) {
+    if (!E || !E.solveGems) return null;
+    try {
+      const r = E.solveGems(cfg, { duration: dur });
+      return { dps: r.bestDps, patch: { gems: r.gems } };
+    } catch (e) { return null; }
+  }
+
+  /* 仆从：枚举仆从候选（含空），每个取最优协同被动（枚举被动）与仆从装备。
+     为控规模：协同只枚举"有 DPS 价值"的 Stat 被动。 */
+  function optMinion(cfg, dur) {
+    const minions = [null].concat((D.MINIONS || []).map(m => m.id));
+    const synergies = [null].concat((MD && MD.PASSIVES ? MD.PASSIVES.filter(p => {
+      return ['all', 'physical', 'fire', 'cold', 'lightning', 'poison', 'arcane', 'cc', 'cd', 'as', 'cdr', 'basic', 'strong', 'special', 'dot', 'vs.elite', 'vs.vulnerable', 'vs.injured', 'vs.slowed'].indexOf(p.field) >= 0;
+    }) : []).map(p => ({ slave: p.slave, stat: p.stat })));
+    let best = null;
+    for (const mid of minions) {
+      const base = Object.assign({}, cfg, { minionId: mid });
+      // 先试无协同
+      const d0 = score(base, dur);
+      if (!best || d0 > best.dps) best = { dps: d0, patch: { minionId: mid, minionSynergy: null } };
+      // 有效等级 ≥10 才考虑协同
+      const eff = (cfg.minionLevel != null ? cfg.minionLevel : 10) + (cfg.minionReins ? 5 : 0);
+      if (mid && eff >= 10) {
+        for (const syn of synergies) {
+          if (!syn) continue;
+          const d = score(Object.assign({}, base, { minionSynergy: syn }), dur);
+          if (d > best.dps) best = { dps: d, patch: { minionId: mid, minionSynergy: syn } };
+        }
+      }
+    }
+    return best;
+  }
+
+  /* 天赋：调用 solver.js（黑盒坐标下降）。 */
+  function optTalents(cfg, dur) {
+    if (!Solver || !Solver.solve) return null;
+    try {
+      const r = Solver.solve({ cfg, duration: Math.min(dur, 16), tier: 'quick' });
+      return { dps: r.dps, patch: { talents: r.talents } };
+    } catch (e) { return null; }
+  }
+
+  /* 符文六槽：枚举本职业可用符文，逐槽贪心（属性 + 套装件数自动统计）。 */
+  function optRunes(cfg, dur) {
+    if (!RD || !RD.RUNES) return null;
+    const clsBit = ({ warrior: 1, sorcerer: 2, hunter: 4, monk: 8 })[cfg.classKey] || 1;
+    const pool = RD.RUNES.filter(r => r.cls === clsBit || r.cls === 15);
+    if (!pool.length) return null;
+    const byId = {}; RD.RUNES.forEach(r => { byId[r.id] = r; });
+    const buildCfg = slots => {
+      const runes = slots.filter(Boolean).map(x => ({ id: x.id, level: x.level }));
+      const cnt = {};
+      runes.forEach(r => { const def = byId[r.id]; if (def && def.setId) cnt[def.setId] = (cnt[def.setId] || 0) + 1; });
+      const equippedSets = Object.keys(cnt).map(setId => ({ setId, count: cnt[setId] }));
+      return Object.assign({}, cfg, { runes, equippedSets, setId: null, setCount: 0 });
+    };
+    let slots = [null, null, null, null, null, null];
+    let bestDps = score(buildCfg(slots), dur);
+    // 逐槽试：每个槽试所有符文（固定等级 1，控制规模），取最优；2 轮
+    for (let round = 0; round < 2; round++) {
+      let improved = false;
+      for (let i = 0; i < 6; i++) {
+        let bestForSlot = slots[i], bestD = bestDps;
+        // 真源 AllowDuplicateEquip=false：同一符文不能重复装在其他槽
+        const usedElsewhere = slots.filter((_, j) => j !== i && slots[j]).map(s => s.id);
+        for (const r of pool) {
+          if (usedElsewhere.indexOf(r.id) >= 0) continue;
+          const trial = slots.slice(); trial[i] = { id: r.id, level: 1 };
+          const d = score(buildCfg(trial), dur);
+          if (d > bestD + 1e-6) { bestD = d; bestForSlot = trial[i]; }
+        }
+        // 也试留空
+        const trialEmpty = slots.slice(); trialEmpty[i] = null;
+        const dE = score(buildCfg(trialEmpty), dur);
+        if (dE > bestD + 1e-6) { bestD = dE; bestForSlot = null; }
+        if (bestD > bestDps + 1e-6) { slots[i] = bestForSlot; bestDps = bestD; improved = true; }
+      }
+      if (!improved) break;
+    }
+    return { dps: bestDps, patch: { runeSlots: slots, runes: buildCfg(slots).runes, equippedSets: buildCfg(slots).equippedSets, setId: null, setCount: 0 } };
+  }
+
+  const OPTIMIZERS = {
+    skills: optSkills, effects: optEffects, affix: optAffix,
+    gems: optGems, minion: optMinion, talents: optTalents, runes: optRunes
+  };
+
+  /* ---------- 主框架：交替坐标上升 ---------- */
+  function solveCombo(opts) {
+    opts = opts || {};
+    const cfg = clone(opts.cfg || {});
+    const duration = opts.duration || 20;
+    const rounds = opts.rounds || 2;
+    const locked = opts.locked || [];               // 锁定的系统（不优化）
+    let unlock = (opts.unlock || SYSTEMS.filter(s => locked.indexOf(s) < 0)).slice();
+    unlock = unlock.filter(s => SYSTEMS.indexOf(s) >= 0 && locked.indexOf(s) < 0);
+    const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : function () { };
+    const startDps = score(cfg, duration);
+    const history = [{ step: 'start', dps: startDps }];
+    let curCfg = cfg, curDps = startDps;
+    let step = 0;
+    const totalSteps = rounds * unlock.length;
+    for (let round = 0; round < rounds; round++) {
+      for (const sys of unlock) {
+        step++;
+        onProgress({ pct: Math.round(step / totalSteps * 100), stage: `第${round + 1}轮 · ${SYS_LABEL[sys] || sys}`, dps: curDps });
+        const opt = OPTIMIZERS[sys];
+        if (!opt) continue;
+        // 关键：单步优化时，cfg 里已含其他系统当前值（"锁定"即不进 unlock）
+        const res = opt(curCfg, duration);
+        if (res && res.patch) {
+          const trial = Object.assign({}, curCfg, res.patch);
+          const d = score(trial, duration);
+          if (d > curDps + 1e-6) { curCfg = trial; curDps = d; }
+        }
+        history.push({ step: step, system: sys, dps: curDps });
+      }
+    }
+    onProgress({ pct: 100, stage: '完成', dps: curDps });
+    return {
+      cfg: curCfg, startDps, dps: curDps, gainPct: startDps ? (curDps / startDps - 1) * 100 : 0,
+      unlock, locked, rounds, history,
+      approximate: true,
+      note: '交替坐标上升的近似最优解：每系统用黑盒候选试算，交替优化至收敛；非严格全局最优'
+    };
+  }
+
+  root.ComboSolver = { SYSTEMS, SYS_LABEL, solveCombo, score, optimizers: OPTIMIZERS, approximate: true };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
 <script data-src="./app.js">
 /* ==========================================================================
    UI 控制器
@@ -5919,17 +6498,21 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     element: 'fire',
     primaryType: 'strong',
     gear: Object.assign({}, E.GEAR_PRESETS.mid),
+    gearBuild: null,            // 目标装分生成的装备词条（存在时引擎优先于 gear 预设）
     skills: { basic: 'w_val', strong: 'w_flame', special1: 'w_hook', special2: 'w_molten' },
     talents: {},
     setId: 'w_eye',
     setCount: 4,
+    runeSlots: [null, null, null, null, null, null],  // 6 槽逐槽自由配置 { id, level } | null
     legendaries: ['vigor', 'draught', 'serrated', 'kabuto'],
     minionId: 'raptor',
     minionLevel: 10,
     minionReins: false,
     minionGear: 'none',
-    minionGearGate: true,       // 第13件装备是否遵守训练等级门槛
-    minionGearBuild: null,      // 第13件装备 gearBuild（由 affix.js 词条池构造）
+    minionGearGate: true,       // 仆从装备是否遵守训练等级门槛（5级解锁）
+    minionGearBuild: null,      // 仆从装备 gearBuild（由 affix.js 词条池构造）
+    minionStars: 10,            // 仆从星级，10 星解锁协同被动槽
+    minionSynergy: null,        // 协同被动 { slave, stat }：10星主仆从带另一个10级仆从的被动
     electroStacks: null,
     brittleStacks: 0,
     brittleZone: 'crit',
@@ -5963,8 +6546,8 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     };
   })();
 
-  const PERSIST_KEYS = ['classKey', 'element', 'primaryType', 'gear', 'skills', 'talents', 'setId', 'setCount',
-    'legendaries', 'minionId', 'minionLevel', 'minionReins', 'minionGear', 'minionGearGate', 'minionGearBuild', 'minionStars',
+  const PERSIST_KEYS = ['classKey', 'element', 'primaryType', 'gear', 'gearBuild', 'skills', 'talents', 'setId', 'setCount', 'runeSlots',
+    'legendaries', 'minionId', 'minionLevel', 'minionReins', 'minionGear', 'minionGearGate', 'minionGearBuild', 'minionStars', 'minionSynergy',
     'electroStacks', 'brittleStacks', 'brittleZone', 'reckoningStacks', 'gems', 'enemy', 'encounter', 'diff', 'duration', 'gcd', 'preset', 'slot', 'decisions'];
 
   function snapshot() { return Store.normalize(state); }
@@ -6093,6 +6676,7 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     state.talents = Object.assign({}, DEFAULT_TALENTS[key]);
     state.legendaries = ui.legs.slice();
     state.gear = Object.assign({}, E.GEAR_PRESETS.mid);
+    state.gearBuild = null;       // 换职业清掉目标装分词条（避免跨职业串配置）
     state.electroStacks = null;   // 静电是推算值，换职业重新推
     state._preset = 'mid';
     state.slot = 'weapon';
@@ -6103,9 +6687,10 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
 
   /* ------------------------------------------------------------ nav */
   const RENDER_ON_ENTER = {
-    gear: renderGear, talents: renderTalents, solver: renderSolver, minions: renderMinions,
+    gear: () => { safeRun('装备特效图标', renderLegendaryIcons); safeRun('装备页', renderGear); },
+    talents: renderTalents, solver: renderSolver, minions: renderMinions,
     model: renderModel, rotation: renderRotation, agent: renderAgent,
-    damage: renderDamage, compare: renderCompare
+    damage: renderDamage, compare: renderCompare, character: renderRuneSlots, builder: renderBuilder
   };
 
   function goto(tab) {
@@ -6314,6 +6899,7 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       if (!p) return;
       state._preset = b.dataset.p;
       state.gear = Object.assign({}, p);
+      state.gearBuild = null;   // 切回预设装备时清掉目标装分覆盖
       state._cache = {}; state._gearKey = null;
       syncAllInputs(); recomputeAll();
     });
@@ -6425,6 +7011,49 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     });
   }
 
+  /* 装备页：按部位排序的传奇特效图标网格（点击装备/卸下，戒指可 2 件） */
+  const LEG_SLOT_ORDER = ['武器', '头盔', '肩甲', '胸甲', '手套', '腰带', '护腿', '靴子', '项链', '戒指', '披风', '仆从装备'];
+  function renderLegendaryIcons() {
+    const grid = $('#legIconGrid');
+    if (!grid) return;
+    const avail = (D.LEGENDARIES || []).filter(L => !L.cls || L.cls.includes(state.classKey));
+    const bySlot = {};
+    avail.forEach(L => { (bySlot[L.slot] || (bySlot[L.slot] = [])).push(L); });
+    const slots = LEG_SLOT_ORDER.filter(s => bySlot[s] && bySlot[s].length);
+    Object.keys(bySlot).forEach(s => { if (slots.indexOf(s) < 0) slots.push(s); });
+    grid.innerHTML = '';
+    slots.forEach(slot => {
+      const row = el('div', 'lslot-row');
+      const name = el('div', 'lslot-name'); name.textContent = slot;
+      const icons = el('div', 'lslot-icons');
+      bySlot[slot].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh')).forEach((L, idx) => {
+        const on = state.legendaries.indexOf(L.id) >= 0;
+        const ic = el('div', 'lgi c-' + (L.conf || 'none') + (on ? ' on' : ''));
+        ic.title = L.name + (L.lvl > 1 ? ' · Lv' + L.lvl : '') + '\n' + (L.text || '') + '\n' + (CONF_LABEL[L.conf] || '');
+        ic.innerHTML = `<div class="lgib"></div><span class="lgidx">${idx + 1}</span>`;
+        ic.onclick = () => {
+          const cap = L.slot === '戒指' ? 2 : 1;
+          if (state.legendaries.indexOf(L.id) >= 0) {
+            state.legendaries = state.legendaries.filter(x => x !== L.id);
+          } else {
+            const same = state.legendaries.filter(id => {
+              const x = (D.LEGENDARIES || []).find(y => y.id === id);
+              return x && x.slot === L.slot;
+            });
+            if (same.length >= cap) state.legendaries = state.legendaries.filter(id => id !== same[0]);
+            state.legendaries.push(L.id);
+          }
+          state._cache = {}; state._gearKey = null; state._affixCache = null;
+          safeRun('装备特效', renderLegendaryIcons); recomputeAll();
+        };
+        icons.appendChild(ic);
+      });
+      row.appendChild(name); row.appendChild(icons); grid.appendChild(row);
+    });
+    const cnt = $('#legIconCount');
+    if (cnt) cnt.textContent = `按部位排列 · 已装 ${state.legendaries.length} 件 · 戒指可带 2 件`;
+  }
+
   function bindLegTools() {
     const q = $('#legSearch');
     if (q) {
@@ -6451,6 +7080,10 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       const f = el('div', 'field');
       f.innerHTML = `<label>${label}</label>`;
       const sel = el('select');
+      // "不装备"选项：为提高周期伤害可主动留空（如冰法只带冰普攻）
+      const none = el('option'); none.value = ''; none.selected = !state.skills[key];
+      none.textContent = '— 不装备 —';
+      sel.appendChild(none);
       list.filter(filter || (() => true)).forEach(a => {
         const o = el('option'); o.value = a.id; o.selected = state.skills[key] === a.id;
         o.textContent = `${a.name}${a.mana ? ' · ' + a.mana + ' 法力' : ''}${a.cd ? ' · ' + a.cd + 's' : ''}`;
@@ -6460,10 +7093,80 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       f.appendChild(sel);
       $('#slotBox').appendChild(f);
     };
+    // 基础攻击与强力攻击各自可留空；两个特殊槽双向互斥且都可留空
     mk('基础攻击', 'basic', c.basics);
     mk('强力攻击', 'strong', c.strongs);
-    mk('特殊技能 1', 'special1', c.specials);
+    mk('特殊技能 1', 'special1', c.specials, a => a.id !== state.skills.special2);
     mk('特殊技能 2', 'special2', c.specials, a => a.id !== state.skills.special1);
+  }
+
+  /* ------------------------------------------------------------ 符文六槽 */
+  const RUNE_CLS = { warrior: 1, sorcerer: 2, hunter: 4, monk: 8 };
+  const RUNE_TYPE_LABEL = { common: '蓝', rare: '金', legendary: '大金', grand: '大金', set: '套装' };
+  function renderRuneSlots() {
+    const box = $('#runeSlotsBox');
+    if (!box) return;
+    const RD = window.RuneData;
+    box.innerHTML = '';
+    if (!RD || !RD.RUNES) { box.innerHTML = '<div class="empty">符文数据未加载</div>'; return; }
+    const clsBit = RUNE_CLS[state.classKey] || 1;
+    const pool = RD.RUNES.filter(r => (r.cls === clsBit || r.cls === 15));
+    const byId = {}; RD.RUNES.forEach(r => { byId[r.id] = r; });
+    const slots = state.runeSlots || [];
+    for (let i = 0; i < 6; i++) {
+      const cur = slots[i];
+      const row = el('div', 'field');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+      const lab = el('label'); lab.style.cssText = 'width:52px;flex:none'; lab.textContent = '槽 ' + (i + 1);
+      const sel = el('select'); sel.style.flex = '1';
+      const none = el('option'); none.value = ''; none.textContent = '— 空槽 —'; sel.appendChild(none);
+      // 按类型分组：蓝/金/大金/套装
+      const groups = {};
+      pool.forEach(r => {
+        const g = r.type || 'other';
+        (groups[g] || (groups[g] = [])).push(r);
+      });
+      Object.keys(groups).forEach(g => {
+        const og = el('optgroup'); og.label = RUNE_TYPE_LABEL[g] || g;
+        groups[g].forEach(r => {
+          const o = el('option'); o.value = r.id;
+          o.textContent = r.name + (r.setId ? '（套）' : '');
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+      sel.value = cur && cur.id ? cur.id : '';
+      const lvSel = el('select'); lvSel.style.cssText = 'width:64px;flex:none';
+      for (let L = 1; L <= 6; L++) {
+        const o = el('option'); o.value = L; o.textContent = 'L' + L; lvSel.appendChild(o);
+      }
+      lvSel.value = cur ? (cur.level || 1) : 1;
+      lvSel.disabled = !cur || !cur.id;
+      const onChange = () => {
+        const id = sel.value;
+        state.runeSlots[i] = id ? { id, level: parseInt(lvSel.value, 10) || 1 } : null;
+        lvSel.disabled = !id;
+        state._cache = {}; recomputeAll();
+        safeRun('符文六槽', renderRuneSlots);
+      };
+      sel.onchange = onChange;
+      lvSel.onchange = onChange;
+      row.appendChild(lab); row.appendChild(sel); row.appendChild(lvSel);
+      box.appendChild(row);
+    }
+    // 摘要：套装件数
+    const cnt = {};
+    slots.forEach(s => { if (s && s.id && byId[s.id] && byId[s.id].setId) { const k = byId[s.id].setId; cnt[k] = (cnt[k] || 0) + 1; } });
+    const sum = $('#runeSlotsSummary');
+    if (sum) {
+      const parts = Object.keys(cnt).map(k => {
+        const set = (RD.SETS || []).find(x => x.id === k);
+        const n = cnt[k];
+        const active = [2, 4, 6].filter(t => n >= t).join('/');
+        return `${set ? set.name : k} ×${n}${active ? '（触发 ' + active + ' 件）' : ''}`;
+      });
+      sum.innerHTML = parts.length ? '已装符文套装：' + parts.join('；') : '尚未配置符文六槽（使用下方简化模式）。';
+    }
   }
 
   /* ------------------------------------------------------------ enemy calc */
@@ -6680,20 +7383,37 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
 
   /* ------------------------------------------------------------ config for engine */
   function cfg() {
+    // 符文六槽 -> cfg.runes（单件属性/技能等级）+ cfg.equippedSets（套装件数自动统计）
+    const runeSlots = state.runeSlots || [];
+    const runes = runeSlots.filter(Boolean).map(x => ({ id: x.id, level: x.level }));
+    const equippedSets = [];
+    if (runes.length && window.RuneData && window.RuneData.RUNES) {
+      const byId = {}; window.RuneData.RUNES.forEach(r => { byId[r.id] = r; });
+      const cnt = {};
+      runes.forEach(r => { const def = byId[r.id]; if (def && def.setId) cnt[def.setId] = (cnt[def.setId] || 0) + 1; });
+      Object.keys(cnt).forEach(setId => equippedSets.push({ setId, count: cnt[setId] }));
+    }
+    // 用了逐槽符文时，职业套装位（旧 setId/setCount）置空，避免两套套装叠加双计
+    const useSlots = runes.length > 0;
     return {
       classKey: state.classKey,
       element: state.element,
       primaryType: state.primaryType,
       gear: state.gear,
+      gearBuild: state.gearBuild || null,
       skills: state.skills,
       talents: state.talents,
-      setId: state.setId,
-      setCount: state.setCount,
+      runes,
+      equippedSets,
+      setId: useSlots ? null : state.setId,
+      setCount: useSlots ? 0 : state.setCount,
       legendaries: state.legendaries,
       minionId: state.minionId,
       minionReins: state.minionReins,
       minionGear: state.minionGear,
-      // 第13件装备：引擎按 trainLv >= gearStar 解锁；关闭门槛开关时按达标等级计入
+      minionStars: state.minionStars,
+      minionSynergy: state.minionSynergy,
+      // 仆从装备（真源 5 级解锁）：关闭门槛开关时按达标等级计入
       minionLevel: (state.minionGearBuild && state.minionGearGate === false &&
         state.minionLevel < D.MECHANICS.minion.gearStar)
         ? D.MECHANICS.minion.gearStar : state.minionLevel,
@@ -6781,9 +7501,9 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     if (onPage('rotation')) safeRun('技能轴', renderRotation);
     if (onPage('damage')) safeRun('伤害计算页', renderDamage);
     if (onPage('talents')) safeRun('天赋页', renderTalents);
-    if (onPage('gear')) safeRun('装备页', renderGear);
+    if (onPage('gear')) { safeRun('装备特效图标', renderLegendaryIcons); safeRun('装备页', renderGear); }
     if (onPage('minions')) safeRun('仆从详情', renderMinionPanel);
-    if (onPage('character')) safeRun('对敌折算', renderEnemyCalc);
+    if (onPage('character')) { safeRun('符文六槽', renderRuneSlots); safeRun('对敌折算', renderEnemyCalc); }
     const ze = $('#zElectro');
     if (ze && state.electroStacks == null) ze.value = r.electroStacks;
     scheduleDraft();
@@ -6956,7 +7676,7 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     const tp = Object.values(state.talents).reduce((a, b) => a + b, 0);
     const min = D.MINIONS.find(m => m.id === state.minionId);
     const rows = [
-      ['技能轴', `${AB(state.skills.basic).name} → ${AB(state.skills.strong).name} → ${AB(state.skills.special1).name} / ${AB(state.skills.special2).name}`],
+      ['技能轴', [state.skills.basic, state.skills.strong, state.skills.special1, state.skills.special2].map(id => abName(id)).filter(Boolean).join(' → ') || '（全部留空）'],
       ['符文', `${set ? set.name : '—'} ${state.setCount} 件`],
       ['天赋', `${tp} / 70 点`],
       ['仆从', min ? min.name : '—'],
@@ -7672,7 +8392,7 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
         ${[0, 1, 2, 3].map(i => `<div class="field"><label>主词条 ${i + 1}</label><div class="val">${affixSelect(side, 'm' + i, [0, 4, 5, 2][i])}</div></div>`).join('')}
         <div class="field"><label>副词条</label><div class="val">${affixSelect(side, 'sub', 32)}</div></div>
       </div>`;
-      h = `<div class="note" style="margin-bottom:12px">两件装备各填装分、稀有度、掷骰档和 4 主 + 1 副；数值由 <b>AffixMath.buildGear</b> 换算后各跑一次 simulate。仆从第 13 件装备（无宝石孔）属二期，暂不支持。</div>
+      h = `<div class="note" style="margin-bottom:12px">两件装备各填装分、稀有度、掷骰档和 4 主 + 1 副；数值由 <b>AffixMath.buildGear</b> 换算后各跑一次 simulate。仆从装备（5 级解锁）在仆从页配置。</div>
         <div class="grid2" style="grid-template-columns:1fr 1fr">${col('A', 700, 'legendary', 1)}${col('B', 850, 'legendary', 1.15)}</div>`;
     } else if (_cmpMode === 'talent') {
       const c = D.CLASSES[state.classKey] || {};
@@ -7883,6 +8603,12 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     txt('#phTpCls', c.name || '—');
     txt('#phTpPts', total + ' / 70');
     const tree = $('#talentTree'); tree.innerHTML = '';
+    // 点数预算条（70 点上限，满额高亮）
+    const budget = el('div', 'tp-budget');
+    const pct = Math.min(100, total / 70 * 100);
+    budget.innerHTML = `<div class="lbl"><span>天赋点数</span><span><b>${total}</b> / 70</span></div>
+      <div class="bar"><i class="${total >= 70 ? 'full' : ''}" style="width:${pct}%"></i></div>`;
+    tree.appendChild(budget);
     c.talents.forEach(row => {
       const locked = total < row.at;
       const isCap = [10, 30, 60].includes(row.at);
@@ -8236,7 +8962,86 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     }
   }
 
+  /* ------------------------------------------------------------ 组合最优解 */
+  let _comboResult = null;
+  function renderComboBoxes() {
+    const box = $('#comboSystems');
+    if (!box || !window.ComboSolver) return;
+    const SYS = window.ComboSolver.SYSTEMS;
+    const LABEL = window.ComboSolver.SYS_LABEL;
+    box.innerHTML = '';
+    SYS.forEach(sys => {
+      const on = state._comboUnlock ? (state._comboUnlock.indexOf(sys) >= 0) : true;
+      const lbl = el('label', 'switchrow');
+      lbl.style.cssText = 'font-size:10.5px;border:1px solid var(--line2);padding:4px 8px;background:#0c0a07';
+      lbl.innerHTML = `<input type="checkbox" data-combo-sys="${sys}" ${on ? 'checked' : ''}><span>${LABEL[sys] || sys}</span>`;
+      box.appendChild(lbl);
+    });
+  }
+  function bindCombo() {
+    renderComboBoxes();
+    const run = $('#comboRun');
+    if (run) run.onclick = () => {
+      if (!window.ComboSolver) { toast('组合求解模块未加载', true); return; }
+      const unlock = $$('[data-combo-sys]').filter(x => x.checked).map(x => x.dataset.comboSys);
+      const locked = [];
+      if ($('#comboKeepSkills') && $('#comboKeepSkills').checked) { locked.push('skills'); const i = unlock.indexOf('skills'); if (i >= 0) unlock.splice(i, 1); }
+      if ($('#comboKeepTalents') && $('#comboKeepTalents').checked) { locked.push('talents'); const i = unlock.indexOf('talents'); if (i >= 0) unlock.splice(i, 1); }
+      if (!unlock.length) { toast('至少勾选一个要优化的系统', true); return; }
+      state._comboUnlock = unlock;
+      const resBox = $('#comboResult');
+      if (resBox) resBox.innerHTML = '<div class="note">求解中… 交替优化 ' + unlock.length + ' 个系统，逐一黑盒试算中</div>';
+      const applyBtn = $('#comboApply'); if (applyBtn) applyBtn.disabled = true;
+      // 让浏览器先画出"求解中"
+      setTimeout(() => {
+        try {
+          const t0 = Date.now();
+          const res = window.ComboSolver.solveCombo({
+            cfg: cfg(), unlock, locked, rounds: 2, duration: Math.min(20, state.duration),
+            onProgress: p => { const b = $('#comboResult'); if (b) b.innerHTML = `<div class="note">${p.stage} · ${p.pct}% · 当前 ${fmt(p.dps)}</div>`; }
+          });
+          _comboResult = res;
+          const sysNames = unlock.map(s => (window.ComboSolver.SYS_LABEL[s] || s)).join('、');
+          if (resBox) resBox.innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)">
+              <div style="background:var(--panel);padding:10px 12px"><div class="k" style="font-size:9.5px;color:var(--dim)">起始秒伤</div><div class="num" style="font-size:17px">${fmt(res.startDps)}</div></div>
+              <div style="background:var(--panel);padding:10px 12px"><div class="k" style="font-size:9.5px;color:var(--dim)">优化后</div><div class="num gold" style="font-size:17px">${fmt(res.dps)}</div></div>
+              <div style="background:var(--panel);padding:10px 12px"><div class="k" style="font-size:9.5px;color:var(--dim)">提升</div><div class="num green" style="font-size:17px">+${res.gainPct.toFixed(1)}%</div></div>
+            </div>
+            <div class="note" style="margin-top:8px;font-size:10px;line-height:1.7">优化系统：${sysNames} · 锁定：${locked.length ? locked.map(s => window.ComboSolver.SYS_LABEL[s] || s).join('、') : '无'} · ${res.history.length - 1} 步 · ${Date.now() - t0}ms<br>${res.note}</div>`;
+          if (applyBtn) applyBtn.disabled = false;
+        } catch (e) {
+          const b = $('#comboResult'); if (b) b.innerHTML = '<div class="note red">求解失败：' + String(e.message || e) + '</div>';
+        }
+      }, 60);
+    };
+    const apply = $('#comboApply');
+    if (apply) apply.onclick = () => {
+      if (!_comboResult) return;
+      const r = _comboResult;
+      // 把结果 cfg 的相关字段写回 state
+      const c = r.cfg;
+      if (c.legendaries) state.legendaries = c.legendaries.slice();
+      if (c.gems) state.gems = c.gems;
+      if (c.minionId !== undefined) state.minionId = c.minionId;
+      if (c.minionSynergy !== undefined) state.minionSynergy = c.minionSynergy;
+      if (c.runeSlots) state.runeSlots = c.runeSlots;
+      if (c.runes !== undefined) { /* runeSlots 已含，cfg 会重建 */ }
+      if (c.talents && state._comboUnlock && state._comboUnlock.indexOf('talents') >= 0) state.talents = c.talents;
+      if (c.gearBuild && state._comboUnlock && state._comboUnlock.indexOf('affix') >= 0) {
+        state.gearBuild = c.gearBuild;
+        if (c.targetIlvl) state.gear = Object.assign(state.gear, { name: '目标装分 ' + c.targetIlvl });
+      }
+      // 技能仅当未锁定时应用
+      if (c.skills && !(($('#comboKeepSkills') || {}).checked)) state.skills = c.skills;
+      syncAllInputs(); safeRun('技能槽', renderSlots); safeRun('符文六槽', renderRuneSlots); safeRun('仆从', renderMinions);
+      state._cache = {}; state._affixCache = null; state._gearKey = null;
+      recomputeAll(); toast('已应用组合最优解');
+    };
+  }
+
   function bindSolver() {
+    safeRun('组合求解', bindCombo);
     if ($('#svTierQuick')) $('#svTierQuick').onclick = () => {
       if (svHandle) return; svTier = 'quick'; renderSolver(); selectTemplate(svActiveId);
     };
@@ -8347,6 +9152,50 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       if (sec.map(String).indexOf(String(keepSec)) >= 0) secSel.value = String(keepSec);
     }
   }
+  /* 协同被动槽（真源 SlaveData.Passives）：10 级有效技能等级解锁。
+     主仆从可带一个"已培养至 10 级的其他仆从的被动"，按 Base+PerLevel×9 注入。 */
+  function renderSynergy() {
+    const sel = $('#mnSynergy');
+    if (!sel) return;
+    const MD = window.MinionData;
+    const eff = (() => {
+      const M = D.MECHANICS.minion;
+      const lv = Math.max(M.levelMin, Math.min(M.levelMax, state.minionLevel != null ? state.minionLevel : M.levelMax));
+      return lv + (state.minionReins ? M.reinsBonus : 0);
+    })();
+    const unlocked = eff >= (D.MECHANICS.minion.synergyStar || 10);
+    const hint = $('#mnSynStarHint');
+    if (hint) hint.textContent = unlocked ? '已解锁' : `需有效等级 10（当前 ${eff}）`;
+    sel.innerHTML = '<option value="">— 不带协同被动 —</option>';
+    if (!MD || !MD.PASSIVES) return;
+    // 按仆从分组，组内按 statName
+    const bySlave = {};
+    MD.PASSIVES.forEach((p, idx) => {
+      const k = p.slave + '|' + p.stat;
+      (bySlave[p.slaveZh] || (bySlave[p.slaveZh] = [])).push({ k, p, idx });
+    });
+    Object.keys(bySlave).forEach(zname => {
+      const og = el('optgroup'); og.label = zname;
+      bySlave[zname].forEach(x => {
+        const o = el('option'); o.value = x.k;
+        o.textContent = x.p.statName + ' · ' + x.p.text.replace(x.p.statName + ' ', '');
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    const cur = state.minionSynergy;
+    const curKey = cur && cur.slave != null ? (cur.slave + '|' + cur.stat) : '';
+    if (curKey) sel.value = curKey;
+    sel.disabled = !unlocked;
+    const desc = $('#mnSynDesc');
+    if (desc && cur && (MD.PASSIVES || []).length) {
+      const p = MD.PASSIVES.find(x => x.slave === cur.slave && x.stat === cur.stat);
+      desc.innerHTML = p && unlocked
+        ? `<b class="gold">${p.slaveZh} · ${p.statName}</b>：${p.text}（真源 Base+PerLevel×9，10 级固定值）`
+        : '10 星（有效等级 10）主仆从可额外携带一个已培养至 10 级的其他仆从的被动。';
+    }
+  }
+
   function renderMn13() {
     const AF = window.AffixMath;
     const preview = $('#mn13Preview');
@@ -8418,17 +9267,8 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     $('#mnLevelVal').textContent = lv;
     $('#mnReins').checked = !!state.minionReins;
 
-    const sel = $('#mnGear');
-    if (sel && sel.dataset.lv !== String(eff)) {
-      sel.innerHTML = '';
-      M.gearOptions.forEach(g => {
-        const o = el('option'); o.value = g.id; o.textContent = g.name; o.selected = state.minionGear === g.id;
-        sel.appendChild(o);
-      });
-      sel.dataset.lv = String(eff);
-    }
-    if (sel) sel.disabled = eff < M.gearStar;
     renderMn13();
+    renderSynergy();
 
     const stars = [];
     for (let i = 1; i <= M.levelMax; i++) stars.push(i);
@@ -8438,23 +9278,30 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       </div>
       <div class="note" style="font-size:10.5px;line-height:1.8">
         <div>${eff >= M.gearStar ? '<b class="gold">5 级</b>：已解锁仆从装备' : '<span class="dim">5 级：解锁仆从装备</span>'}</div>
+        <div>${eff >= M.synergyStar ? '<b class="gold">10 级</b>：已解锁协同被动槽' : '<span class="dim">10 级：解锁协同被动槽</span>'}</div>
         <div class="dim" style="margin-top:6px">缰绳的 +${M.reinsBonus} 级对每个被动/主动技能都生效，可超过等级上限。</div>
       </div>`;
 
     if (!info) { $('#mnDetail').innerHTML = '<div class="note">未选择仆从。</div>'; return; }
-    const selfDps = (r.agg.weaponDamage) * info.selfPct / 100;
     const growth = curMin && curMin.bonusPerLevel ? curMin.bonusPerLevel : 0;
     const baseTxt = bonusText(curMin);
     const lvTxt = bonusTextAtLevel(curMin, info.eff);
     const grew = growth > 0 && info.eff > 1;
+    const abil = info.ability || [];
+    const abilTxt = abil.length ? abil.map(a => `${a.zh}<span class="tag ${a.kind === 'buff' ? 'b' : 'sp'}">${a.kind === 'buff' ? '增益' : '伤害'}</span>`).join('、') : '无主动技能（多数仆从只有被动）';
+    const synTxt = info.synergy ? `${info.synergy.slaveZh} · ${info.synergy.text}` : '—';
     $('#mnDetail').innerHTML = `
       <div class="field"><label>被动加成（${grew ? 'L' + info.eff + ' 成长后' : '1 级基准'}</label><span class="num">${grew ? lvTxt : baseTxt}</span></div>
       ${grew ? `<div class="field"><label>被动成长系数</label><span class="num">每级 +${(growth * 100).toFixed(growth < 0.1 ? 2 : 1)}%（相对 1 级）· 真源 PerLevel/Base</span></div>
       <div class="field"><label>1 级基准值</label><span class="num dim">${baseTxt}</span></div>` : ''}
       <div class="field"><label>技能等级 / 强化后</label><span class="num">${info.level} → ${info.eff}${state.minionReins ? '（缰绳 +' + M.reinsBonus + '）' : ''}</span></div>
-      <div class="field"><label>仆从装备</label><span class="num">${info.gear === 'custom' ? '第13件（自定义词条）' : (info.gear && info.gear !== 'none' ? (M.gearOptions.find(g => g.id === info.gear) || {}).name : '—')}</span></div>
-      <div class="field"><label>自身技能输出</label><span class="num gold">${fmt(selfDps)} / 秒</span></div>
-      <div class="note" style="margin-top:10px">被动随有效技能等级成长（真源 <b>Base + PerLevel×(L-1)</b>），缰绳 +${M.reinsBonus} 级同样作用于被动。自身输出不吃你的天赋与装备乘区，单列显示。</div>`;
+      <div class="field"><label>主动技能</label><span class="num">${abilTxt}</span></div>
+      <div class="field"><label>协同被动（10 级）</label><span class="num gold">${synTxt}</span></div>
+      <div class="field"><label>仆从装备</label><span class="num">${info.gear === 'custom' ? '自定义词条（5 级解锁）' : '—'}</span></div>
+      <div class="note" style="margin-top:10px">
+        仆从只有被动稳定作用于角色；<b>主动技能多数是给角色加增益/状态</b>（治愈/顺风/护壳/法力…），
+        真源 Effects 未展开伤害倍率，故<b>不计入 DPS</b>，仅作机制标注。被动随有效等级成长（真源 <b>Base + PerLevel×(L-1)</b>）。
+      </div>`;
   }
 
   function bindMinions() {
@@ -8474,8 +9321,19 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
       state.minionGear = e.target.value;
       state._cache = {}; recomputeAll();
     });
+    const synSel = $('#mnSynergy');
+    if (synSel) synSel.addEventListener('change', e => {
+      const v = e.target.value;
+      if (!v) state.minionSynergy = null;
+      else {
+        const [slave, stat] = v.split('|');
+        state.minionSynergy = { slave, stat: parseInt(stat, 10) };
+      }
+      state._cache = {}; recomputeAll();
+      safeRun('协同被动', renderSynergy);
+    });
     const m13on = $('#mn13On'), m13gate = $('#mn13Gate');
-    if (m13on) m13on.addEventListener('change', () => { mn13Apply(); toast(m13on.checked ? '第13件装备已启用' : '第13件装备已关闭'); });
+    if (m13on) m13on.addEventListener('change', () => { mn13Apply(); toast(m13on.checked ? '仆从装备已启用' : '仆从装备已关闭'); });
     if (m13gate) m13gate.addEventListener('change', () => { mn13Apply(); toast(m13gate.checked ? '遵守训练等级门槛' : '已忽略训练等级门槛（按达标等级计入）'); });
     [['#mn13Slot', 'change'], ['#mn13Rarity', 'change'], ['#mn13Ilvl', 'change'],
      ['#mn13Main', 'change'], ['#mn13Sec', 'change'], ['#mn13Roll', 'input']].forEach(pair => {
@@ -8691,9 +9549,10 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
           <div class="kv">
             <span>被动</span><span>${bonusText(D.MINIONS.find(m => m.id === info.id))}</span>
             <span>5 级装备槽</span><span>${info.eff >= M.gearStar ? '已解锁' : '未解锁'}</span>
-            <span>自身输出</span><span>${fmt(agg.weaponDamage * info.selfPct / 100)} / 秒</span>
+            <span>协同被动</span><span>${info.synergy ? info.synergy.text : '未配置'}</span>
+            <span>主动技能</span><span>${(info.ability || []).map(a => a.zh).join('、') || '无'}</span>
           </div>
-          注意：<b>被动随技能等级成长</b>，缰绳的 +${M.reinsBonus} 级对每个被动/主动技能都生效；仆从自身输出单列于下，不吃你的天赋与装备乘区。
+          注意：<b>被动随技能等级成长</b>，缰绳的 +${M.reinsBonus} 级对每个被动/主动技能都生效；仆从主动技能多数是给角色加增益，真源未展开伤害倍率，故不计入 DPS。
           <div class="src">只有召唤中的那只生效，换仆从要回城</div>`,
         trace
       };
@@ -8836,6 +9695,198 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     return [c.name, set ? set.name : '', preset].filter(Boolean).join(' · ').slice(0, 40);
   }
 
+  /* 构筑指纹：比裸 DPS 更有意义的存档标记——脱离场景也稳定。
+     格式：职业 · 套装N件 · 核心技能 · 天赋N点 · 装分档。
+     裸 DPS 之所以会"存档显示≠载入后首页"，是因为它依赖保存那一刻的 duration /
+     未决项裁决，而载入会用当前口径重算。指纹只描述构筑本身，不随场景漂移。 */
+  function buildFingerprint(snap) {
+    const s = snap || {};
+    const c = D.CLASSES[s.classKey] || {};
+    const all = [...(c.basics || []), ...(c.strongs || []), ...(c.specials || [])];
+    const nm = id => { const a = all.find(x => x.id === id); return a ? a.name : null; };
+    const set = ((c.sets) || []).find(x => x.id === s.setId);
+    const sk = s.skills || {};
+    const core = [nm(sk.basic), nm(sk.strong)].filter(Boolean).slice(0, 2).join('/') || '无技能';
+    const tp = Object.values(s.talents || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+    const preset = ({ starter: '起步', mid: '中配', end: '毕业' })[s.preset] || '中配';
+    const bits = [c.name || s.classKey || '—'];
+    if (set) bits.push(set.name + (s.setCount ? s.setCount + '件' : ''));
+    bits.push(core, tp + '点', preset);
+    return bits.filter(Boolean).join(' · ').slice(0, 52);
+  }
+
+  /* ============================================================ 构筑方案
+     每个板块独立保存多套预设，总方案 = 各板块各选一套的组合。 */
+  const BUILDER_META = {
+    skills:  { tab: 'character', icon: 'sword',   desc: '普攻/强攻/两个特殊技能（可留空）' },
+    effects: { tab: 'character', icon: 'star',    desc: '传奇装备特效（最多 4 件）' },
+    affix:   { tab: 'gear',      icon: 'shield',  desc: '装备数值 / 套装件数 / 目标装分' },
+    gems:    { tab: 'gear',      icon: 'gem',     desc: '宝石镶嵌（6 家族 × 孔位）' },
+    minion:  { tab: 'minions',   icon: 'paw',     desc: '出战仆从 / 协同被动 / 仆从装备' },
+    talents: { tab: 'talents',   icon: 'tree',    desc: '天赋页（70 点分配）' },
+    runes:   { tab: 'character', icon: 'rune',    desc: '符文六槽 + 套装件数' }
+  };
+  const BUILDER_ICONS = {
+    sword: '<path d="M18 3l3 3-9 9-3-3zM9 12l-4 1 1-4z" stroke="currentColor" fill="none" stroke-width="1.5"/>',
+    star: '<path d="M12 3l2.5 6h6l-5 4 2 6-5.5-4-5.5 4 2-6-5-4h6z" stroke="currentColor" fill="none" stroke-width="1.4"/>',
+    shield: '<path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6z" stroke="currentColor" fill="none" stroke-width="1.4"/>',
+    gem: '<path d="M12 3l6 6-6 12-6-12z" stroke="currentColor" fill="none" stroke-width="1.4"/>',
+    paw: '<circle cx="8" cy="9" r="2"/><circle cx="16" cy="9" r="2"/><circle cx="12" cy="6" r="2"/><path d="M12 12c-3 0-5 2-5 4s2 3 5 3 5-1 5-3-2-4-5-4z" stroke="currentColor" fill="none" stroke-width="1.3"/>',
+    tree: '<path d="M12 21V8M12 12L7 7M12 14l5-5M7 7l-2-3M7 7l2-3M17 9l-2-3M17 9l2-3" stroke="currentColor" fill="none" stroke-width="1.3"/>',
+    rune: '<path d="M12 2l8 10-8 10L4 12z" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="M9 12h6M12 9v6" stroke="currentColor" stroke-width="1.3"/>'
+  };
+  function captureBlock(kind) {
+    switch (kind) {
+      case 'skills': return { skills: JSON.parse(JSON.stringify(state.skills)) };
+      case 'effects': return { legendaries: state.legendaries.slice() };
+      case 'affix': return { gear: JSON.parse(JSON.stringify(state.gear)), setId: state.setId, setCount: state.setCount, preset: state._preset, gearBuild: state.gearBuild || null };
+      case 'gems': return { gems: JSON.parse(JSON.stringify(state.gems || {})) };
+      case 'minion': return {
+        minionId: state.minionId, minionLevel: state.minionLevel, minionReins: state.minionReins,
+        minionStars: state.minionStars, minionSynergy: state.minionSynergy ? JSON.parse(JSON.stringify(state.minionSynergy)) : null,
+        minionGear: state.minionGear, minionGearGate: state.minionGearGate,
+        minionGearBuild: state.minionGearBuild ? JSON.parse(JSON.stringify(state.minionGearBuild)) : null
+      };
+      case 'talents': return { talents: JSON.parse(JSON.stringify(state.talents)) };
+      case 'runes': return { runeSlots: JSON.parse(JSON.stringify(state.runeSlots || [])) };
+      default: return {};
+    }
+  }
+  function applyBlock(kind, data) {
+    if (!data) return;
+    const set = (k, v) => { if (v !== undefined) state[k] = v; };
+    switch (kind) {
+      case 'skills': set('skills', data.skills); break;
+      case 'effects': set('legendaries', data.legendaries); break;
+      case 'affix':
+        set('gear', data.gear); set('setId', data.setId); set('setCount', data.setCount); set('gearBuild', data.gearBuild);
+        if (data.preset) state._preset = data.preset; break;
+      case 'gems': set('gems', data.gems); break;
+      case 'minion':
+        ['minionId', 'minionLevel', 'minionReins', 'minionStars', 'minionSynergy', 'minionGear', 'minionGearGate', 'minionGearBuild'].forEach(k => set(k, data[k])); break;
+      case 'talents': set('talents', data.talents); break;
+      case 'runes': set('runeSlots', data.runeSlots); break;
+    }
+  }
+  function blockPreview(kind, data) {
+    if (!data) return '';
+    const nm = id => abName(id);
+    switch (kind) {
+      case 'skills': { const s = data.skills || {}; return [s.basic, s.strong, s.special1, s.special2].map(nm).filter(Boolean).join(' → ') || '全空'; }
+      case 'effects': return (data.legendaries || []).length + ' 件传奇特效';
+      case 'affix': return (data.gear && data.gear.name) || '装备数值';
+      case 'gems': { let n = 0; Object.values(data.gems || {}).forEach(a => { n += (a || []).length; }); return n + ' 颗宝石'; }
+      case 'minion': { const m = D.MINIONS.find(x => x.id === data.minionId); return (m ? m.name : '无仆从') + (data.minionSynergy ? ' · 协同' : ''); }
+      case 'talents': return Object.values(data.talents || {}).reduce((a, b) => a + (b || 0), 0) + ' 点天赋';
+      case 'runes': { const n = (data.runeSlots || []).filter(Boolean).length; return n + ' / 6 符文槽'; }
+      default: return '';
+    }
+  }
+  function renderBuilder() {
+    const grid = $('#builderGrid');
+    if (!grid) return;
+    const db = Store.readBlocks ? Store.readBlocks() : {};
+    const bp = Store.getBlueprint ? Store.getBlueprint() : {};
+    const kinds = Store.BLOCK_KINDS || Object.keys(BUILDER_META);
+    grid.innerHTML = '';
+    kinds.forEach(kind => {
+      const meta = BUILDER_META[kind] || {};
+      const list = (db[kind] || []);
+      const chosenId = bp[kind];
+      const chosen = list.find(x => x.id === chosenId);
+      const card = el('div', 'bcard' + (chosen ? ' on' : ''));
+      const ic = `<svg viewBox="0 0 24 24">${BUILDER_ICONS[meta.icon] || BUILDER_ICONS.rune}</svg>`;
+      const selOpts = ['<option value="">— 未选 —</option>'].concat(list.map(x => `<option value="${x.id}"${x.id === chosenId ? ' selected' : ''}>${x.name}</option>`)).join('');
+      card.innerHTML = `
+        <div class="bh"><span class="ic">${ic}</span><h4>${Store.BLOCK_LABEL[kind] || kind}</h4><span class="cnt">${list.length} 套</span></div>
+        <div class="cur">${chosen ? blockPreview(kind, chosen.data) : (meta.desc || '')}</div>
+        <select data-bsel="${kind}">${selOpts}</select>
+        <div class="bops">
+          <button data-bact="save" data-kind="${kind}">保存当前</button>
+          <button data-bact="edit" data-kind="${kind}">去编辑</button>
+          <button data-bact="rename" data-kind="${kind}" class="del" title="重命名选中方案">✎</button>
+          <button data-bact="del" data-kind="${kind}" class="del" title="删除选中方案">×</button>
+        </div>`;
+      card.onclick = e => {
+        const btn = e.target.closest('button[data-bact]');
+        const sel = e.target.closest('select[data-bsel]');
+        if (sel) return;
+        if (!btn) return;
+        const act = btn.dataset.bact, k = btn.dataset.kind;
+        if (act === 'edit') { goto(meta.tab || 'character'); return; }
+        if (act === 'save') {
+          const defName = (Store.BLOCK_LABEL[k] || k) + ' ' + (list.length + 1);
+          const name = window.prompt('给这套「' + (Store.BLOCK_LABEL[k] || k) + '」起名', defName);
+          if (!name || !name.trim()) return;
+          const entry = Store.saveBlock(k, name.trim(), captureBlock(k));
+          bp[k] = entry.id; Store.setBlueprint(bp);
+          toast('已保存「' + name.trim() + '」'); safeRun('构筑方案', renderBuilder);
+        } else if (act === 'rename') {
+          const cur = list.find(x => x.id === bp[k]);
+          if (!cur) { toast('请先选择一个方案', true); return; }
+          const name = window.prompt('新名称', cur.name);
+          if (name && name.trim()) { Store.renameBlock(k, cur.id, name.trim()); safeRun('构筑方案', renderBuilder); }
+        } else if (act === 'del') {
+          const cur = list.find(x => x.id === bp[k]);
+          if (!cur) { toast('请先选择一个方案', true); return; }
+          if (!window.confirm('删除方案「' + cur.name + '」？')) return;
+          Store.removeBlock(k, cur.id); delete bp[k]; Store.setBlueprint(bp);
+          safeRun('构筑方案', renderBuilder);
+        }
+      };
+      const sel = card.querySelector('select[data-bsel]');
+      sel.onchange = e => {
+        const v = e.target.value;
+        if (v) bp[kind] = v; else delete bp[kind];
+        Store.setBlueprint(bp);
+        safeRun('构筑方案', renderBuilder);
+      };
+      grid.appendChild(card);
+    });
+    // 总方案摘要
+    const chosen = kinds.filter(k => bp[k]);
+    if ($('#bpCount')) $('#bpCount').textContent = chosen.length + ' / ' + kinds.length;
+    if ($('#bpDps') && state._result) $('#bpDps').textContent = fmt(state._result.dps);
+    const sum = $('#bpSummary');
+    if (sum) {
+      sum.innerHTML = chosen.length
+        ? chosen.map(k => { const l = (db[k] || []).find(x => x.id === bp[k]); return (Store.BLOCK_LABEL[k] || k) + '：<b class="gold">' + (l ? l.name : '?') + '</b>'; }).join('<br>')
+        : '尚未选择任何板块预设。';
+    }
+  }
+
+  function bindBuilder() {
+    const apply = $('#bpApply');
+    if (apply) apply.onclick = () => {
+      const db = Store.readBlocks ? Store.readBlocks() : {};
+      const bp = Store.getBlueprint ? Store.getBlueprint() : {};
+      const kinds = Store.BLOCK_KINDS || [];
+      let n = 0;
+      kinds.forEach(k => {
+        const id = bp[k];
+        if (!id) return;
+        const entry = (db[k] || []).find(x => x.id === id);
+        if (entry) { applyBlock(k, entry.data); n++; }
+      });
+      syncAllInputs(); safeRun('职业卡片', renderClassCards); safeRun('技能槽', renderSlots);
+      safeRun('符文六槽', renderRuneSlots); safeRun('仆从', renderMinions);
+      state._cache = {}; state._affixCache = null; state._gearKey = null;
+      recomputeAll(); safeRun('构筑方案', renderBuilder);
+      toast('已应用 ' + n + ' 个板块预设');
+    };
+    const saveFull = $('#bpSaveFull');
+    if (saveFull) saveFull.onclick = () => {
+      const name = ($('#bpName') && $('#bpName').value.trim()) || autoName() + '·组合';
+      const entry = Store.save(snapshot(), { name, dps: state._result ? state._result.dps : 0 });
+      toast(entry ? '已存为完整配置「' + name + '」' : '保存失败');
+    };
+    const clear = $('#bpClear');
+    if (clear) clear.onclick = () => {
+      if (!window.confirm('清空所有板块的预设选择？（不会删除已保存的预设）')) return;
+      Store.setBlueprint({}); safeRun('构筑方案', renderBuilder); toast('已清空板块选择');
+    };
+  }
+
   function renderSaveList() {
     const box = $('#saveList');
     if (!box) return;
@@ -8857,8 +9908,7 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
           ${stale ? `<span class="badge warn">${item.game}</span>` : ''}
         </div>
         <div class="m">
-          <span>${c.name || item.cls || '—'}</span>
-          <span>秒伤 <b>${fmt(item.dps)}</b></span>
+          <span class="fp">${buildFingerprint(item.snap)}</span>
           <span>${tsLabel(item.ts)}</span>
         </div>
         <div class="ops">
@@ -9117,6 +10167,7 @@ window.DESKRAWL_KB = {"version":{"game":"1.1.11a","gameDate":"2026-11-12","dataD
     safeRun('天赋', bindTalents);
     safeRun('最优解', bindSolver);
     safeRun('仆从', bindMinions);
+    safeRun('构筑方案', bindBuilder);
     safeRun('伤害计算', bindDamage);
     safeRun('未决项', bindPending);
     safeRun('装备取舍', bindCompare);

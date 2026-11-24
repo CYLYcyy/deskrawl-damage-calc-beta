@@ -41,6 +41,33 @@ window.Engine = (function () {
   function getRuneData() {
     return typeof window !== 'undefined' ? window.RuneData : globalThis.RuneData;
   }
+  function getMinionData() {
+    return typeof window !== 'undefined' ? window.MinionData : globalThis.MinionData;
+  }
+
+  /* 真源 Stat field（minion-data.js 生成，如 'cc' / 'vs.elite' / 'dr.fire' / 'all'）
+     -> engine mods 增量。协同被动按真源 10 级值注入，不吃缰绳成长（协同槽固定 10 级）。 */
+  function applyStatField(s, field, value) {
+    if (!field || !value) return;
+    const setVs = (k, v) => { if (s.vs && k in s.vs) s.vs[k] += v; };
+    const setDr = (k, v) => { s.dr = s.dr || {}; s.dr[k] = (s.dr[k] || 0) + v; };
+    switch (field) {
+      case 'str': case 'dex': case 'int': case 'cc': case 'cd': case 'as':
+      case 'all': case 'physical': case 'fire': case 'cold': case 'lightning': case 'poison': case 'arcane':
+      case 'basic': case 'strong': case 'special': case 'dot': case 'cdr': case 'costRed':
+      case 'manaMax': case 'manaRegen': case 'genFlat': case 'genPct': case 'flatDmg':
+      case 'thorns': case 'dodge': case 'hpPct': case 'takenDR':
+        s[field] = (s[field] || 0) + value; break;
+      case 'hp': s.flatDmg += 0; s.hp = (s.hp || 0) + value; break; // 生存向，不进 DPS
+      case 'lifeOnHit': case 'lifeOnKill': case 'hpRegen': case 'manaOnKill':
+      case 'goldFind': case 'magicFind': case 'ms': case 'critDR':
+        s[field] = (s[field] || 0) + value; break; // 生存/资源向，引擎不用于 DPS
+      default:
+        if (field.indexOf('vs.') === 0) setVs(field.slice(3), value);
+        else if (field.indexOf('dr.') === 0) setDr(field.slice(3), value);
+        else s['_' + field] = (s['_' + field] || 0) + value; // 未知字段保留，不丢数据
+    }
+  }
 
   const emptyMods = () => ({
     str: 0, dex: 0, int: 0, cc: 0, cd: 0, as: 0,
@@ -259,80 +286,74 @@ window.Engine = (function () {
       if (L) applyLegendary(s, L, cfg);
     });
 
-    // 仆从：被动随技能等级成长；缰绳 +5 作用于所有自身技能；继承槽固定 10 级；
-    // 第 13 件装备走 gearBuild（无宝石孔、需训练等级 ≥ gearStar）
+    /* 仆从（1.0.4 真源重构）：
+       - 只有召唤中的那一只生效；它的【被动】随技能等级成长（Base+PerLevel×(L-1)），
+         缰绳 +5 作用于所有自身技能（可超 10 级）。
+       - 【主动技能】：真源 68 只里 16 只有 Abilities，多数是给角色+增益/+状态
+         （治愈/顺风/护壳/法力…），只有少数是伤害型。SO dump 的 Effects 为托管引用、
+         未展开倍率，故主动技能【不计入 DPS】，仅作机制标注展示（避免伪造数字）。
+       - 【协同被动槽】：10 星主仆从可额外带一个"已培养至 10 级的其他仆从的被动"
+         （用户实测机制），按真源 Stat/Value 以固定 10 级值注入：Base+PerLevel×9。
+       - 【仆从装备】：5 级解锁，词条走 gearBuild（无宝石孔），属性并入玩家属性池。
+         不再有编造的"攻击型/辅助型/守护型"三类增益。 */
     const min = D.MINIONS.find(x => x.id === cfg.minionId);
     let minionInfo = null;
     if (min) {
       const MM = MED.minion;
-      // 训练等级：cfg.minionLevel 缺省取上限，夹在 [levelMin, levelMax]
       const trainLv = Math.max(MM.levelMin, Math.min(MM.levelMax, cfg.minionLevel != null ? cfg.minionLevel : MM.levelMax));
-      // B5: 被动成长等级读 cfg.minionSkillLevel，默认训练等级
       const skillLv = cfg.minionSkillLevel != null ? cfg.minionSkillLevel : trainLv;
-      // 缰绳 +5 作用于所有自身技能（可超上限）；继承槽技能固定 10 级、不吃 +5
       const reins = cfg.minionReins ? MM.reinsBonus : 0;
       const inherited = !!cfg.inheritedSkill;
       const eff = inherited ? 10 : skillLv + reins;
-      // 共鸣字段保留供 UI 展示；放大被动的旧语义仅在数据层仍提供 resonanceBonus 时生效，
-      // 数据层净化（移除 resonanceStar/resonanceBonus）后自动失效，等于删除该逻辑
-      const resonance = eff >= MM.resonanceStar;
-      const resonanceAmp = resonance && MM.resonanceBonus != null;
+      const stars = Math.max(1, Math.min(10, cfg.minionStars != null ? cfg.minionStars : 10));
 
-      // 被动 base
+      // 主仆从被动 base
       const bonus = JSON.parse(JSON.stringify(min.bonus || {}));
       if (min.bonus && min.bonus.statPct) {
         for (const k in min.bonus.statPct) s[k] = (s[k] || 0) * (1 + min.bonus.statPct[k] / 100);
       }
       mergeMods(s, bonus);
-      // 过渡保留：数据仍带 resonanceBonus 时维持旧行为；不再作为成长机制
-      if (resonanceAmp) {
-        const extra = JSON.parse(JSON.stringify(min.bonus || {}));
-        scaleMods(extra, MM.resonanceBonus / 100);
-        mergeMods(s, extra);
-      }
-      // B5: 被动随技能等级成长（真源 SlaveData.json 精确口径）
-      // 真源：Value(L) = Base + PerLevel × (L - 1)，Base 为 1 级值。
-      // data.js 的 bonus = Base×100（百分点），bonusPerLevel = PerLevel/Base（每级相对增量），
-      // 故 base × (1 + ratio×(L-1)) = base + PerLevel×100×(L-1)，与真源逐位一致。
-      // 2026-11-25 复核：真源 83 个被动 PerLevel≠0（此前"77/77 全 0"为误判，读了错误字段），
-      // 32 个已建模 DPS 仆从按 statId 精确匹配并灌入 ratio（绝大多数 0.10，灰烬领主 CDR 0.0667）。
-      // 成长等级用 eff（含缰绳 +5、可超 10；继承槽固定 10、不吃缰绳），与自身技能口径一致。
+      // 被动随有效等级成长（真源 Base+PerLevel×(L-1)）
       const perLv = min.bonusPerLevel;
       if (perLv && eff > 1) {
         const extra = JSON.parse(JSON.stringify(min.bonus || {}));
         scaleMods(extra, perLv * (eff - 1));
         mergeMods(s, extra);
       }
-      // 无 bonusPerLevel 的仆从（如 buff 类）被动保持 base，不静默外推。
 
-      // 第 13 件装备：优先 gearBuild（无宝石孔、训练等级 ≥ gearStar），属性并入玩家属性池
+      // 协同被动槽：需主仆从有效技能等级 ≥10（玩家称"10星"）；cfg.minionSynergy = { slave, stat }
+      let synergyInfo = null;
+      const syn = cfg.minionSynergy;
+      if (eff >= 10 && syn && syn.stat != null) {
+        const MD = getMinionData();
+        const cand = MD && (MD.PASSIVES || []).find(p => p.stat === syn.stat && (!syn.slave || p.slave === syn.slave));
+        if (cand) {
+          const v10 = (cand.base || 0) + (cand.per || 0) * 9;  // 协同被动固定 10 级
+          applyStatField(s, cand.field, v10);
+          synergyInfo = { slave: cand.slave, slaveZh: cand.slaveZh, stat: cand.stat, statName: cand.statName, field: cand.field, value: v10, text: cand.text };
+        }
+      }
+
+      // 仆从装备（5 级解锁）：优先 gearBuild，属性并入玩家属性池
       let minionGearLabel = null;
       if (trainLv >= MM.gearStar && cfg.minionGearBuild) {
         const AF = getAffixMath();
         if (AF && typeof AF.buildGear === 'function') {
           try {
             const mg = AF.buildGear(Object.assign({}, cfg, { gearBuild: cfg.minionGearBuild }));
-            if (mg) {
-              addMods(s, gearToMods(mg, cfg)); // 仆从装备无宝石孔：不并入 gem 相关字段
-              minionGearLabel = 'custom';
-            }
-          } catch (e) { /* 缺模块/数据异常时跳过仆从装备 */ }
+            if (mg) { addMods(s, gearToMods(mg, cfg)); minionGearLabel = 'custom'; }
+          } catch (e) { /* 缺模块/数据异常时跳过 */ }
         }
-      } else if (eff >= MM.gearStar && cfg.minionGear && cfg.minionGear !== 'none') {
-        // DEPRECATED: 旧 4 个抽象 gearOptions（none/atk/sup/def）fallback，新配置请用 minionGearBuild
-        const g = MM.gearOptions.find(x => x.id === cfg.minionGear);
-        if (g && g.fx) {
-          if (g.fx.dmg) for (const k in g.fx.dmg) s[k] = (s[k] || 0) + g.fx.dmg[k];
-          if (g.fx.takenDR) s.takenDR += g.fx.takenDR;
-          if (g.fx.selfPct) s.minionSelfPct = (s.minionSelfPct || 0) + g.fx.selfPct;
-        }
-        minionGearLabel = cfg.minionGear;
       }
+      // 主动技能：标注但不计 DPS（倍率真源未展开）
+      const MD = getMinionData();
+      const ability = MD && (MD.ABILITIES || []).filter(a => a.dataName === min.name || a.slave === min.srcName)
+        .map(a => ({ zh: a.zh, kind: a.kind, cd: a.cd, note: '伤害型倍率真源未展开，不计入 DPS' }));
+
       minionInfo = {
-        id: min.id, name: min.name, level: trainLv, skillLevel: skillLv, eff, resonance, inherited,
-        gear: (trainLv >= MM.gearStar || eff >= MM.gearStar) ? (minionGearLabel || 'none') : null,
-        selfPct: (MM.selfBasePct + MM.selfPerLevelPct * (eff - 1)) * (1 + (s.minionSelfPct || 0) / 100),
-        selfEle: min.selfEle || guessEle(min)
+        id: min.id, name: min.name, level: trainLv, skillLevel: skillLv, eff, stars, inherited,
+        gear: trainLv >= MM.gearStar ? (minionGearLabel || 'none') : null,
+        synergy: synergyInfo, ability: ability || []
       };
     }
 
@@ -1006,8 +1027,9 @@ window.Engine = (function () {
       if (st.castLock <= 0) castStrong();
 
       // 基础攻击：自动攻击，与动作条并行（仅被引导类技能打断）
-      if (st.t >= (st.channelUntil || 0)) {
-        const interval = Math.max(1 / ((1 + curAS() / 100) * agg.gear.speed), basic && basic.cd ? basic.cd : 0);
+      // 允许留空：basic 为 null 时不普攻、不回蓝，只靠法力自然回复。
+      if (basic && st.t >= (st.channelUntil || 0)) {
+        const interval = Math.max(1 / ((1 + curAS() / 100) * agg.gear.speed), basic.cd || 0);
         st.basicT -= dt;
         if (st.basicT <= 0) {
           st.basicT += interval;
@@ -1082,8 +1104,12 @@ window.Engine = (function () {
     };
   }
 
+  /* 技能查找：允许留空。id 为空/null/'none' 时返回 null（该槽不装备）。
+     不再强制回退到 c[key][0]——用户可选择不带技能以提高周期伤害
+     （典型：冰法 6 件套后只带冰普攻，强攻/特殊技能全空）。 */
   function findAb(c, id, key) {
-    const a = (c[key] || []).find(x => x.id === id) || c[key][0];
+    if (id === null || id === undefined || id === '' || id === 'none') return null;
+    const a = (c[key] || []).find(x => x.id === id) || null;
     if (a && a.channel && !a._prep) {
       a.hits = Math.max(1, Math.round(a.channel.dur / a.channel.interval));
       a._prep = true;

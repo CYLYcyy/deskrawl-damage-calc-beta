@@ -321,5 +321,44 @@ function buildGear(cfg) {
   return out;
 }
 
-if (typeof window !== "undefined") window.AffixMath = { RARITY_BONUS, PER_LEVEL, PERCENT_STATS, STAT_NAMES, affixValue, CLASS_EXCLUDE, SLOT_POOLS, SLOT_POOLS_DETAIL, DIVINE_FIXED, CLASS_BITS, buildGear };
-else globalThis.AffixMath = { RARITY_BONUS, PER_LEVEL, PERCENT_STATS, STAT_NAMES, affixValue, CLASS_EXCLUDE, SLOT_POOLS, SLOT_POOLS_DETAIL, DIVINE_FIXED, CLASS_BITS, buildGear };
+/* 由「目标装分（毕业程度）」生成 12 部位的 gearBuild。
+   每个部位 4 主 + 1 副，主词条按职业/流派优先级从真源主池挑选；数值随 ilvl 联动。
+   - primaryType: 'basic'|'strong'|'special'|'dot' 决定类型伤主词条优先（33/34/61/62）
+   - element: 决定元素伤主词条优先（23火/24? 见 ELE）
+   返回 { gearBuild, parts:[{slot,name,main:[statId],secondary:[statId],values}] }
+   供装备页"目标装分旋钮"、词条 UI 与第三轮词条最优解共用。 */
+function buildFullGear(targetIlvl, rarity, cls, element, primaryType, roll) {
+  const ilvl = Number(targetIlvl) || 700;
+  const rar = rarity || 'legendary';
+  const cbit = typeof cls === 'number' ? cls : (CLASS_BITS[String(cls || '').toLowerCase()] || 0);
+  const TYPE_STAT = { basic: 33, strong: 34, special: 61, dot: 62 };
+  const ELE_STAT = { physical: 23, fire: 24, cold: 25, lightning: 26, poison: 27, arcane: 28 };
+  const PREF_MAIN = [0, 1, 2]; // 主属性占位，buildGear 会按职业掩码过滤
+  const prefer = [];
+  if (TYPE_STAT[primaryType]) prefer.push(TYPE_STAT[primaryType]);
+  if (ELE_STAT[element]) prefer.push(ELE_STAT[element]);
+  prefer.push(65, 5, 4, 6, 3, 32, 40, 13, 7); // 全伤/暴伤/暴率/攻速/flat/精英/易伤/CDR/生命
+  const slots = [];
+  const parts = [];
+  const slotsOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  slotsOrder.forEach(slot => {
+    const pool = SLOT_POOLS[slot];
+    if (!pool || !pool.length) return; // 背部无词条
+    const available = pool.filter(st => !(cbit && CLASS_EXCLUDE[st] && (CLASS_EXCLUDE[st] & cbit)));
+    // 选 4 条主：优先表顺序，不足则用池中靠前词条补齐
+    const picked = [];
+    prefer.concat(available).forEach(st => { if (picked.length < 4 && available.indexOf(st) >= 0 && picked.indexOf(st) < 0) picked.push(st); });
+    available.forEach(st => { if (picked.length < 4 && picked.indexOf(st) < 0) picked.push(st); });
+    const secondary = (SLOT_POOLS[slot].secondary || []).slice(0, 1);
+    slots.push({ slot, main: picked, secondary });
+    const values = {};
+    picked.concat(secondary).forEach(st => { values[STAT_NAMES[st] || ('stat' + st)] = affixValue(ilvl, rar, st, roll == null ? 1 : roll); });
+    parts.push({ slot, name: SLOT_POOLS[slot].name || ('槽' + slot), main: picked, secondary, values });
+  });
+  const gearBuild = { name: '目标装分 ' + ilvl, ilvl, rarity: rar, roll: roll == null ? 1 : roll,
+    classKey: cls, element, slots, dps: ELE_STAT[element] ? 230 : 230 };
+  return { gearBuild, parts };
+}
+
+if (typeof window !== "undefined") window.AffixMath = { RARITY_BONUS, PER_LEVEL, PERCENT_STATS, STAT_NAMES, affixValue, CLASS_EXCLUDE, SLOT_POOLS, SLOT_POOLS_DETAIL, DIVINE_FIXED, CLASS_BITS, buildGear, buildFullGear };
+else globalThis.AffixMath = { RARITY_BONUS, PER_LEVEL, PERCENT_STATS, STAT_NAMES, affixValue, CLASS_EXCLUDE, SLOT_POOLS, SLOT_POOLS_DETAIL, DIVINE_FIXED, CLASS_BITS, buildGear, buildFullGear };

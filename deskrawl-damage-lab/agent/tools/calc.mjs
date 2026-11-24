@@ -28,7 +28,7 @@ const ctx = { console };
 vm.createContext(ctx);
 vm.runInContext('var window = globalThis;', ctx);
 // 加载顺序：纯数据 → 数值/符文模块 → 引擎（引擎运行时从 window 取 AffixMath / RuneData）
-for (const f of ['data.js', 'affix.js', 'runes.js', 'engine.js']) {
+for (const f of ['data.js', 'affix.js', 'runes.js', 'minion-data.js', 'engine.js']) {
   vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), ctx, { filename: f });
 }
 const E = ctx.window.Engine;

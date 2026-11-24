@@ -77,24 +77,32 @@
     return g;
   }
 
-  /* 该职业的兜底技能组：取前三类各第一个 */
+  /* 该职业的兜底技能组：取前三类各第一个；特殊技能只有一个时第二槽留空（不重复带） */
   function fallbackSkills(classKey) {
     const c = D.CLASSES[classKey] || {};
     const b = (c.basics || [])[0], s = (c.strongs || [])[0], sp = (c.specials || [])[0], sp2 = (c.specials || [])[1];
-    return { basic: b && b.id, strong: s && s.id, special1: sp && sp.id, special2: (sp2 || sp) && (sp2 || sp).id };
+    return { basic: b && b.id, strong: s && s.id, special1: sp && sp.id, special2: (sp2 && sp2.id) || '' };
   }
 
+  /* 技能槽规范化：
+     - 显式 '' / null / 'none' = 该槽不装备（留空）；用于"为提高周期伤害不带技能"
+     - 未提供该键（旧存档）才回退到职业默认；无效 id 也回退
+     - 特殊技能双向去重：两个特殊槽不得装备同一个技能 */
   function sanitizeSkills(classKey, v) {
     const c = D.CLASSES[classKey] || {};
     const pool = { basic: (c.basics || []).map(a => a.id), strong: (c.strongs || []).map(a => a.id), special1: (c.specials || []).map(a => a.id), special2: (c.specials || []).map(a => a.id) };
     const fb = fallbackSkills(classKey);
     const out = {};
     ['basic', 'strong', 'special1', 'special2'].forEach(k => {
-      const want = v && v[k];
-      out[k] = pool[k].indexOf(want) >= 0 ? want : fb[k];
+      const has = v && Object.prototype.hasOwnProperty.call(v, k);
+      const want = has ? v[k] : undefined;
+      if (want === '' || want === null || want === 'none') out[k] = '';       // 显式留空
+      else if (pool[k].indexOf(want) >= 0) out[k] = want;                      // 合法技能
+      else out[k] = fb[k] || '';                                              // 缺省/无效回退
     });
-    if (out.special2 && out.special2 === out.special1 && pool.special2.length > 1) {
-      out.special2 = pool.special2.find(x => x !== out.special1) || out.special1;
+    // 双向去重：特殊槽 2 与特殊槽 1 相同则换一个，换不到则留空（绝不重复带）
+    if (out.special1 && out.special2 && out.special1 === out.special2) {
+      out.special2 = pool.special2.find(x => x !== out.special1) || '';
     }
     return out;
   }
@@ -137,6 +145,17 @@
       slotCount[L.slot]++;
       if (out.indexOf(id) < 0) out.push(id);
     });
+    return out;
+  }
+
+  /* 主装备 gearBuild（目标装分生成）：结构较深，宽松校验防类型污染即可 */
+  function sanitizeGearBuild(v) {
+    if (!v || typeof v !== 'object') return null;
+    const out = JSON.parse(JSON.stringify(v));
+    out.ilvl = int(out.ilvl, 700, 100, 1200);
+    out.rarity = pick(out.rarity, ['common', 'uncommon', 'rare', 'legendary', 'divine', 'blackMist', 'ancient', 'ancientDivine'], 'legendary');
+    out.roll = num(out.roll, 1, 0.5, 1.15);
+    if (Array.isArray(out.slots)) out.slots = out.slots.slice(0, 11);
     return out;
   }
 
@@ -259,6 +278,54 @@
   }
   function clearPending() { raw.del(KEY_PENDING); }
 
+  /* 符文六槽：真源 RuneSlotUnlockLevels=[30,35,40,45,50,55]，6 槽逐槽自由配置。
+     每槽 { id: RuneData id, level: 1-6 } 或 null（空槽）。 */
+  const RUNE_UNLOCK = [30, 35, 40, 45, 50, 55];
+  function sanitizeRuneSlots(v) {
+    const out = [null, null, null, null, null, null];
+    if (!Array.isArray(v)) return out;
+    const validIds = {};
+    const RD = window.RuneData;
+    if (RD && Array.isArray(RD.RUNES)) RD.RUNES.forEach(r => { validIds[r.id] = true; });
+    for (let i = 0; i < 6; i++) {
+      const slot = v[i];
+      if (!slot || typeof slot !== 'object' || !slot.id) continue;
+      // 有 RuneData 时校验 id 合法性；无则保留（模块未加载不丢数据）
+      if (Object.keys(validIds).length && !validIds[slot.id]) continue;
+      out[i] = { id: String(slot.id).slice(0, 60), level: int(slot.level, 1, 1, 6) };
+    }
+    return out;
+  }
+
+  /* 协同被动槽：{ slave: 真源英文名, stat: Stat id }，需主仆从 10 星 */
+  function sanitizeSynergy(v) {
+    if (!v || typeof v !== 'object' || v.stat == null) return null;
+    const stat = int(v.stat, 0, 0, 100);
+    const slave = typeof v.slave === 'string' ? v.slave.slice(0, 60) : '';
+    return { slave, stat };
+  }
+
+  /* 宝石镶嵌 { [数字槽位]: [{ fam, lv }, ...] }，照真源 GemData 校验
+     槽位 1-11、家族 6 类、品级 1-7、每槽孔数不超过 GEM_SLOT_CAP。 */
+  const GEM_FAMS = ['diamond', 'ruby', 'sapphire', 'topaz', 'emerald', 'amethyst'];
+  const GEM_CAP = (window.DESKRAWL_DATA && window.DESKRAWL_DATA.GEM_SLOT_CAP) ||
+    { 1: 3, 2: 1, 3: 2, 4: 2, 5: 0, 6: 0, 7: 1, 8: 1, 9: 0, 10: 0, 11: 0 };
+  function sanitizeGems(v) {
+    const out = {};
+    if (!v || typeof v !== 'object') return out;
+    Object.keys(v).forEach(sk => {
+      const slot = parseInt(sk, 10);
+      if (!(slot >= 1 && slot <= 11) || !Array.isArray(v[sk])) return;
+      const cap = GEM_CAP[slot] || 0;
+      const gems = v[sk].slice(0, cap).map(g => ({
+        fam: pick(g && g.fam, GEM_FAMS, GEM_FAMS[0]),
+        lv: int(g && g.lv, 1, 1, 7)
+      }));
+      if (gems.length) out[slot] = gems;
+    });
+    return out;
+  }
+
   /* ---------------------------------------------------------------- snapshot */
   function defaults() {
     const cls = CLASS_KEYS[0] || 'warrior';
@@ -267,10 +334,12 @@
       element: ELEMENTS[0] || 'physical',
       primaryType: 'strong',
       gear: defaultGear('mid'),
+      gearBuild: null,
       skills: fallbackSkills(cls),
       talents: {},
       setId: null,
       setCount: 0,
+      runeSlots: [null, null, null, null, null, null],
       legendaries: [],
       minionId: (D.MINIONS && D.MINIONS[0] && D.MINIONS[0].id) || null,
       minionLevel: 10,
@@ -279,9 +348,12 @@
       minionGearGate: true,
       minionGearBuild: null,
       minionStars: 10,
+      minionSynergy: null,
       electroStacks: null,
       brittleStacks: 0,
       brittleZone: 'crit',
+      reckoningStacks: 0,
+      gems: {},
       enemy: sanitizeEnemy({}, 6),
       encounter: null,
       diff: 6,
@@ -316,9 +388,10 @@
     GEAR_KEYS.forEach(k => { if (k in g) gear[k] = num(g[k], gear[k], 0); });
     gear.dps = num(gear.dps, 200, 1);
     gear.speed = num(gear.speed, 1, 0.2, 4);
-    gear.name = typeof g.name === 'string' ? g.name : gear.name;
+      gear.name = typeof g.name === 'string' ? g.name : gear.name;
+      const gearBuild = sanitizeGearBuild(s.gearBuild || s.gb);
 
-    const encIds = (D.ENCOUNTERS || []).map(x => x.id);
+      const encIds = (D.ENCOUNTERS || []).map(x => x.id);
     const encRaw = s.encounter !== undefined ? s.encounter : s.ec;
     const encounter = encIds.indexOf(encRaw) >= 0 ? encRaw : null;
     const encDef = (D.ENCOUNTERS || []).find(x => x.id === encounter);
@@ -336,10 +409,12 @@
       element: element,
       primaryType: primaryType,
       gear: gear,
+      gearBuild: gearBuild,
       skills: sanitizeSkills(classKey, s.skills || s.s),
       talents: sanitizeTalents(classKey, s.talents || s.tl),
       setId: setId,
       setCount: setCount,
+      runeSlots: sanitizeRuneSlots(s.runeSlots || s.rs),
       legendaries: sanitizeLegendaries(classKey, s.legendaries || s.lg),
       minionId: minionId,
       minionLevel: int(s.minionLevel != null ? s.minionLevel : s.ml, 10, 1, 10),
@@ -348,9 +423,12 @@
       minionGearGate: bool(s.minionGearGate != null ? s.minionGearGate : s.m13g, true),
       minionGearBuild: sanitizeMinionGearBuild(s.minionGearBuild || s.m13),
       minionStars: stars,
+      minionSynergy: sanitizeSynergy(s.minionSynergy || s.mSyn),
       electroStacks: (s.electroStacks === undefined ? s.es : s.electroStacks) == null ? null : int(s.electroStacks !== undefined ? s.electroStacks : s.es, 0, 0, 10),
       brittleStacks: int(s.brittleStacks != null ? s.brittleStacks : s.bs, 0, 0, 100),
       brittleZone: pick(s.brittleZone || s.bz, ['crit', 'taken', 'off'], 'crit'),
+      reckoningStacks: int(s.reckoningStacks != null ? s.reckoningStacks : s.rk, 0, 0, 30),
+      gems: sanitizeGems(s.gems || s.gm),
       enemy: sanitizeEnemy(s.enemy || s.en, s.diff != null ? s.diff : s.df, encDef ? encDef.name : null),
       encounter: encounter,
       diff: num(s.diff != null ? s.diff : s.df, 6, 1, 20),
@@ -589,6 +667,57 @@
     return raw.set(KEY_PREF, JSON.stringify(o));
   }
 
+  /* ---------------------------------------------------------------- 板块预设
+     受游戏内置"天赋页保存"启发：每个板块（技能/装备特效/词条/宝石/仆从/天赋/符文）
+     独立保存多个命名方案；总配置方案 = 各板块各选一个预设的组合。
+     数据结构：{ skills:[{id,name,ts,data}], effects:[...], ... } */
+  const KEY_BLOCKS = 'deskrawl.lab.blocks.v1';
+  const BLOCK_KINDS = ['skills', 'effects', 'affix', 'gems', 'minion', 'talents', 'runes'];
+  const BLOCK_LABEL = {
+    skills: '技能配置', effects: '装备特效', affix: '装备词条', gems: '宝石镶嵌',
+    minion: '仆从配置', talents: '天赋页', runes: '符文页'
+  };
+  const bid = () => 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  function readBlocks() {
+    const o = parse(raw.get(KEY_BLOCKS));
+    const out = {};
+    BLOCK_KINDS.forEach(k => { out[k] = (o && Array.isArray(o[k])) ? o[k] : []; });
+    return out;
+  }
+  function writeBlocks(db) {
+    const clean = {};
+    BLOCK_KINDS.forEach(k => { clean[k] = Array.isArray(db[k]) ? db[k].slice(0, 30) : []; });
+    return raw.set(KEY_BLOCKS, JSON.stringify(clean));
+  }
+  function saveBlock(kind, name, data) {
+    if (BLOCK_KINDS.indexOf(kind) < 0) return null;
+    const db = readBlocks();
+    const entry = { id: bid(), name: String(name || '未命名').slice(0, 24), ts: Date.now(), data: data || {} };
+    db[kind].unshift(entry);
+    writeBlocks(db);
+    return entry;
+  }
+  function renameBlock(kind, id, name) {
+    const db = readBlocks();
+    const e = (db[kind] || []).find(x => x.id === id);
+    if (e) { e.name = String(name || e.name).slice(0, 24); writeBlocks(db); }
+    return e || null;
+  }
+  function removeBlock(kind, id) {
+    const db = readBlocks();
+    db[kind] = (db[kind] || []).filter(x => x.id !== id);
+    writeBlocks(db);
+    return db;
+  }
+  /* 总配置方案 = 各板块选中的预设 id 组合 */
+  function getBlueprint() {
+    const o = parse(raw.get(KEY_BLOCKS + '.blueprint')) || {};
+    return o; // { skills: id, effects: id, ... }
+  }
+  function setBlueprint(bp) {
+    return raw.set(KEY_BLOCKS + '.blueprint', JSON.stringify(bp || {}));
+  }
+
   /** 存储健康诊断：UI 用它在启动时给出友好提示，而不是静默失败 */
   function diagnose() {
     const draftRaw = raw.get(KEY_DRAFT);
@@ -609,7 +738,9 @@
     solveKey, getSolve, putSolve, clearSolve,
     exportFile, parseFile, toHash, fromHash,
     getPref, setPref, diagnose,
+    readBlocks, writeBlocks, saveBlock, renameBlock, removeBlock, getBlueprint, setBlueprint,
+    BLOCK_KINDS: BLOCK_KINDS.slice(), BLOCK_LABEL: BLOCK_LABEL,
     available: hasLS,
-    KEY: { saves: KEY_SAVES, draft: KEY_DRAFT, pending: KEY_PENDING, solve: KEY_SOLVE, pref: KEY_PREF }
+    KEY: { saves: KEY_SAVES, draft: KEY_DRAFT, pending: KEY_PENDING, solve: KEY_SOLVE, pref: KEY_PREF, blocks: KEY_BLOCKS }
   };
 })();
