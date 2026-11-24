@@ -1,50 +1,56 @@
-# 真源实证事实表（反编译 1.0.3 dump）
+# 真源实证事实表（1.0.4 dump，2026-11-25 全面对齐）
 
-> 来源：`limbo947/Deskrawl-Reverse` commit `0d56f3e`，`so_dump` dumped_at **2026-10-16**（对应游戏 **1.0.3**）。
-> 完整调研：`/root/.codebuddy/artifact/MECHANICS_TRUE_SOURCE.md`（8 项待实测项逐条取证）。
-> **版本边界**：真源是 1.0.3，不含 1.1.0 / 1.1.11 改动。**旧真源不得覆盖玩家已确认的新版数值**。
+> 来源：`CYLYcyy/Deskrawl-Reverse` commit `84e1727`，重导 **1.0.4** 全量 SO（buildid 26606215，2026-11-12 补丁）。
+> **版本口径**：Steam 展示号 **1.1.11a = 内部补丁 1.0.4**（同一天同一补丁）。旧「1.0.3 落后于 1.1.11」判断作废——缺的从来是高精度 dump，现已在手。
+> 完整裁决：`/workspace/deskrawl-真源裁决-1.0.4.md`；结构差异核实：`engine-gaps.md`（artifact）。
 > 采信度：官方 > 游戏本体逆向（本表）> 社区数据库 > 推断 > 查不到。
 
-## 一、真源已实证、且本地一致的项（可直接采信）
+## 一、真源已实证、本地已对齐（可直接采信）
 
-| 项 | 真源值 | 证据 | 本地状态 |
+| 项 | 1.0.4 真源值 | 证据 | 本地状态 |
 | --- | --- | --- | --- |
-| 易伤幅度 | 固定 **+30%（×1.3 硬编码）** | `docs/04` 伤害链步骤8：`if(目标.Vulnerable) dmg=round(dmg×1.3)`；常量 `1.3` 多处反汇编 | ✅ `data.js taken:30` 一致。真源 dur=3s，本地 4s 存疑 |
-| CDR 上限 | **80%**（85→80） | `docs/08` 1.0.2b §13.3 更新说明 + 反汇编查表 `0x18364F9C8`；1.0.3 逐字节一致 | ✅ `caps.cdr:80`，**不再是待核对项** |
-| 闪电风暴 | 基础 **150% + 7.5%/级**，3 段 | `AbilityData.json` `SorcererStrongAttack3`：Base=1.5/PerLevel=0.075/TargetCount=3 | ✅ 本地 225%=L11、二手 218%=L10，**同源不同等级，非两机制** |
-| 暴击/闪避/蓝耗上限 | 85%；减伤 90% | `docs/08` 属性封顶分档 `0.85/0.80/0.90/inf` | ✅ `caps.cc:85, dr:90` |
-| 技能等级成长 | `倍率(N)=Base+max(0,N−1)×PerLevel` | `docs/04` §6.2.0 `AttackScaling.wo(level)` | ✅ 引擎 `pctAtLevel` 已接入 |
-| 武器白字 | `Final(WeaponDamage=20)` 进伤害基项、乘技能倍率 | `Player.bjr` 括号原式；官方工具链置 base=0 防双计 | ✅ `weaponDamage` 走 stat20；**白字勿塞进 baseDamage** |
-| BaseDamage 固定项 | 玩家 49/49 段 **全为 0** | `AbilityData.json` DamageEffect.BaseDamage 穷举；官方工具链置 0 | ✅ 引擎 `s.baseDamage=0`，口径保真、数值零影响 |
+| 易伤幅度 | 固定 **×1.3** + VulnerableDamage 进条件池 | `docs/04` 步骤8 `dmg=round(dmg×1.3)`；`VulnerableBehavior` pathid 64929 | ✅ `taken:30`；真源 dur=3s，本地 4s 存疑（不影响幅度） |
+| CDR 上限 | **80%** | `StatCap.GetCap` 查表 1.0.4 逐字节一致 | ✅ `caps.cdr:80` |
+| 暴击/闪避/蓝耗上限 | 85%；减伤 90% | `StatCap.GetCap` 分档 | ✅ `caps.cc:85, dr:90` |
+| **静电** | **每层 10%**、最多 10 层、**仅闪电** | `StaticElectricity` pathid 64917：`DamageAmplificationBehavior AmplificationPercent.Base=0.10`、`MaxStacks=10`、`FilterByDamageType=true`、`AffectedDamageType=3(Lightning)` | ✅ 2026-11-25 从 5% 改为 10%；旧 5%/6.6% 已弃用 |
+| **闪电风暴** | 10 级 **217%**（Base 1.5 + 0.075/级） | `AbilityData.json SorcererStrongAttack3` `AttackScaling.value` | ✅ 从 225% 改为 217%；≈用户实测 218%（同源） |
+| **横扫** | 10 级 **97%**（Base 0.7 + 0.03/级） | `WarriorBasicAttack2` | ✅ 本地 97% 已正确 |
+| 技能等级成长 | `倍率(N)=Base+max(0,N−1)×PerLevel` | `docs/04` §6.2.0 | ✅ 引擎 `pctAtLevel`（44 技能按真源重灌） |
+| 武器白字 | `Final(WeaponDamage=20)` 进伤害基项、乘倍率 | `Player.bjr` 原式 | ✅ `weaponDamage` 走 stat20；白字勿塞 baseDamage |
+| BaseDamage 固定项 | 玩家 49/49 段全为 0 | `DamageEffect.BaseDamage` 穷举 | ✅ 引擎 `s.baseDamage=0` |
+| 装备词条 Roll | `(1+rarityMul)×ilvl×perLevel×rollFactor`（stat20 +5） | `ItemizationConfig` + `docs/04` §6.3 | ✅ affix.js 一致，55 项系数未变 |
 
-## 二、真源新证据，但冲突用户拍板 / 版本存疑（不静默改，进未决项）
-
-| 项 | 真源值（1.0.3） | 本地默认 / 用户拍板 | 处理 |
-| --- | --- | --- | --- |
-| 静电系数 | `StaticElectricity` = `DamageAmplificationBehavior`，`AmplificationPercent.Base=0.10` → **10%/层**（仅闪电 `AffectedDamageType=3`、10层） | **5%/层**（用户拍板推断） | 保留 5% 默认；10% 作为候选项进前端未决项，等用户裁决/实测。data.js 记 `perStackTrue:10` 仅证据不计算 |
-| 静电 × 易伤结构 | 二者**不同括号**：易伤独立 `×1.3`（`VulnerableBehavior`），静电走 Slot13 `DamageAmplificationBehavior` | **加算**（用户拍板，`taken:'additive'`） | 保留加算默认；相乘作敏感性候选，进未决项 |
-| 横扫倍率 | 基础 50% + 2.5%/级（L20=97.5%、L21=100%） | 本地 97%（旧版近似），**但 1.1.11 已改 70%+3%/级** | 真源是旧版，不能覆盖已确认的新版改动；本地 97% 仍是待裁决新值 |
-
-## 三、真源也没有答案（维持近似 / 标文案级）
+## 二、真源给了证据但结构仍无定论（保留敏感性口径）
 
 | 项 | 真源情况 | 处理 |
 | --- | --- | --- |
-| 脆裂 Brittle | SO `Behaviors:[]` **无任何数值**，`MaxStacks=100`；5%/层仅见于本地化文案"每层使受到的暴击伤害提高5%"；乘区归属无实证 | 数值 5%/层文案级；归属推断=暴击区。引擎已支持 `cfg.brittleStacks` + `brittleZone`('crit'/'taken'/'off')，默认 crit 但标推断，进未决项 |
-| 充能之戒 K 值 | `EquipmentEffects.json` 仅 `MaxBonus=0.5`，无独立 K/曲线字段（`EquipmentEffect_DamagePerManaFraction`）；`0.005/法力` 属武僧套符文，勿混用 | 本地用"50%×0.7 uptime"近似，缺法力维度；维持 |
-| 仆从被动成长 | 77/77 被动 `PerLevel=0`、无等级字段/配置/存档位——**1.0.3 被动固定**。但仆从养成是 1.1.0（10-29）才引入，真源版本落后 | 保留引擎成长路径，标注"真源版本未决"，不删不编造 |
+| 静电 × 易伤结构 | 静电=`DamageAmplificationBehavior`、易伤=`VulnerableBehavior`，两种不同 Behavior，真源**无合并证据** | 默认**加算**（`taken:'additive'`）；`--taken-mode multiply` 作敏感性对照。回答时说明口径，不武断断言 |
 
-## 四、回答机制问题时的标准话术
+## 三、真源已裁决的机制（初判「待实测」已移除）
 
-1. 先查本表：**真源已实证**的，直接给值，标"真源实证"。
-2. **冲突用户拍板/版本存疑**的，说："真源 1.0.3 给的是 X，但你的拍板是 Y，且真源版本落后于游戏，默认仍用 Y，X 作为候选项供你裁决"。
-3. **真源也没有**的，说："真源 SO 无此数值，只有文案/推断，维持近似"，绝不编造。
-4. 任何结论都带版本标注："真源 2026-10-16 dump（1.0.3）"。
+| 项 | 1.0.4 裁决 | 处理 |
+| --- | --- | --- |
+| **脆裂 Brittle** | 状态本身 `Behaviors=[]` 无伤害；+5%/层来自传奇戒指 `LegendaryRing8CritDamage` 的 `ConditionalCritDamage`，进**暴伤池** `1+cc×(cd+0.05×层数)` | ✅ 引擎已从「独立乘区」改为「并入暴伤」，默认 `brittleZone:'crit'` |
+| 三层聚合 PercentMult | 三层模型真实存在，但真实 `Type:2` 仅 12 个，全在 AttackSpeed/MoveSpeed/WeaponDamage；伤害关键属性 0 个 | 暂不接入通用层，登记结构缺口（清算锤未收录） |
+| 技能类型乘区 Slot16 | 33/34/61 真源独立加算，但 134/134 技能全单标签 | `ab.type` 单分类等价，不改引擎 |
+| 最终减伤 66 | 乘区后绝对减法、无上限，数据只在玩家侧磐石护腿 | 对输出 DPS 零影响，低优先级可选（默认 0） |
+| DoT | 引擎已有 `dotTick`（62 同池 + 条件池 + 暴击） | 已覆盖，无需补 |
 
-## 五、如何更新本表
+## 四、真源仍无答案（维持近似 / 标文案级）
 
-拿到 1.1.11 的新 `so_dump` 后（见 `/workspace/deskrawl-真源更新操作清单.md`），重跑核查脚本，逐项对比本表第二节的存疑项：
-- 静电系数是否仍 10%、结构是否仍不同括号 → 决定是否覆盖用户拍板的 5%/加算；
-- 横扫/技能的新版斜率 → 替换本地旧值；
-- 仆从被动是否新增成长系数 → 决定是否开放成长。
+| 项 | 真源情况 | 处理 |
+| --- | --- | --- |
+| 充能之戒 K 值 | 仅 `MaxBonus=0.5`，无独立 K/曲线 | 本地"50%×0.7 uptime"近似，维持 |
+| 仆从被动成长 | 68 条 SlaveData 无被动 PerLevel 成长字段；养成是 1.1.0 引入 | 保留成长路径，标"真源未给系数"，不编造 |
+| 新增传奇的机制折算 | 棱彩之心/终斩印戒/噬魂肩甲等依赖覆盖率/敌人数 | 标 `conf:'mechanism'`、记真源数值，不折算固定 fx |
 
-更新后同步修改 `data.js`、`engine.js`、`SKILL.md`、知识库（`build-kb.mjs` 重建）。
+## 五、回答机制问题时的标准话术
+
+1. 先查本表：**已实证**的直接给值，标"1.0.4 真源实证"。
+2. **结构无定论**（静电×易伤）：说"默认加算，真源两种 Behavior 无合并证据，可用相乘做敏感性对照"。
+3. **真源也没有**的：说"真源 SO 无此数值，维持近似"，绝不编造。
+4. 版本标注："1.0.4 SO dump（= Steam 1.1.11a，2026-11-25 对齐）"。
+
+## 六、如何更新本表
+
+游戏再更新后，按 `patch_regression.py --live` 重导 SO，逐项对比本表：静电/易伤结构是否出现合并证据、新增双标签技能、PercentMult 是否落到伤害属性、仆从成长系数。更新后同步 `data.js`、`engine.js`、`SKILL.md`，跑 `build-kb.mjs` 重建知识库。

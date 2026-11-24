@@ -486,6 +486,12 @@ window.Engine = (function () {
       const v = agg.cdVs[k];
       v.states.forEach(st => { cd += v.value * stateWeight(st, ctx); });
     }
+    // 1.0.4 真源：脆裂增伤来自传奇戒指 LegendaryRing8CritDamage 的 ConditionalCritDamage
+    // （进暴伤池：暴伤 += 0.05×层数，ScaleByStatusStacks）。仅在 crit 归属时并入 cd。
+    // cd 为百分点单位（200=200%），故 0.05×stacks 换算为 5×stacks 百分点。
+    if ((ctx.brittleZone || 'crit') === 'crit' && (ctx.brittleStacks || 0)) {
+      cd += MED.status.brittle.perStackCD * ctx.brittleStacks;
+    }
     return cd + (ctx.buffCd || 0);
   }
 
@@ -494,23 +500,20 @@ window.Engine = (function () {
   function takenMultiplier(agg, ele, ctx) {
     const ST = MED.status;
     const vuln = (ST.vulnerable.taken / 100) * (ctx.vulnUptime || 0);
-    const elec = ele === 'lightning' ? (ST.electrostatic.perStack / 100) * (ctx.electroStacks || 0) : 0;
+    // 静电系数：1.0.4 真源默认 10%/层；前端未决项 electroPerStack 可覆盖（用户一手实测/旧口径对照）
+    const perStack = ctx.electroPerStack != null ? ctx.electroPerStack : ST.electrostatic.perStack;
+    const elec = ele === 'lightning' ? (perStack / 100) * (ctx.electroStacks || 0) : 0;
     // 脆裂若被裁决进"受伤区"，则与易伤/静电同通道加算（层数0时不生效）
     const brit = (ctx.brittleZone === 'taken') ? (ST.brittle.perStackCD / 100) * (ctx.brittleStacks || 0) : 0;
     if (ctx.takenMode === 'multiplicative') return (1 + vuln) * (1 + elec) * (1 + brit);
     return 1 + vuln + elec + brit;
   }
 
-  /* 脆裂放大系数：每层 +5% 受到暴击伤害（MED.status.brittle.perStackCD）。
-     'crit'（默认/文案方向）：只放大暴击伤害那部分 → (1+0.05×层数)，进暴击乘区；
-     'off'：不启用；'taken'：由 takenMultiplier 处理，此处返回 1。
-     层数 0 或关闭时返回 1，保证旧构筑逐位不变。 */
+  /* 脆裂放大系数：1.0.4 真源下脆裂(crit 归属)已并入 critDamage 的暴伤池，
+     此处恒返回 1，避免重复相乘。'taken' 由 takenMultiplier 处理；'off' 不启用。
+     保留此函数只为兼容乘区面板的 note 展示。 */
   function brittleCritMult(ctx) {
-    const zone = ctx.brittleZone || 'crit';
-    if (zone !== 'crit') return 1;
-    const stacks = ctx.brittleStacks || 0;
-    if (!stacks) return 1;
-    return 1 + (MED.status.brittle.perStackCD / 100) * stacks;
+    return 1;
   }
 
   /* 单元素部分的乘区集合 */
@@ -535,7 +538,7 @@ window.Engine = (function () {
         { id: 'ability', name: '技能倍率', mult: pct / 100, value: pct / 100, note: (ab.name || '') + ' ' + pct + '%' },
         { id: 'attr', name: '主属性', mult: attr, value: attr, note: '1 + 主属性/100' },
         { id: 'element', name: '元素 + 全伤', mult: eleM, value: eleM, note: '加算：1 + 元素伤% + 全伤%' },
-        { id: 'crit', name: '暴击期望', mult: crit, value: crit, note: '1 + 暴率×暴伤×' + (bcrit !== 1 ? '脆裂' + bcrit.toFixed(2) + '×' : '') + '(1-暴伤减免)｜' + cc.toFixed(1) + '% / ' + cd.toFixed(0) + '%' },
+        { id: 'crit', name: '暴击期望', mult: crit, value: crit, note: '1 + 暴率×(暴伤+脆裂' + ((ctx.brittleStacks||0) && (ctx.brittleZone||'crit')==='crit' ? '+' + (MED.status.brittle.perStackCD*ctx.brittleStacks).toFixed(0) : '0') + ')×(1-暴伤减免)｜' + cc.toFixed(1) + '% / ' + cd.toFixed(0) + '%' },
         { id: 'vs', name: '条件伤', mult: vs, value: vs, note: '对精英/健康/减速等，内部加算' },
         { id: 'type', name: '类型伤', mult: type, value: type, note: '普通/强力/特殊' },
         { id: 'abilityMod', name: '技能专属加成', mult: abm, value: abm, note: '只作用于该技能' },
@@ -664,8 +667,9 @@ window.Engine = (function () {
       // 静电：点出静电充能后闪电命中必定叠层，按"平均 6 层"给默认值，
       // 用户可以手动覆盖（0–10），UI 里是滑块
       electroStacks: cfg.electroStacks != null ? cfg.electroStacks : (agg.flags.static ? 6 : 0),
+      electroPerStack: cfg.electroPerStack, // 前端未决项可覆盖静电系数（默认取 data.js 1.0.4 真源 10%）
       takenMode: cfg.takenMode, // B4: 'multiplicative' 时静电×易伤相乘，默认加算
-      // 脆裂：目标身上层数，每层 +5% 受到暴击伤害（文案级，真源 SO 无数值）。
+      // 脆裂：目标身上层数，1.0.4 真源来自传奇戒指暴伤池，默认 crit 归属。
       // 归属 brittleZone: 'crit'(暴击区，默认/文案方向) | 'taken'(受伤区) | 'off'(不启用)。
       brittleStacks: cfg.brittleStacks != null ? cfg.brittleStacks : 0,
       brittleZone: cfg.brittleZone || 'crit',
@@ -1027,6 +1031,7 @@ window.Engine = (function () {
       distant: typeof enemy.distant === 'number' ? enemy.distant : (enemy.distant ? 1 : 0), vulnUptime: cfg.vulnUptime || 0,
       count: enemy.count || 1,
       electroStacks: cfg.electroStacks != null ? cfg.electroStacks : (agg.flags.static ? 6 : 0),
+      electroPerStack: cfg.electroPerStack,
       takenMode: cfg.takenMode, // B4
       brittleStacks: cfg.brittleStacks != null ? cfg.brittleStacks : 0,
       brittleZone: cfg.brittleZone || 'crit',

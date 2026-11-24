@@ -1,16 +1,19 @@
 /* ==========================================================================
    桌面破坏神 · 伤害计算专家  —  数据集
-   游戏版本: 1.1.11a (2026-11-12)   数据校对: 2026-11-21
-   数据来源: deskrawl.tools / afkmeta / wikily / 官方补丁公告
-   说明: 技能数值为技能等级 10/10、角色 70 级。标注 approx 的为社区推算值。
+   游戏版本: 1.1.11a (2026-11-12) = 内部补丁 1.0.4   数据校对: 2026-11-25
+   数据来源: Deskrawl-Reverse 1.0.4 SO dump（字节级真源，buildid 26606215）+ 官方补丁公告
+   说明: 技能数值为技能等级 10/10、角色 70 级。2026-11-25 全面对齐 1.0.4 真源：
+         44 个技能倍率按 AttackScaling.value 重灌、静电 5%→10%（真源实锤）。
+         标注 approx 的为社区推算值（真源未覆盖部分）。
    更新方式: 只改本文件，engine.js 与界面无需改动。
    ========================================================================== */
 window.DESKRAWL_DATA = (function () {
   const VERSION = {
     game: '1.1.11a',
     gameDate: '2026-11-12',
-    dataDate: '2026-11-21',
-    note: '技能 10/10、等级 70、物品等级 700 基准'
+    dataDate: '2026-11-25',
+    trueSource: 'Deskrawl-Reverse 1.0.4（buildid 26606215，Steam展示号 1.1.11a = 内部补丁 1.0.4）',
+    note: '技能 10/10、等级 70、物品等级 700 基准；2026-11-25 全面对齐 1.0.4 SO 真源'
   };
 
   const ELEMENTS = {
@@ -29,22 +32,22 @@ window.DESKRAWL_DATA = (function () {
     tagline: '近战爆发 · 流血引擎',
     weapon: { name: '处刑巨斧', dps: 230, speed: 1.0 },
     basics: [
-      { id: 'w_val', name: '英勇打击', ele: 'physical', pct: 110, perLevel: 3, mana: 8, vuln: { chance: 20, dur: 3 }, tags: ['single'], text: '单体重击，20% 概率施加易伤。' },
-      { id: 'w_cleave', name: '横扫', ele: 'physical', pct: 97, perLevel: 3, mana: 6, tags: ['aoe'], text: '横扫前方所有敌人。1.1.11 基础值 70%，每级 +3%（基准 pct=97 为 10 级值，待游戏面板实测 97/100/75 定稿）。' },
-      { id: 'w_blood', name: '血刃', ele: 'physical', pct: 75, perLevel: 2.5, mana: 7, dot: { pct: 250, dur: 5, ele: 'physical' }, tags: ['single', 'bleed'], text: '直伤 + 5 秒流血 250%。' },
-      { id: 'w_steady', name: '稳固重击', ele: 'physical', pct: 85, perLevel: 2.5, mana: 6, tags: ['single'], text: '叠加壁垒，偏防御。' }
+      { id: 'w_val', name: '英勇打击', ele: 'physical', pct: 107, perLevel: 3.0, mana: 8, vuln: { chance: 20, dur: 3 }, tags: ['single'], text: '单体重击，20% 概率施加易伤。' },
+      { id: 'w_cleave', name: '横扫', ele: 'physical', pct: 97, perLevel: 3.0, mana: 6, tags: ['aoe'], text: '横扫前方所有敌人。1.1.11 基础值 70%，每级 +3%（基准 pct=97 为 10 级值，待游戏面板实测 97/100/75 定稿）。' },
+      { id: 'w_blood', name: '血刃', ele: 'physical', pct: 72, perLevel: 2.5, mana: 7, dot: { pct: 250, dur: 5, ele: 'physical' }, tags: ['single', 'bleed'], text: '直伤 + 5 秒流血 250%。' },
+      { id: 'w_steady', name: '稳固重击', ele: 'physical', pct: 82, perLevel: 2.5, mana: 6, tags: ['single'], text: '叠加壁垒，偏防御。' }
     ],
     strongs: [
-      { id: 'w_flame', name: '烈焰打击', ele: 'fire', pct: 350, perLevel: 10, mana: 35, tags: ['single'], text: '单体火焰爆发，战士最高单发。' },
-      { id: 'w_half', name: '半月斩', ele: 'physical', pct: 220, perLevel: 7, mana: 55, tags: ['aoe', 'pierce'], text: '穿透所有敌人。' },
-      { id: 'w_whirl', name: '旋风斩', ele: 'physical', pct: 150, perLevel: 5, mana: 85, channel: { dur: 3, interval: 0.4 }, tags: ['aoe', 'channel'], text: '持续旋转，每 0.4 秒一跳。' },
-      { id: 'w_rend', name: '撕裂猛击', ele: 'physical', pct: 130, perLevel: 3, hits: 3, mana: 28, dot: { pct: 250, dur: 5, ele: 'physical' }, tags: ['aoe', 'bleed'], text: '三段斩击，每段附带流血。' }
+      { id: 'w_flame', name: '烈焰打击', ele: 'fire', pct: 340, perLevel: 10.0, mana: 35, tags: ['single'], text: '单体火焰爆发，战士最高单发。' },
+      { id: 'w_half', name: '半月斩', ele: 'physical', pct: 213, perLevel: 7.0, mana: 55, tags: ['aoe', 'pierce'], text: '穿透所有敌人。' },
+      { id: 'w_whirl', name: '旋风斩', ele: 'physical', pct: 145, perLevel: 5.0, mana: 85, channel: { dur: 3, interval: 0.4 }, tags: ['aoe', 'channel'], text: '持续旋转，每 0.4 秒一跳。' },
+      { id: 'w_rend', name: '撕裂猛击', ele: 'physical', pct: 127, perLevel: 3.0, hits: 3, mana: 28, dot: { pct: 250, dur: 5, ele: 'physical' }, tags: ['aoe', 'bleed'], text: '三段斩击，每段附带流血。' }
     ],
     specials: [
       { id: 'w_shout', name: '狂暴怒吼', perLevel: 1, cd: 25, buff: { as: 35, dur: 4 }, tags: ['warcry'], text: '攻速 +35%，持续 4 秒。' },
       { id: 'w_shield', name: '狂怒护盾', perLevel: 1.5, cd: 28, tags: ['warcry', 'def'], text: '吸收 55% 最大生命的护盾，持续 9 秒。' },
-      { id: 'w_hook', name: '夺命钩', ele: 'physical', pct: 90, perLevel: 1.5, cd: 10, vuln: { chance: 100, dur: 4 }, tags: ['aoe'], text: '拉怪并施加易伤。' },
-      { id: 'w_earth', name: '大地震击', ele: 'physical', pct: 420, perLevel: 12, cd: 16, tags: ['aoe', 'stun'], text: '高伤 AOE 并眩晕。' },
+      { id: 'w_hook', name: '夺命钩', ele: 'physical', pct: 88, perLevel: 1.5, cd: 10, vuln: { chance: 100, dur: 4 }, tags: ['aoe'], text: '拉怪并施加易伤。' },
+      { id: 'w_earth', name: '大地震击', ele: 'physical', pct: 408, perLevel: 12.0, cd: 16, tags: ['aoe', 'stun'], text: '高伤 AOE 并眩晕。' },
       { id: 'w_thorn', name: '铁荆棘', perLevel: 10, cd: 25, thorns: { mult: 1.0, dur: 8, interval: 1 }, tags: ['aoe'], text: '8 秒内每秒对周围造成 100% 荆棘值的物理伤害。' },
       { id: 'w_molten', name: '熔火之力', perLevel: 3, cd: 10, buff: { strong: 55, costRed: 50, manaRestore: 50, dur: 11 }, tags: ['warcry'], text: '回复 50% 法力，11 秒内强力攻击 +55% 且耗蓝 -50%。' }
     ],
@@ -63,24 +66,24 @@ window.DESKRAWL_DATA = (function () {
     tagline: '远程元素 · 闪电风暴',
     weapon: { name: '琥珀骷髅杖', dps: 230, speed: 1.0 },
     basics: [
-      { id: 's_fireball', name: '火球术', ele: 'fire', pct: 105, perLevel: 3, mana: 9, tags: ['aoe'], text: '小范围爆炸。' },
-      { id: 's_ice', name: '寒冰碎片', ele: 'cold', pct: 175, perLevel: 5, mana: 9, tags: ['single'], text: '单发最高基础倍率。' },
-      { id: 's_electro', name: '电弧', ele: 'lightning', pct: 95, perLevel: 2.5, mana: 9, tags: ['aoe'], text: '扇形命中前方全部敌人。' },
-      { id: 's_flamelight', name: '烈焰闪电', ele: 'lightning', pct: 90, perLevel: 2.5, extra: { ele: 'fire', pct: 80 }, mana: 9, tags: ['single'], text: '同时造成 80% 火焰 + 90% 闪电。' }
+      { id: 's_fireball', name: '火球术', ele: 'fire', pct: 102, perLevel: 3.0, mana: 9, tags: ['aoe'], text: '小范围爆炸。' },
+      { id: 's_ice', name: '寒冰碎片', ele: 'cold', pct: 170, perLevel: 5.0, mana: 9, tags: ['single'], text: '单发最高基础倍率。' },
+      { id: 's_electro', name: '电弧', ele: 'lightning', pct: 92, perLevel: 2.5, mana: 9, tags: ['aoe'], text: '扇形命中前方全部敌人。' },
+      { id: 's_flamelight', name: '烈焰闪电', ele: 'lightning', pct: 88, perLevel: 2.5, extra: { ele: 'fire', pct: 80 }, mana: 9, tags: ['single'], text: '同时造成 80% 火焰 + 90% 闪电。' }
     ],
     strongs: [
-      { id: 's_breath', name: '烈焰吐息', ele: 'fire', pct: 240, perLevel: 6, mana: 65, cd: 1.5, tags: ['aoe'], text: '直线火焰并点燃。' },
-      { id: 's_icemeteor', name: '冰陨石', ele: 'cold', pct: 85, perLevel: 2, mana: 80, cd: 4, channel: { dur: 3, interval: 0.5 }, tags: ['aoe', 'field'], text: '留下 3 秒冰霜领域，每 0.5 秒一跳。' },
-      { id: 's_storm', name: '闪电风暴', ele: 'lightning', pct: 225, perLevel: 7.5, hits: 3, mana: 50, tags: ['aoe'], text: '随机打击 3 个敌人。' },
-      { id: 's_frostbeam', name: '寒冰射线', ele: 'cold', pct: 80, perLevel: 2, mana: 45, cd: 3.3, channel: { dur: 3, interval: 0.5 }, tags: ['aoe', 'channel'], text: '引导 3 秒，每 0.5 秒一跳。' }
+      { id: 's_breath', name: '烈焰吐息', ele: 'fire', pct: 234, perLevel: 6.0, mana: 65, cd: 1.5, tags: ['aoe'], text: '直线火焰并点燃。' },
+      { id: 's_icemeteor', name: '冰陨石', ele: 'cold', pct: 83, perLevel: 2.0, mana: 80, cd: 4, channel: { dur: 3, interval: 0.5 }, tags: ['aoe', 'field'], text: '留下 3 秒冰霜领域，每 0.5 秒一跳。' },
+      { id: 's_storm', name: '闪电风暴', ele: 'lightning', pct: 217, perLevel: 7.5, hits: 3, mana: 50, tags: ['aoe'], text: '随机打击 3 个敌人。' },
+      { id: 's_frostbeam', name: '寒冰射线', ele: 'cold', pct: 78, perLevel: 2.0, mana: 45, cd: 3.3, channel: { dur: 3, interval: 0.5 }, tags: ['aoe', 'channel'], text: '引导 3 秒，每 0.5 秒一跳。' }
     ],
     specials: [
-      { id: 's_nova', name: '冰霜新星', ele: 'cold', pct: 40, perLevel: 1, cd: 22, tags: ['aoe', 'freeze'], text: '冻结周围敌人。' },
+      { id: 's_nova', name: '冰霜新星', ele: 'cold', pct: 39, perLevel: 1.0, cd: 22, tags: ['aoe', 'freeze'], text: '冻结周围敌人。' },
       { id: 's_elemental', name: '火焰元素', perLevel: 3, cd: 30, summon: { pct: 110, dur: 12, interval: 1 }, tags: ['summon'], text: '召唤火元素持续攻击。' },
       { id: 's_iceblock', name: '寒冰屏障', perLevel: 10, cd: 30, tags: ['def'], text: '5 秒无敌但无法行动。' },
-      { id: 's_meteor', name: '火焰陨石', ele: 'fire', pct: 550, perLevel: 15, cd: 24, tags: ['aoe', 'burn'], text: '大范围爆发并点燃。' },
+      { id: 's_meteor', name: '火焰陨石', ele: 'fire', pct: 535, perLevel: 15.0, cd: 24, tags: ['aoe', 'burn'], text: '大范围爆发并点燃。' },
       { id: 's_aura', name: '烈焰光环', perLevel: 10, cd: 21, buff: { cc: 10, cd: 150, dur: 5 }, tags: ['buff'], text: '5 秒内暴击率 +10%、暴伤 +150%。' },
-      { id: 's_cloud', name: '闪电云', ele: 'lightning', pct: 70, perLevel: 2, hits: 8, cd: 24, tags: ['aoe', 'field'], text: '4 秒内 8 道闪电。' }
+      { id: 's_cloud', name: '闪电云', ele: 'lightning', pct: 68, perLevel: 2.0, hits: 8, cd: 24, tags: ['aoe', 'field'], text: '4 秒内 8 道闪电。' }
     ],
     sets: [
       { id: 's_storm', name: '风暴召唤者', b: { 2: { dmg: { lightning: 50 } }, 4: { flag: 'storm_splash' }, 6: { flag: 'storm_ball' } }, text: '2: 闪电 +50%; 4: 风暴溅射; 6: 每次命中生成闪电球(50%×3)' },
@@ -96,24 +99,24 @@ window.DESKRAWL_DATA = (function () {
     tagline: '远程物理 · 速射与陷阱',
     weapon: { name: '黑鸦反曲弓', dps: 230, speed: 1.0 },
     basics: [
-      { id: 'h_poison', name: '毒液射击', ele: 'poison', pct: 135, perLevel: 3.5, mana: 8, dot: { pct: 400, dur: 8, ele: 'poison' }, tags: ['single', 'poison'], text: '每 2 秒 100% 武器伤害，持续 8 秒（共 400%）。1.1.11 毒跳 75%→100%。' },
-      { id: 'h_bomb', name: '奥术炸弹', ele: 'arcane', pct: 90, perLevel: 2, mana: 10, tags: ['aoe'], text: '小范围爆炸。' },
-      { id: 'h_knife', name: '飞刀弹幕', ele: 'physical', pct: 120, perLevel: 3, hits: 3, mana: 7, tags: ['aoe'], text: '同时打 3 个目标，单体时集中。' },
-      { id: 'h_twin', name: '双箭', ele: 'physical', pct: 90, perLevel: 2, hits: 2, mana: 9, tags: ['single'], text: '单体时两箭都命中同一目标。' }
+      { id: 'h_poison', name: '毒液射击', ele: 'poison', pct: 132, perLevel: 3.5, mana: 8, dot: { pct: 400, dur: 8, ele: 'poison' }, tags: ['single', 'poison'], text: '每 2 秒 100% 武器伤害，持续 8 秒（共 400%）。1.1.11 毒跳 75%→100%。' },
+      { id: 'h_bomb', name: '奥术炸弹', ele: 'arcane', pct: 88, perLevel: 2.0, mana: 10, tags: ['aoe'], text: '小范围爆炸。' },
+      { id: 'h_knife', name: '飞刀弹幕', ele: 'physical', pct: 117, perLevel: 3.0, hits: 3, mana: 7, tags: ['aoe'], text: '同时打 3 个目标，单体时集中。' },
+      { id: 'h_twin', name: '双箭', ele: 'physical', pct: 88, perLevel: 2.0, hits: 2, mana: 9, tags: ['single'], text: '单体时两箭都命中同一目标。' }
     ],
     strongs: [
-      { id: 'h_steady', name: '稳固射击', ele: 'physical', pct: 330, perLevel: 8, mana: 55, cd: 0.8, tags: ['pierce'], text: '穿透直线。' },
-      { id: 'h_multi', name: '多重射击', ele: 'arcane', pct: 265, perLevel: 6.5, mana: 65, cd: 0.6, tags: ['aoe'], text: '宽锥形 AOE。' },
-      { id: 'h_rapid', name: '快速射击', ele: 'physical', pct: 61, perLevel: 1.6, mana: 70, cd: 2.5, channel: { dur: 2, interval: 0.25 }, tags: ['channel'], text: '引导 2 秒，每 0.25 秒一箭。' },
-      { id: 'h_venom', name: '毒液弩矢', ele: 'poison', pct: 210, perLevel: 5, mana: 80, cd: 0.8, dot: { pct: 800, dur: 8, ele: 'poison' }, tags: ['aoe', 'poison'], text: '范围爆发并叠 2 层中毒（按 2 层计）。' }
+      { id: 'h_steady', name: '稳固射击', ele: 'physical', pct: 322, perLevel: 8.0, mana: 55, cd: 0.8, tags: ['pierce'], text: '穿透直线。' },
+      { id: 'h_multi', name: '多重射击', ele: 'arcane', pct: 258, perLevel: 6.5, mana: 65, cd: 0.6, tags: ['aoe'], text: '宽锥形 AOE。' },
+      { id: 'h_rapid', name: '快速射击', ele: 'physical', pct: 59, perLevel: 1.6, mana: 70, cd: 2.5, channel: { dur: 2, interval: 0.25 }, tags: ['channel'], text: '引导 2 秒，每 0.25 秒一箭。' },
+      { id: 'h_venom', name: '毒液弩矢', ele: 'poison', pct: 205, perLevel: 5.0, mana: 80, cd: 0.8, dot: { pct: 800, dur: 8, ele: 'poison' }, tags: ['aoe', 'poison'], text: '范围爆发并叠 2 层中毒（按 2 层计）。' }
     ],
     specials: [
-      { id: 'h_trap', name: '毒陷阱', ele: 'poison', pct: 350, perLevel: 10, cd: 30, tags: ['aoe', 'trap'], dot: { pct: 1200, dur: 8, ele: 'poison' }, text: '3 层中毒，每 2 秒 100%，持续 8 秒。' },
-      { id: 'h_shock', name: '震荡波', ele: 'physical', pct: 130, perLevel: 3, cd: 20, tags: ['aoe'] },
+      { id: 'h_trap', name: '毒陷阱', ele: 'poison', pct: 340, perLevel: 10.0, cd: 30, tags: ['aoe', 'trap'], dot: { pct: 1200, dur: 8, ele: 'poison' }, text: '3 层中毒，每 2 秒 100%，持续 8 秒。' },
+      { id: 'h_shock', name: '震荡波', ele: 'physical', pct: 127, perLevel: 3.0, cd: 20, tags: ['aoe'] },
       { id: 'h_flare', name: '照明弹', perLevel: 0, cd: 25, vuln: { chance: 100, dur: 3 }, tags: ['aoe'], text: '施加易伤与眩晕 3 秒。' },
-      { id: 'h_arrowstorm', name: '奥术箭雨', ele: 'arcane', pct: 210, perLevel: 5, hits: 6, cd: 24, tags: ['aoe', 'field'] },
+      { id: 'h_arrowstorm', name: '奥术箭雨', ele: 'arcane', pct: 205, perLevel: 5.0, hits: 6, cd: 24, tags: ['aoe', 'field'] },
       { id: 'h_phantom', name: '幻影形态', perLevel: 0, cd: 24, buff: { as: 50, dur: 6 }, tags: ['buff'] },
-      { id: 'h_arctrap', name: '奥术陷阱', ele: 'arcane', pct: 550, perLevel: 15, cd: 30, tags: ['aoe', 'trap'] }
+      { id: 'h_arctrap', name: '奥术陷阱', ele: 'arcane', pct: 535, perLevel: 15.0, cd: 30, tags: ['aoe', 'trap'] }
     ],
     sets: [
       { id: 'h_deadeye', name: '神射手之决', b: { 2: { dmg: { physical: 50 } }, 6: { flag: 'rapid_double' } }, text: '2: 物理 +50%; 6: 快速射击 +30% 速度且伤害翻倍' },
@@ -129,24 +132,24 @@ window.DESKRAWL_DATA = (function () {
     tagline: '近战连击 · 圣光闪电',
     weapon: { name: '缠皮长棍', dps: 230, speed: 1.0 },
     basics: [
-      { id: 'm_three', name: '三连击', ele: 'physical', pct: 200, perLevel: 2.5, mana: 9, tags: ['single'], text: '125/125/400，平均 216.7%，此处按均摊 200% 计。' },
-      { id: 'm_fist', name: '怒拳', ele: 'physical', pct: 110, perLevel: 3, mana: 5, selfBuff: { as: 5, max: 20, dur: 4 }, tags: ['single'], text: '每层 +5% 攻速，最多 20 层。' },
-      { id: 'm_seismic', name: '震地击', ele: 'physical', pct: 133, perLevel: 2.5, mana: 7, tags: ['aoe'], text: '每第三击 180% 溅射，均摊 133%。' },
-      { id: 'm_chi', name: '真气弹', ele: 'physical', pct: 120, perLevel: 3, mana: 7, tags: ['single'], text: '第三发回血。' }
+      { id: 'm_three', name: '三连击', ele: 'physical', pct: 380, perLevel: 20.0, mana: 9, tags: ['single'], text: '125/125/400，平均 216.7%，此处按均摊 200% 计。' },
+      { id: 'm_fist', name: '怒拳', ele: 'physical', pct: 107, perLevel: 3.0, mana: 5, selfBuff: { as: 5, max: 20, dur: 4 }, tags: ['single'], text: '每层 +5% 攻速，最多 20 层。' },
+      { id: 'm_seismic', name: '震地击', ele: 'physical', pct: 108, perLevel: 2.5, mana: 7, tags: ['aoe'], text: '每第三击 180% 溅射，均摊 133%。' },
+      { id: 'm_chi', name: '真气弹', ele: 'physical', pct: 117, perLevel: 3.0, mana: 7, tags: ['single'], text: '第三发回血。' }
     ],
     strongs: [
-      { id: 'm_judgment', name: '神圣裁决', ele: 'lightning', pct: 520, perLevel: 12, extra: { ele: 'lightning', pct: 140 }, mana: 45, tags: ['single'], text: '主目标 520% + 周围 140% 闪电。' },
-      { id: 'm_lunge', name: '穿刺突进', ele: 'physical', pct: 240, perLevel: 6, mana: 32, tags: ['aoe'], text: '直线穿透。' },
-      { id: 'm_staff', name: '旋风棍', ele: 'physical', pct: 95, perLevel: 2.5, hits: 2, mana: 75, cd: 1, tags: ['aoe'], text: '两道龙卷，各 95%。' },
-      { id: 'm_palms', name: '金掌', ele: 'physical', pct: 230, perLevel: 7, mana: 40, cd: 1, tags: ['aoe'], text: '双掌穿透并击退。' }
+      { id: 'm_judgment', name: '神圣裁决', ele: 'lightning', pct: 508, perLevel: 12.0, extra: { ele: 'lightning', pct: 140 }, mana: 45, tags: ['single'], text: '主目标 520% + 周围 140% 闪电。' },
+      { id: 'm_lunge', name: '穿刺突进', ele: 'physical', pct: 234, perLevel: 6.0, mana: 32, tags: ['aoe'], text: '直线穿透。' },
+      { id: 'm_staff', name: '旋风棍', ele: 'physical', pct: 92, perLevel: 2.5, hits: 2, mana: 75, cd: 1, tags: ['aoe'], text: '两道龙卷，各 95%。' },
+      { id: 'm_palms', name: '金掌', ele: 'physical', pct: 223, perLevel: 7.0, mana: 40, cd: 1, tags: ['aoe'], text: '双掌穿透并击退。' }
     ],
     specials: [
-      { id: 'm_orbs', name: '圣光法球', ele: 'lightning', pct: 101, perLevel: 1.5, hits: 4, cd: 18, tags: ['aoe'], text: '环绕 6 秒，多次命中。' },
+      { id: 'm_orbs', name: '圣光法球', ele: 'lightning', pct: 100, perLevel: 1.5, hits: 4, cd: 18, tags: ['aoe'], text: '环绕 6 秒，多次命中。' },
       { id: 'm_stream', name: '灵流', perLevel: 1, cd: 16, tags: ['def'], text: '每秒回复 21% 最大生命，持续 4 秒。' },
-      { id: 'm_charge', name: '冲锋', ele: 'physical', pct: 260, perLevel: 8, cd: 12, tags: ['aoe', 'stun'] },
+      { id: 'm_charge', name: '冲锋', ele: 'physical', pct: 252, perLevel: 8.0, cd: 12, tags: ['aoe', 'stun'] },
       { id: 'm_twin', name: '灵魂双子', perLevel: 20, cd: 28, buff: { mirror: 1, dur: 10 }, tags: ['summon'], text: '10 秒内复制你的基础与强力攻击。' },
       { id: 'm_wind', name: '踏风', perLevel: 0, cd: 16, buff: { dodge: 30, dur: 5 }, tags: ['def'] },
-      { id: 'm_thunder', name: '圣雷', ele: 'lightning', pct: 380, perLevel: 10, cd: 18, tags: ['aoe'] }
+      { id: 'm_thunder', name: '圣雷', ele: 'lightning', pct: 370, perLevel: 10.0, cd: 18, tags: ['aoe'] }
     ],
     sets: [
       { id: 'm_hundred', name: '百手', b: { 2: { dmg: { basic: 100 } }, 4: { flag: 'fist_phys' }, 6: { flag: 'fist_palms' } }, text: '2: 基础攻击 +100%; 4: 怒拳每层 +3% 物理; 6: 25% 概率免费金掌' },
@@ -442,8 +445,8 @@ window.DESKRAWL_DATA = (function () {
          乘区归属无实证（文案方向=暴击乘区）。本地维持 5%/层 max10，标为文案级。 */
     status: {
       vulnerable:      { taken: 30, dur: 4, note: 'Take 30% more damage；真源 ×1.3 硬编码实证，真源 dur=3s' },
-      electrostatic:   { perStack: 5, perStackTrue: 10, max: 10, dur: 4, ele: 'lightning', note: '本地 5%（用户拍板推断）；真源 1.0.3 SO = 10%/层（仅闪电、10层），冲突待用户裁决' },
-      brittle:         { perStackCD: 5, max: 10, note: '每层 +5% 受到暴击伤害（仅本地化文案，真源 SO 无数值；乘区归属未实证）' },
+      electrostatic:   { perStack: 10, perStackOld: 5, max: 10, dur: 4, ele: 'lightning', note: '1.0.4 真源 SO 实锤：StaticElectricity DamageAmplificationBehavior AmplificationPercent=0.10 → 每层 10%（仅闪电、10层）。旧版 5% 为用户早期推断值，已按真源对齐' },
+      brittle:         { perStackCD: 5, max: 10, source: 'LegendaryRing8CritDamage', note: '1.0.4 真源实锤：脆裂本身无伤害行为（Brittle SO Behaviors=[]，MaxStacks=100）；+5%/层来自传奇戒指 LegendaryRing8CritDamage 的 ConditionalCritDamage（进暴伤池：暴伤 += 0.05×层数）。max10 为本地模拟上限，真源戒指逻辑无层数上限' },
       exposed:         { stacks: 5, note: '5 层破绽 → 易伤' },
       chill:           { as: -25, ms: -35 },
       numbingCold:     { dealt: -30 },
@@ -477,32 +480,32 @@ window.DESKRAWL_DATA = (function () {
     { id: 'raptor', name: '迅猛龙', rarity: '传说', bonus: { dmg: { dot: 30 }, stat: { cc: 3, cd: 25 } }, cap: 35 },
     { id: 'emberfang', name: '烬牙', rarity: '传说', bonus: { vs: { elite: 30 } }, cap: 30 },
     { id: 'lordcinder', name: '灰烬领主', rarity: '传说', bonus: { stat: { cdr: 12 } }, cap: 35 },
-    { id: 'icehound', name: '冰霜猎犬', rarity: '传说', bonus: { dmg: { lightning: 30 } }, cap: 35 },
+    { id: 'icehound', name: '冰霜猎犬', rarity: '传说', bonus: { dmg: { lightning: 30, cold: 30 } }, cap: 35, note: '1.0.4 真源补冰霜伤害 +30%' },
     { id: 'bonereaper', name: '白骨收割者', rarity: '传说', bonus: { dmg: { lightning: 30 } }, cap: 30 },
     { id: 'tidewrath', name: '怒潮蟹王', rarity: '传说', bonus: { stat: { cd: 40 }, def: 1 }, cap: 32 },
     { id: 'redrocklord', name: '赤岩领主', rarity: '传说', bonus: { dmg: { strong: 30 } }, cap: 25 },
     { id: 'lordcrimson', name: '绯红谷领主', rarity: '传说', bonus: { vs: { vulnerable: 30 } }, cap: 30 },
-    { id: 'frostdragon', name: '霜龙', rarity: '传说', bonus: { vs: { distant: 30 } }, cap: 35 },
+    { id: 'frostdragon', name: '霜龙', rarity: '传说', bonus: { vs: { distant: 40 } }, cap: 35, note: '1.0.4 真源 远处 30→40%' },
     { id: 'harpy', name: '沙暴鹰身女王', rarity: '传说', bonus: { vs: { slowed: 30 } }, cap: 27 },
-    { id: 'serparmat', name: '吞噬者瑟帕玛特', rarity: '传说', bonus: { vs: { bleeding: 30 } }, cap: 30 },
+    { id: 'serparmat', name: '吞噬者瑟帕玛特', rarity: '传说', bonus: { vs: { bleeding: 40 } }, cap: 30, note: '1.0.4 真源 流血 30→40%' },
     { id: 'dreadmanticore', name: '沙丘蝎狮', rarity: '传说', bonus: { dmg: { poison: 30 } }, cap: 35 },
-    { id: 'darkelf', name: '暗精灵法师', rarity: '传说', bonus: { stat: { manaMax: 50 }, dmg: { fire: 30 } }, cap: 25 },
+    { id: 'darkelf', name: '暗精灵法师', rarity: '传说', bonus: { stat: { manaMax: 50 }, dmg: { fire: 30, arcane: 30 } }, cap: 25, note: '1.0.4 真源补奥术伤害 +30%' },
     { id: 'defiledwyrm', name: '污秽古龙', rarity: '传说', bonus: { def: 1 }, cap: 34 },
     { id: 'ancientoak', name: '远古橡木树精', rarity: '传说', bonus: { def: 1 }, cap: 30 },
     { id: 'bloodmoon', name: '血月狼人', rarity: '传说', bonus: { def: 1 }, cap: 25 },
-    { id: 'undeadaxe', name: '亡灵斧手', rarity: '稀有', bonus: { dmg: { physical: 20 } }, cap: 27 },
+    { id: 'undeadaxe', name: '亡灵斧手', rarity: '稀有', bonus: { dmg: { physical: 25 } }, cap: 27, note: '1.0.4 真源 物理 20→25%' },
     { id: 'cinderlash', name: '烬鞭', rarity: '稀有', bonus: { dmg: { fire: 25 } }, cap: 28 },
     { id: 'faedragon', name: '妖精龙', rarity: '稀有', bonus: { dmg: { arcane: 25 } }, cap: 25 },
-    { id: 'brinescale', name: '盐鳞蛇', rarity: '稀有', bonus: { dmg: { cold: 20 } }, cap: 25 },
+    { id: 'brinescale', name: '盐鳞蛇', rarity: '稀有', bonus: { dmg: { cold: 25 } }, cap: 25, note: '1.0.4 真源 冰霜 20→25%' },
     { id: 'skeleton', name: '骷髅弓手', rarity: '罕见', bonus: { stat: { cc: 3 } }, cap: 25 },
-    { id: 'greywolf', name: '灰森林狼', rarity: '罕见', bonus: { stat: { as: 5 } }, cap: 15 },
+    { id: 'greywolf', name: '灰森林狼', rarity: '罕见', bonus: { stat: { as: 10 } }, cap: 15, note: '1.0.4 真源 攻速 5→10%' },
     { id: 'mutatingwolf', name: '变异狼', rarity: '稀有', bonus: { stat: { cc: 0 } , def: 1 }, cap: 20 },
-    { id: 'orc', name: '兽人战士', rarity: '稀有', bonus: { statPct: { str: 10, dex: 10 } }, cap: 30 },
+    { id: 'orc', name: '兽人战士', rarity: '稀有', bonus: { statPct: { str: 10 } }, cap: 30, note: '1.0.4 真源仅力量+10%（旧版多记的敏捷+10% 已删）' },
     { id: 'scorched', name: '焦灼小鬼', rarity: '罕见', bonus: { dmg: { fire: 20 } }, cap: 25 },
-    { id: 'mountain', name: '山虎', rarity: '罕见', bonus: { vs: { healthy: 15 } }, cap: 25 },
-    { id: 'sandwasp', name: '沙蜂', rarity: '罕见', bonus: { vs: { poisoned: 15 } }, cap: 20 },
+    { id: 'mountain', name: '山虎', rarity: '罕见', bonus: { vs: { healthy: 25 } }, cap: 25, note: '1.0.4 真源 健康目标 15→25%' },
+    { id: 'sandwasp', name: '沙蜂', rarity: '罕见', bonus: { vs: { poisoned: 20 } }, cap: 20, note: '1.0.4 真源 中毒目标 15→20%' },
     { id: 'koboldthief', name: '沙狗头窃贼', rarity: '罕见', bonus: { vs: { bleeding: 20 } }, cap: 20 },
-    { id: 'frozen', name: '冰霜僵尸战士', rarity: '罕见', bonus: { dmg: { all: 3 } }, cap: 25 },
+    { id: 'frozen', name: '冰霜僵尸战士', rarity: '罕见', bonus: { dmg: { all: 5 } }, cap: 25, note: '1.0.4 真源 全伤 3→5%' },
     { id: 'flyingfish', name: '飞鱼王', rarity: '传说', bonus: { mana: { costRed: 10 } }, cap: 30 },
     { id: 'bluewhale', name: '蓝猛犸', rarity: '传说', bonus: { def: 1 }, cap: 35 }
   ];
@@ -547,7 +550,7 @@ window.DESKRAWL_DATA = (function () {
       text: '击杀后 +30% 攻击速度，持续 3 秒。',
       fx: { stat: { as: 30 }, uptime: 0.6 } },
     { id: 'wanderinggale', name: '游风之冠', slot: '头盔', lvl: 35, cls: ['monk'], conf: 'modeled',
-      text: '旋风杖召唤 4 道龙卷，但每道小 25%、持续时间更短。',
+      text: '旋风棍式召唤 4 道龙卷，每道体积 -25%、游走时长 -40%（1.0.4 真源 SizeIncrease=-0.25 / LifetimeIncrease=-0.4）。',
       fx: { ability: { m_whirl: 50 }, note: '4×0.75 / 2 = 1.5 倍' } },
     { id: 'kabuto', name: '绯红风暴兜', slot: '头盔', lvl: 35, cls: ['warrior'], conf: 'modeled',
       text: '旋风斩每击 30% 概率施加流血。',
@@ -585,9 +588,9 @@ window.DESKRAWL_DATA = (function () {
       fx: { procDps: { pct: 70, ele: 'physical', uptime: 0.8 } } },
     { id: 'unyielding', name: '不屈胸甲', slot: '胸甲', lvl: 35, conf: 'official',
       text: '生命低于 30% 时受伤会获得 4 秒无敌（25 秒冷却）。', fx: {} },
-    { id: 'vessel', name: '无尽流之器', slot: '胸甲', lvl: 35, cls: ['monk'], conf: 'official',
-      text: '灵流不再治疗，改为每秒对周围敌人造成 160% 武器伤害（闪电），持续 4 秒。',
-      fx: { procDps: { pct: 40, ele: 'lightning', uptime: 1 } } },
+    { id: 'vessel', name: '无尽流之器', slot: '胸甲', lvl: 35, cls: ['monk'], conf: 'mechanism',
+      text: '1.0.4 真源：特效为 DamagePerStatusStack（每层真气/Chi 伤害 +2.2，Tag=12），不再是旧的「160%/s×4s 闪电 AOE」。',
+      fx: {}, note: '真源 pathid 5141：DamagePerStack=2.2、Tag=12(Chi)。依赖真气层数，无法折算固定秒伤，暂不建模（待实测密度）。旧 procDps 已删除' },
 
     /* ---- 手套 8 ---- */
     { id: 'unstoppable', name: '不可阻挡护手', slot: '手套', lvl: 1, conf: 'official',
@@ -682,7 +685,21 @@ window.DESKRAWL_DATA = (function () {
     { id: 'emberdusk', name: '余烬暮色披风', slot: '披风', lvl: 30, conf: 'none', text: '纯外观，无基础属性、无词条、无被动。', fx: {} },
     { id: 'rimeshard', name: '霜片裹尸布', slot: '披风', lvl: 30, conf: 'none', text: '纯外观，无基础属性、无词条、无被动。', fx: {} },
     { id: 'snowpelt', name: '雪皮披风', slot: '披风', lvl: 30, conf: 'none', text: '纯外观，无基础属性、无词条、无被动。', fx: {} },
-    { id: 'duskfeather', name: '暮羽之翼', slot: '披风', lvl: 9999, conf: 'none', text: '纯外观（DLC / 成就），无战斗属性。', fx: {} }
+    { id: 'duskfeather', name: '暮羽之翼', slot: '披风', lvl: 9999, conf: 'none', text: '纯外观（DLC / 成就），无战斗属性。', fx: {} },
+
+    /* ---- 1.0.4 新增传奇（真源 pathid 实证；机制依赖覆盖率/敌人数，暂不折算固定 fx） ---- */
+    { id: 'prismheart', name: '棱彩之心', slot: '项链', lvl: 60, conf: 'mechanism',
+      text: '1.0.4 真源：HighestElementalDamageBonus BonusIncrease=0.25——最高元素伤害属性额外 +25%。',
+      fx: {}, note: 'pathid 64193。可按主元素 +25% 近似，但需确认是否进元素加算池，暂不建模' },
+    { id: 'finalverdict', name: '终斩印戒', slot: '戒指', lvl: 50, cls: ['warrior'], conf: 'mechanism',
+      text: '1.0.4 真源：AbilityStatusDamage DamageBonus=2.5——对带状态目标伤害 +250%。',
+      fx: {}, note: 'pathid 5185。依赖目标状态覆盖率，暂不折算固定秒伤' },
+    { id: 'souldevour', name: '噬魂肩甲', slot: '肩甲', lvl: 40, conf: 'mechanism',
+      text: '1.0.4 真源：DamagePerNearbyEnemy 半径 3 内每敌 +3%（Boss 按 5 敌计）。',
+      fx: {}, note: 'pathid 64198。依赖周围敌人数，暂不建模' },
+    { id: 'minionsaddle', name: '黄金可汗之鞍', slot: '仆从装备', lvl: 70, conf: 'mechanism',
+      text: '1.0.4 新增仆从装备槽（槽位 12），无直接玩家 DPS 特效。',
+      fx: {}, note: 'pathid 5308，对应 Slot 12 仆从装备' }
   ];
 
   /* ---------------------------------------------------------------- 词缀表 (ilvl 700 传奇) */

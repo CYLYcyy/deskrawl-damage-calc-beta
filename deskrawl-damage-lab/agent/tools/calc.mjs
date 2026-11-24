@@ -63,7 +63,7 @@ if (has('help') || argv.length === 0) {
 --talents    auto | JSON（如 {"str":10}）
 --minion     id --minion-level 1-10 --reins --minion-gear none|atk|sup|def
 --electro    静电层数 0-10
---brittle    脆裂层数（每层 +5% 受到暴击伤害，默认 0）
+--brittle    脆裂层数（1.0.4 真源：进暴伤池 +5%/层，来自传奇戒指，默认 0）
 --brittle-zone crit|taken|off                    脆裂归属（默认 crit=暴击区；文案方向，推断）
 --affix      部位（weapon/helm/ring…）输出词条 Top8
 --hit        技能 id，输出单跳乘区（默认瞬时口径：条件项按命中瞬间 0/1）

@@ -3,8 +3,8 @@
 | 状态 | 数值 | 说明 |
 | --- | --- | --- |
 | vulnerable | taken=30，dur=4 | Take 30% more damage；真源 ×1.3 硬编码实证，真源 dur=3s |
-| electrostatic | perStack=5，perStackTrue=10，max=10，dur=4，ele=lightning | 本地 5%（用户拍板推断）；真源 1.0.3 SO = 10%/层（仅闪电、10层），冲突待用户裁决 |
-| brittle | perStackCD=5，max=10 | 每层 +5% 受到暴击伤害（仅本地化文案，真源 SO 无数值；乘区归属未实证） |
+| electrostatic | perStack=10，perStackOld=5，max=10，dur=4，ele=lightning | 1.0.4 真源 SO 实锤：StaticElectricity DamageAmplificationBehavior AmplificationPercent=0.10 → 每层 10%（仅闪电、10层）。旧版 5% 为用户早期推断值，已按真源对齐 |
+| brittle | perStackCD=5，max=10，source=LegendaryRing8CritDamage | 1.0.4 真源实锤：脆裂本身无伤害行为（Brittle SO Behaviors=[]，MaxStacks=100）；+5%/层来自传奇戒指 LegendaryRing8CritDamage 的 ConditionalCritDamage（进暴伤池：暴伤 += 0.05×层数）。max10 为本地模拟上限，真源戒指逻辑无层数上限 |
 | exposed | stacks=5 | 5 层破绽 → 易伤 |
 | chill | as=-25，ms=-35 |  |
 | numbingCold | dealt=-30 |  |
@@ -13,8 +13,8 @@
 
 ## 归类
 
-- **受伤增加**：易伤 30%（真源 ×1.3 实证）、静电（仅闪电）、脆裂（仅暴击）。**结构有版本争议**：本地默认三者按加算；真源 1.0.3 显示易伤独立 ×1.3、静电走另一增伤接口（不同括号），冲突用户拍板故未静默改，见 `true-source-facts.md`。
-- **脆裂落地**：数值每层 +5% 受到暴击伤害（仅文案级，真源 SO 无数值）；引擎支持 `brittleZone`：默认 `crit`（暴击区，只放大暴击部分）/ `taken`（受伤区）/ `off`，层数 0 时无影响。归属为推断，进未决项供裁决。
+- **受伤增加**：易伤 30%（真源 ×1.3 实证）、静电 10%/层（1.0.4 真源实锤，仅闪电）、脆裂（进暴伤池）。默认三者相关项按加算；静电×易伤结构无合并证据，`--taken-mode multiply` 作敏感性对照。
+- **脆裂落地（1.0.4 真源已裁决）**：脆裂状态本身无伤害行为（`Brittle` Behaviors=[]）；增伤来自传奇戒指 `LegendaryRing8CritDamage` 的 `ConditionalCritDamage`（暴伤 += 0.05×层数，进暴伤池 `1+cc×(cd+0.05×层数)`）。引擎已按此口径，`brittleZone` 默认 `crit`（并入暴伤）/ `taken` / `off`，层数 0 时无影响。
 - **减益**：减速（攻速 -25%、移速 -35%）、麻木之寒（目标造成伤害 -30%）
 - **持续伤害**：流血（每秒物理）、中毒（每 2 秒毒）、燃烧（每 0.5 秒火）
 - **控制**：冻结、定身、眩晕、短眩晕

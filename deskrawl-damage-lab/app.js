@@ -570,7 +570,7 @@
     const e = state.enemy || {};
     const ST = (D.MECHANICS && D.MECHANICS.status) || {};
     const vulnTake = (ST.vulnerable && ST.vulnerable.taken) || 30;
-    const perStack = (ST.electrostatic && ST.electrostatic.perStack) || 5;
+    const perStack = pendingVal('electroCoef');
     const vuln = (e.vuln || 0) / 100;
     const elec = (r.electroStacks || 0) * perStack / 100;
     const taken = 1 + (vulnTake / 100) * vuln + (state.element === 'lightning' ? elec : 0);
@@ -670,26 +670,26 @@
      静电×易伤按 team 校准取「加算」（引擎默认），另一口径为相乘。 */
   const PENDING = [
     { id: 'takenMode', title: '静电 × 易伤：相乘还是加算', def: 'additive', defLabel: '加算（引擎默认）',
-      alts: [{ v: 'multiplicative', label: '相乘（真源 1.0.3 方向：二者独立括号）' }],
-      evidence: '易伤固定 +30%，静电每层 +5%（只加闪电）。加算 = 1 + 30% + 5%×层数；相乘 = (1+30%)×(1+5%×层数)。真源1.0.3显示易伤是独立×1.3、静电走Slot13 DamageAmplificationBehavior，二者不同括号（偏相乘）；但真源旧版且冲突你此前拍板的加算，默认仍加算，10%/相乘作为对照候选。验证：同一技能在木桩做 2×2 打桩，记录「都不开 / 只易伤 / 只静电 / 都开」的跳字，看比值贴合哪一种。' },
+      alts: [{ v: 'multiplicative', label: '相乘（敏感性对照）' }],
+      evidence: '易伤固定 ×1.3，静电每层 +10%（1.0.4 真源实锤，只加闪电）。加算 = 1 + 30%×覆盖 + 10%×层数；相乘 = (1+30%×覆盖)×(1+10%×层数)。静电=DamageAmplificationBehavior、易伤=VulnerableBehavior，是两种不同 Behavior，真源无合并证据，故保留加算默认、相乘作敏感性对照。验证：同一技能木桩做 2×2 打桩，记录「都不开/只易伤/只静电/都开」跳字，看比值贴合哪种。' },
     { id: 'minionPassive', title: '仆从被动是否进面板', def: 'off', defLabel: '不重复计入',
       alts: [{ v: 'on', label: '进面板' }],
       evidence: '同一套装备，带仆从 / 不带仆从各看一次面板主属性：面板变了就是进面板，没变就是不进。带 +5 缰绳再测一次。本项当前只记录裁决，仆从机制修正属二期。' },
     { id: 'cdrCap', title: '冷却缩减上限：80% 还是 85%', def: 80, defLabel: '80%（真源实证）', unit: '%',
       alts: [{ v: 85, label: '85%（旧文档描述，已弃用）' }],
       evidence: '真源已确认：CDR 上限 = 80%（1.0.2b 更新说明「冷却缩减上限从 85% 降至 80%」+ 反汇编 StatCap.GetCap 逐字节实证，1.0.3 跨版本复核一致；暴击/闪避/蓝耗仍 85%）。无需实测，保留本项仅为查阅旧口径。' },
-    { id: 'electroCoef', title: '静电系数：每层 5%', def: 5, defLabel: '5%/层（已拍板）', unit: '%/层',
-      alts: [{ v: 10, label: '10%/层（真源 SO，1.0.3）' }, { v: 6.6, label: '6.6%（旧仓库值，已弃用）' }],
-      evidence: '木桩 0 层与 N 层各打同一技能，反推每层增伤 ≈(R_N / R_0 − 1) / N。先确认上面的「相乘/加算」结构，否则反推会串味。StaticElectricity = DamageAmplificationBehavior, AmplificationPercent.Base=0.10 → 10%/层，仅闪电、10层；但真源是1.0.3旧版，可能与1.1.11不符，且冲突用户拍板5%，故默认不变，请你裁决或实测。6.6% 是旧仓库值，已弃用。' },
-    { id: 'sweepPct', title: '横扫倍率：97 / 100 / 75', def: 97, defLabel: '97%（版本链自洽）', unit: '%',
+    { id: 'electroCoef', title: '静电系数：每层 10%', def: 10, defLabel: '10%/层（1.0.4 真源实锤）', unit: '%/层',
+      alts: [{ v: 5, label: '5%/层（旧推断值，已弃用）' }, { v: 6.6, label: '6.6%（旧仓库值，已弃用）' }],
+      evidence: '1.0.4 真源实锤：StaticElectricity = DamageAmplificationBehavior，AmplificationPercent.Base=0.10 → 每层 10%；MaxStacks=10、FilterByDamageType=true、AffectedDamageType=3(仅闪电)。旧 5%/6.6% 均为推断值，已弃用。木桩 0 层与 N 层各打同一技能可反推每层增伤 ≈(R_N/R_0−1)/N 验证。' },
+    { id: 'sweepPct', title: '横扫倍率：97 / 100 / 75', def: 97, defLabel: '97%（1.0.4 真源）', unit: '%',
       alts: [{ v: 100, label: '100%' }, { v: 75, label: '75%（旧版）' }],
-      evidence: '看 10 级横扫的技能面板倍率。97% 与 1.1.11 版本链自洽；100% 常见于四舍五入记录；75% 是旧版本值。' },
-    { id: 'stormPct', title: '闪电风暴倍率：225%', def: 225, defLabel: '225%（游戏本体逆向 A）', unit: '%',
-      alts: [{ v: 218, label: '218%（第三方二手实测，L10）' }],
-      evidence: '真源已确认（1.0.3）：闪电风暴 150% + 7.5%/级、3 段随机命中；225% = L11（本地现值），218% = L10（第三方二手值），二者同源于同一成长公式，不再待实测。保留 218% 候选仅为查阅旧口径。' },
-    { id: 'brittleZone', title: '脆裂归属：暴击区 / 受伤区 / 不启用', def: 'crit', defLabel: '暴击区（真源文案方向，推断）',
+      evidence: '1.0.4 真源：WarriorBasicAttack2 Base=0.7/PerLevel=0.03 → 10 级 97%。100% 为四舍五入记录、75% 为旧版本值。保留候选仅作对照。' },
+    { id: 'stormPct', title: '闪电风暴倍率：217%', def: 217, defLabel: '217%（1.0.4 真源）', unit: '%',
+      alts: [{ v: 225, label: '225%（旧版 L11 口径，已弃用）' }],
+      evidence: '1.0.4 真源：SorcererStrongAttack3 Base=1.5/PerLevel=0.075 → 10 级 217%（≈用户实测 218% 同源四舍五入）。旧 225% 已弃用。' },
+    { id: 'brittleZone', title: '脆裂归属：暴击区 / 受伤区 / 不启用', def: 'crit', defLabel: '暴击区（1.0.4 真源：进暴伤池）',
       alts: [{ v: 'taken', label: '受伤区（与易伤同通道）' }, { v: 'off', label: '不启用' }],
-      evidence: '真源 SO（1.0.3）脆裂 Brittle 条目 Behaviors:[] 无数值、MaxStacks=100；每层 +5% 受到暴击伤害仅来自本地化文案，乘区归属无实证。文案方向指向暴击乘区，故默认暴击区并标为推断，请实测（木桩对比带/不带脆裂的暴击跳字与非暴击跳字）。' }
+      evidence: '1.0.4 真源实锤：脆裂状态本身 Behaviors:[] 无伤害；+5%/层来自传奇戒指 LegendaryRing8CritDamage 的 ConditionalCritDamage，进暴伤池 1+cc×(cd+0.05×层数)。引擎已按此口径，默认暴击区。taken/off 为对照口径（仅当装备不同机制来源时）。' }
   ];
   const PENDING_BY_ID = {};
   PENDING.forEach(p => { PENDING_BY_ID[p.id] = p; });
@@ -1138,7 +1138,7 @@
            基础 → 技能倍率 → 主属性 → <b>元素+全伤（加算）</b> → 暴击期望 → 条件伤 → 类型伤 → 技能专属 → 目标受伤 → 减伤。
            <br>条件伤按「对敌模型」里的时间占比折算，所以同一套装备换个场景，数字会变。
            <br>易伤是目标<b>受到伤害</b>通道的固定 30%，与「对易伤目标 +X%」的条件伤不是同一件事。
-           <br>静电只加闪电，每层 ${pendingVal('electroCoef')}%（用户拍板），上限 ${(D.MECHANICS.status.electrostatic || {}).max || 10} 层；静电 × 易伤按「${pendingMeta('takenMode').label}」计。
+           <br>静电只加闪电，每层 ${pendingVal('electroCoef')}%（1.0.4 真源），上限 ${(D.MECHANICS.status.electrostatic || {}).max || 10} 层；静电 × 易伤按「${pendingMeta('takenMode').label}」计。
          </div>`;
   }
 
