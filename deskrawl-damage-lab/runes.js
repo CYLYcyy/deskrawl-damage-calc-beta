@@ -1,0 +1,561 @@
+/* ==========================================================================
+   符文数据模块 · 199 条符文 + 13 套 2/4/6 件效果 + 等级授予公式
+   数据证据等级：A（游戏 SO 直出 + 指令级逆向）；套装效果文本取 SO 本地化（1.1.11a）
+   来源：
+     - limbo947/Deskrawl-Reverse data/so_dump/RuneData.json （199 条：9 蓝 + 56 金 + 56 大金 + 78 套装件）
+     - limbo947/Deskrawl-Reverse data/so_dump/RuneSetData.json （13 套 Bonuses 2/4/6）
+     - limbo947/Deskrawl-Reverse data/loc/equipments_zh.json（符文中文名 + 效果文本；Effect1/2/3.Desc）
+     - /root/.codebuddy/artifact/SKILL_RUNE_RESEARCH.md §2-4（机制 + 冲突裁决）
+   属性口径：所有 stat 数值已转「游戏显示单位」（百分比类 ×100）；
+     1 级 = base，N 级 = base + (N-1)×per（SO LeveledFloat 线性）。
+   TODO(D)：符文 2-5 级游戏内实测缺失，按 SO 线性公式外推（社区亦标注待确认）。
+   TODO(冲突)：SO 本地化与 AFK Meta 1.1.0 后文本有版本差异——
+     炼狱盟约 2 件 SO +65% / AFK Meta +90%；唤雷者 6 件 SO 75%×3 / AFK Meta 50%×3；
+     蛇信 6 件 SO -1 秒 / AFK Meta -0.5 秒。本模块以 A 级 SO 为准（注释标明）。
+   TODO(机制)：溅射 / 额外投射物 / 免费施放 / 眩晕等无明确可加算数值的效果只记 flag + text，不伪造乘区。
+   兼容：浏览器 window.RuneData / Node vm globalThis.RuneData。
+   ========================================================================== */
+
+/* 技能等级授予：baseLevels + floor(runeLevel/3)（指令级逆向确认）
+   金符文 base=2、大金 base=4；runeLevel 1-2 不变，3-5 +1，6 +2。
+   兼容：第二参若传入对象（引擎曾这样调用），退化为默认 2。 */
+function grantedLevels(runeLevel, baseLevels) {
+  const lv = Number(runeLevel) || 0;
+  let base = (baseLevels == null) ? 2 : baseLevels;
+  if (typeof base !== "number") base = 2;
+  return base + Math.floor(lv / 3);
+}
+
+/* 13 套符文套装。bonus[2|4|6] 为 engine.js applySetBonus 可识别的 mods 结构：
+   { stat:{}, dmg:{}, vs:{}, ability:{}, flag:"..." }，另附 text（原文）与 note（裁决/机制说明）。
+   只转有明确数值的效果；纯机制给 flag 并在 note 写明。 */
+const SETS = [
+  { id: "HunterSetRune1", name: "设阱者的传承", cls: 4, bonus: {
+    2: { dmg: {"special": 60}, flag: "set_trap_direct_60", text: "陷阱造成的直接伤害提高60%。" },
+    4: { flag: "set_deathmark_traps", text: "被你的陷阱命中的敌人获得你的死亡印记，持续3.5秒，使你对其暴击几率提高30%。", note: "机制：死亡印记 3.5s，对印记目标暴率+30%（需状态条件，未直接加算）" },
+    6: { flag: "set_trap_retrigger3", text: "陷阱可额外再触发3次。", note: "机制：陷阱可额外触发 3 次" },
+  } },
+  { id: "HunterSetRune2", name: "神射手的决心", cls: 4, bonus: {
+    2: { dmg: {"physical": 50}, text: "物理伤害提高50%。" },
+    4: { stat: {"takenDR": 25}, flag: "set_rapid_dr25", text: "引导急速射击时，获得25%伤害减免。", note: "条件：引导急速射击时减伤 25%（非全程）" },
+    6: { flag: "set_rapid_double_pierce3", text: "神射手的专注愈发敏锐。急速射击的射击速度提高30%，造成的伤害翻倍，且箭矢现在可穿透最多3个目标。", note: "机制：急速射击 +30% 攻速、伤害翻倍、穿透 3 目标" },
+  } },
+  { id: "HunterSetRune3", name: "毒牙", cls: 4, bonus: {
+    2: { vs: {"poisoned": 70}, text: "对中毒敌人的伤害提高70%。" },
+    4: { flag: "set_poison_slow", text: "施加中毒时，使目标的移动速度降低25%，攻击速度降低20%，持续5秒。再次施加中毒会刷新减速持续时间。", note: "机制：中毒目标移速-25%/攻速-20%（5s），中毒跳速+100%" },
+    6: { flag: "set_venom_arcing_420", text: "施放毒素射击时有50%几率额外发射一枚弧线毒弹，对小范围内的敌人造成420%武器伤害的毒素伤害，并对所有命中的敌人施加2层中毒。", note: "机制：毒液射击 50% 概率发射 420% 武器伤害毒弹 + 2 层中毒" },
+  } },
+  { id: "MonkSetRune1", name: "百手", cls: 8, bonus: {
+    2: { dmg: {"basic": 100}, text: "普通攻击伤害 +100%。" },
+    4: { flag: "set_fist_phys_stack", text: "[怒拳]的每层还额外提供 +3% 物理伤害，20层时最高 +60%。", note: "机制：怒拳每层 +3% 物理，20 层上限 +60%（需叠层建模）" },
+    6: { flag: "set_free_golden_palms", text: "你施放的怒拳有25%几率免费施放双金掌，且不会击退敌人。这些双金掌会施加[恍惚]，并且当前每有1点法力，伤害额外提高0.5%。", note: "机制：怒拳 25% 免费金掌 + 恍惚 + 每点法力 +0.5% 伤害" },
+  } },
+  { id: "MonkSetRune2", name: "九天轮", cls: 8, bonus: {
+    2: { dmg: {"special": 100}, text: "特殊技能伤害 +100%。" },
+    4: { flag: "set_extra_sacred_orb", text: "神圣法球将额外召唤一颗法球。", note: "机制：圣光法球额外 +1 颗" },
+    6: { flag: "set_orb_burst_300", text: "神圣法球持续时间结束时不再消散，而是脱离轨道飞向最近的敌人，在3米范围内爆开，造成相当于300%武器伤害的闪电伤害。", note: "机制：法球到期追踪爆炸 300% 武器伤害（SO 文本）" },
+  } },
+  { id: "MonkSetRune3", name: "蛇信", cls: 8, bonus: {
+    2: { dmg: {"strong": 50}, text: "强力攻击伤害 +50%。" },
+    4: { flag: "set_lunge_half_cost", text: "穿刺突进的法力消耗减半。", note: "机制：穿刺突进耗蓝减半" },
+    6: { flag: "set_lunge_pierce_vuln_cd1", text: "穿刺突进的气流会贯穿目标身后的敌人，并施加[易伤]。每次施放还会使一个随机[特殊]技能的剩余冷却时间减少 1 秒。", note: "机制：穿透施加易伤；随机特殊技 CD -1 秒（SO 1.1.11a 文本；AFK Meta 为 -0.5 秒，版本冲突）" },
+  } },
+  { id: "SorcererSetRune1", name: "炼狱盟约", cls: 2, bonus: {
+    2: { vs: {"burning": 65}, text: "对灼烧敌人的伤害 +65%。", note: "SO +65%；AFK Meta 1.1.0 后记 +90%，版本冲突，取 A 级 SO" },
+    4: { flag: "set_fire_elemental_pyroblast", text: "火元素获得炎爆术作为额外技能。", note: "机制：火元素获得炎爆术" },
+    6: { flag: "set_fire_elemental_meteor", text: "火元素获得火陨石作为额外技能。", note: "机制：火元素获得火陨石" },
+  } },
+  { id: "SorcererSetRune2", name: "冰封弹幕", cls: 2, bonus: {
+    2: { vs: {"slowed": 65}, text: "对减速敌人的伤害 +65%。" },
+    4: { stat: {"as": 60}, flag: "set_ice_chill", text: "攻击速度 +60%。冰片也会施加[冰寒]。", note: "攻速 +60%（SO 文本）；冰霜碎片附带冰寒为机制" },
+    6: { flag: "set_ice_shards_plus4", text: "冰片额外发射4枚投射物，每枚可穿透1个目标。", note: "机制：寒冰碎片额外 4 发、每发穿透 1 目标" },
+  } },
+  { id: "SorcererSetRune3", name: "唤雷者", cls: 2, bonus: {
+    2: { dmg: {"lightning": 50}, text: "闪电伤害 +50%。" },
+    4: { flag: "set_lightning_splash", text: "闪电风暴的每次雷击都会造成溅射伤害。", note: "机制：闪电风暴每次雷击溅射" },
+    6: { flag: "set_lightning_ball_pulse75x3", text: "闪电风暴的每次雷击都会生成一个闪电球，每0.75秒脉冲一次，共3次，每次在小范围内造成相当于75%武器伤害的闪电伤害。", note: "SO：闪电球每 0.75 秒脉冲、共 3 次、每次 75% 武器伤害；AFK Meta 记 50%×3，版本冲突，取 SO" },
+  } },
+  { id: "WarriorSetRune1", name: "阿瑟隆的坚盾", cls: 1, bonus: {
+    2: { stat: {"cc": 10}, text: "+10%暴击几率。" },
+    4: { flag: "set_crit_heal_5hp", text: "暴击时回复5%的最大生命值。", note: "机制：暴击回复 5% 最大生命（治疗，不进伤害乘区）" },
+    6: { stat: {"cc": 20, "cd": 50}, flag: "set_rageshield_cc_cd", text: "怒气护盾额外提供20%暴击几率和50%暴击伤害。", note: "条件：狂怒护盾期间 +20% 暴率 / +50% 暴伤（非全程）" },
+  } },
+  { id: "WarriorSetRune2", name: "风暴之眼", cls: 1, bonus: {
+    2: { dmg: {"physical": 50}, text: "物理伤害 +50%。" },
+    4: { flag: "set_whirlwind_faster", text: "旋风斩的攻击与旋转速度提升25%，持续时间延长3秒。", note: "机制：旋风斩攻速/转速 +25%、持续 +3 秒" },
+    6: { flag: "set_whirlwind_all_special", text: "引导旋风斩时，除了[战吼]能力外，还可以施放所有[特殊]能力。", note: "机制：引导旋风斩时可释放全部特殊技" },
+  } },
+  { id: "WarriorSetRune3", name: "山岳之重", cls: 1, bonus: {
+    2: { dmg: {"special": 100}, text: "特殊技能伤害 +100%。" },
+    4: { flag: "set_basic_reduce_earth_cd", text: "每次施放[普通攻击]使裂地击的冷却时间减少0.8秒。", note: "机制：每次普攻使大地震击 CD -0.8 秒" },
+    6: { flag: "set_fracture_cd250", text: "你施加的[眩晕]结束或被你再次施加时，敌人陷入[碎骨]状态8秒，受到你的暴击伤害提高250%。", note: "机制：碎骨 8 秒，受到你的暴伤 +250%（需状态条件，未全程加算）" },
+  } },
+  { id: "WarriorSetRune4", name: "秋收之月", cls: 1, bonus: {
+    2: { dmg: {"strong": 50}, text: "强力攻击伤害 +50%。" },
+    4: { flag: "set_crescent_momentum", text: "半月斩每命中一名敌人便获得一层[弦月势能]，持续3秒，最多20层。每层提供+1法力回复和+1%暴击几率。", note: "机制：半月斩命中叠弦月势能，每层 +1 法回 / +1% 暴率，上限 20 层" },
+    6: { flag: "set_halfmoon_homing", text: "半月斩的刃不再飞掠而过，而是在瞄准处追猎周围的敌人，持续3秒。", note: "机制：半月斩飞刃追踪目标附近 3 秒" },
+  } },
+];
+
+/* 199 条符文。stat 为成长包 {engine键: {base, per}}（显示单位；1级 base，N级 base+(N-1)*per）；
+   ability 为技能等级授予 [{id, levels, everyN}]（id = data.js 技能 id）。
+   levelBase/levelGrow 为契约兼容字段（首条属性），完整数据见 stat。 */
+const RUNES = [
+  { id: "HunterSetRune1_1", name: "设阱者的传承 I", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune1",
+    stat: {}, ability: [{"id":"h_trap","levels":4,"everyN":3,"so":"HunterSpecial1"}], levelBase: 0, levelGrow: 0 },
+  { id: "HunterSetRune1_2", name: "设阱者的传承 II", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune1",
+    stat: {}, ability: [{"id":"h_flare","levels":4,"everyN":3,"so":"HunterSpecial3"}], levelBase: 0, levelGrow: 0 },
+  { id: "HunterSetRune1_3", name: "设阱者的传承 III", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune1",
+    stat: {"dex":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "HunterSetRune1_4", name: "设阱者的传承 IV", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune1",
+    stat: {"cd":{"base":30.0,"per":1.5}}, ability: [], levelBase: 30, levelGrow: 1.5 },
+  { id: "HunterSetRune1_5", name: "设阱者的传承 V", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune1",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "HunterSetRune1_6", name: "设阱者的传承 VI", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune1",
+    stat: {"dot":{"base":40.0,"per":1.5}}, ability: [], levelBase: 40, levelGrow: 1.5 },
+  { id: "HunterSetRune2_1", name: "神射手的决心 I", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune2",
+    stat: {}, ability: [{"id":"h_rapid","levels":4,"everyN":3,"so":"HunterHeavyAttack3"}], levelBase: 0, levelGrow: 0 },
+  { id: "HunterSetRune2_2", name: "神射手的决心 II", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune2",
+    stat: {"cd":{"base":15.0,"per":1.0}}, ability: [], levelBase: 15, levelGrow: 1 },
+  { id: "HunterSetRune2_3", name: "神射手的决心 III", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune2",
+    stat: {"dex":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "HunterSetRune2_4", name: "神射手的决心 IV", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune2",
+    stat: {"physical":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "HunterSetRune2_5", name: "神射手的决心 V", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune2",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "HunterSetRune2_6", name: "神射手的决心 VI", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune2",
+    stat: {"lifeOnHit":{"base":10.0,"per":1.0}}, ability: [], levelBase: 10, levelGrow: 1 },
+  { id: "HunterSetRune3_1", name: "毒牙 I", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune3",
+    stat: {}, ability: [{"id":"h_poison","levels":4,"everyN":3,"so":"HunterBasicAttack1"}], levelBase: 0, levelGrow: 0 },
+  { id: "HunterSetRune3_2", name: "毒牙 II", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune3",
+    stat: {}, ability: [{"id":"h_poison","levels":4,"everyN":3,"so":"HunterBasicAttack1"}], levelBase: 0, levelGrow: 0 },
+  { id: "HunterSetRune3_3", name: "毒牙 III", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune3",
+    stat: {"dot":{"base":12.0,"per":0.6}}, ability: [], levelBase: 12, levelGrow: 0.6 },
+  { id: "HunterSetRune3_4", name: "毒牙 IV", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune3",
+    stat: {"dex":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "HunterSetRune3_5", name: "毒牙 V", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune3",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "HunterSetRune3_6", name: "毒牙 VI", type: "set", rarity: 5, cls: 4, setId: "HunterSetRune3",
+    stat: {"as":{"base":30.0,"per":1.0}}, ability: [], levelBase: 30, levelGrow: 1 },
+  { id: "LegendaryRune_HunterBasicAttack1", name: "毒箭符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"dex":{"base":15.0,"per":1.0}}, ability: [{"id":"h_poison","levels":4,"everyN":3,"so":"HunterBasicAttack1"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_HunterBasicAttack2", name: "奥术炸弹符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"hpPct":{"base":15.0,"per":1.0}}, ability: [{"id":"h_bomb","levels":4,"everyN":3,"so":"HunterBasicAttack2"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_HunterBasicAttack3", name: "飞刀连击符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"manaMax":{"base":15.0,"per":1.0}}, ability: [{"id":"h_knife","levels":4,"everyN":3,"so":"HunterBasicAttack3"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_HunterBasicAttack4", name: "二连矢符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"dex":{"base":15.0,"per":1.0}}, ability: [{"id":"h_twin","levels":4,"everyN":3,"so":"HunterBasicAttack4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_HunterHeavyAttack1", name: "稳固射击符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"armorPct":{"base":24.0,"per":2.5}}, ability: [{"id":"h_steady","levels":4,"everyN":3,"so":"HunterHeavyAttack1"}], levelBase: 24, levelGrow: 2.5 },
+  { id: "LegendaryRune_HunterHeavyAttack2", name: "多重射击符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"magicResistPct":{"base":0.24,"per":0.025}}, ability: [{"id":"h_multi","levels":4,"everyN":3,"so":"HunterHeavyAttack2"}], levelBase: 0.24, levelGrow: 0.025 },
+  { id: "LegendaryRune_HunterHeavyAttack3", name: "急速射击符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"moveSpeed":{"base":6.5,"per":0.5}}, ability: [{"id":"h_rapid","levels":4,"everyN":3,"so":"HunterHeavyAttack3"}], levelBase: 6.5, levelGrow: 0.5 },
+  { id: "LegendaryRune_HunterHeavyAttack4", name: "剧毒弹符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"manaMax":{"base":15.0,"per":1.0}}, ability: [{"id":"h_venom","levels":4,"everyN":3,"so":"HunterHeavyAttack4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_HunterSpecial1", name: "毒陷阱符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"potionFind":{"base":47.5,"per":5.0}}, ability: [{"id":"h_trap","levels":4,"everyN":3,"so":"HunterSpecial1"}], levelBase: 47.5, levelGrow: 5 },
+  { id: "LegendaryRune_HunterSpecial2", name: "冲击波符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"dex":{"base":15.0,"per":1.0}}, ability: [{"id":"h_shock","levels":4,"everyN":3,"so":"HunterSpecial2"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_HunterSpecial3", name: "奥术陷阱符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"magicResistPct":{"base":0.24,"per":0.025}}, ability: [{"id":"h_flare","levels":4,"everyN":3,"so":"HunterSpecial3"}], levelBase: 0.24, levelGrow: 0.025 },
+  { id: "LegendaryRune_HunterSpecial4", name: "奥术箭雨符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"hpPct":{"base":15.0,"per":1.0}}, ability: [{"id":"h_arrowstorm","levels":4,"everyN":3,"so":"HunterSpecial4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_HunterSpecial5", name: "幻影形态符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"armorPct":{"base":24.0,"per":2.5}}, ability: [{"id":"h_phantom","levels":4,"everyN":3,"so":"HunterSpecial5"}], levelBase: 24, levelGrow: 2.5 },
+  { id: "LegendaryRune_HunterSpecial6", name: "照明弹符文 (宏伟)", type: "grand", rarity: 3, cls: 4,
+    stat: {"moveSpeed":{"base":6.5,"per":0.5}}, ability: [{"id":"h_arctrap","levels":4,"everyN":3,"so":"HunterSpecial6"}], levelBase: 6.5, levelGrow: 0.5 },
+  { id: "LegendaryRune_MonkBasicAttack1", name: "三重击符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"dex":{"base":15.0,"per":1.0}}, ability: [{"id":"m_three","levels":4,"everyN":3,"so":"MonkBasicAttack1"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_MonkBasicAttack2", name: "怒拳符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"hpPct":{"base":15.0,"per":1.0}}, ability: [{"id":"m_fist","levels":4,"everyN":3,"so":"MonkBasicAttack2"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_MonkBasicAttack3", name: "震地击符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"manaMax":{"base":15.0,"per":1.0}}, ability: [{"id":"m_seismic","levels":4,"everyN":3,"so":"MonkBasicAttack3"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_MonkBasicAttack4", name: "气弹符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"dex":{"base":15.0,"per":1.0}}, ability: [{"id":"m_chi","levels":4,"everyN":3,"so":"MonkBasicAttack4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_MonkHeavyAttack1", name: "圣裁之击符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"armorPct":{"base":24.0,"per":2.5}}, ability: [{"id":"m_judgment","levels":4,"everyN":3,"so":"MonkHeavyAttack1"}], levelBase: 24, levelGrow: 2.5 },
+  { id: "LegendaryRune_MonkHeavyAttack2", name: "穿刺突进符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"magicResistPct":{"base":0.24,"per":0.025}}, ability: [{"id":"m_lunge","levels":4,"everyN":3,"so":"MonkHeavyAttack2"}], levelBase: 0.24, levelGrow: 0.025 },
+  { id: "LegendaryRune_MonkHeavyAttack3", name: "旋风棍式符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"moveSpeed":{"base":6.5,"per":0.5}}, ability: [{"id":"m_staff","levels":4,"everyN":3,"so":"MonkHeavyAttack3"}], levelBase: 6.5, levelGrow: 0.5 },
+  { id: "LegendaryRune_MonkHeavyAttack4", name: "双金掌符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"manaMax":{"base":15.0,"per":1.0}}, ability: [{"id":"m_palms","levels":4,"everyN":3,"so":"MonkHeavyAttack4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_MonkSpecial1", name: "神圣法球符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"potionFind":{"base":47.5,"per":5.0}}, ability: [{"id":"m_orbs","levels":4,"everyN":3,"so":"MonkSpecial1"}], levelBase: 47.5, levelGrow: 5 },
+  { id: "LegendaryRune_MonkSpecial2", name: "灵气涌流符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"dex":{"base":15.0,"per":1.0}}, ability: [{"id":"m_stream","levels":4,"everyN":3,"so":"MonkSpecial2"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_MonkSpecial3", name: "冲锋符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"moveSpeed":{"base":6.5,"per":0.5}}, ability: [{"id":"m_charge","levels":4,"everyN":3,"so":"MonkSpecial3"}], levelBase: 6.5, levelGrow: 0.5 },
+  { id: "LegendaryRune_MonkSpecial4", name: "灵体分身符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"hpPct":{"base":15.0,"per":1.0}}, ability: [{"id":"m_twin","levels":4,"everyN":3,"so":"MonkSpecial4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_MonkSpecial5", name: "踏风步符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"armorPct":{"base":24.0,"per":2.5}}, ability: [{"id":"m_wind","levels":4,"everyN":3,"so":"MonkSpecial5"}], levelBase: 24, levelGrow: 2.5 },
+  { id: "LegendaryRune_MonkSpecial6", name: "神圣雷霆符文 (宏伟)", type: "grand", rarity: 3, cls: 8,
+    stat: {"magicResistPct":{"base":0.24,"per":0.025}}, ability: [{"id":"m_thunder","levels":4,"everyN":3,"so":"MonkSpecial6"}], levelBase: 0.24, levelGrow: 0.025 },
+  { id: "LegendaryRune_SorcererBasicAttack1", name: "火球符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"int":{"base":15.0,"per":1.0}}, ability: [{"id":"s_fireball","levels":4,"everyN":3,"so":"SorcererBasicAttack1"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_SorcererBasicAttack2", name: "冰碎片符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"hpPct":{"base":15.0,"per":1.0}}, ability: [{"id":"s_ice","levels":4,"everyN":3,"so":"SorcererBasicAttack2"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_SorcererBasicAttack3", name: "电击符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"manaMax":{"base":15.0,"per":1.0}}, ability: [{"id":"s_electro","levels":4,"everyN":3,"so":"SorcererBasicAttack3"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_SorcererBasicAttack4", name: "烈焰雷电符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"int":{"base":15.0,"per":1.0}}, ability: [{"id":"s_flamelight","levels":4,"everyN":3,"so":"SorcererBasicAttack4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_SorcererSpecial1", name: "冰霜新星符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"potionFind":{"base":47.5,"per":5.0}}, ability: [{"id":"s_nova","levels":4,"everyN":3,"so":"SorcererSpecial1"}], levelBase: 47.5, levelGrow: 5 },
+  { id: "LegendaryRune_SorcererSpecial2", name: "火元素符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"int":{"base":15.0,"per":1.0}}, ability: [{"id":"s_elemental","levels":4,"everyN":3,"so":"SorcererSpecial2"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_SorcererSpecial3", name: "寒冰屏障符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"moveSpeed":{"base":6.5,"per":0.5}}, ability: [{"id":"s_iceblock","levels":4,"everyN":3,"so":"SorcererSpecial3"}], levelBase: 6.5, levelGrow: 0.5 },
+  { id: "LegendaryRune_SorcererSpecial4", name: "火陨石符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"hpPct":{"base":15.0,"per":1.0}}, ability: [{"id":"s_meteor","levels":4,"everyN":3,"so":"SorcererSpecial4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_SorcererSpecial5", name: "烈焰光环符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"armorPct":{"base":24.0,"per":2.5}}, ability: [{"id":"s_aura","levels":4,"everyN":3,"so":"SorcererSpecial5"}], levelBase: 24, levelGrow: 2.5 },
+  { id: "LegendaryRune_SorcererSpecial6", name: "雷云符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"magicResistPct":{"base":0.24,"per":0.025}}, ability: [{"id":"s_cloud","levels":4,"everyN":3,"so":"SorcererSpecial6"}], levelBase: 0.24, levelGrow: 0.025 },
+  { id: "LegendaryRune_SorcererStrongAttack1", name: "烈焰吐息符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"armorPct":{"base":24.0,"per":2.5}}, ability: [{"id":"s_breath","levels":4,"everyN":3,"so":"SorcererStrongAttack1"}], levelBase: 24, levelGrow: 2.5 },
+  { id: "LegendaryRune_SorcererStrongAttack2", name: "冰陨石符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"magicResistPct":{"base":0.24,"per":0.025}}, ability: [{"id":"s_icemeteor","levels":4,"everyN":3,"so":"SorcererStrongAttack2"}], levelBase: 0.24, levelGrow: 0.025 },
+  { id: "LegendaryRune_SorcererStrongAttack3", name: "闪电风暴符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"moveSpeed":{"base":6.5,"per":0.5}}, ability: [{"id":"s_storm","levels":4,"everyN":3,"so":"SorcererStrongAttack3"}], levelBase: 6.5, levelGrow: 0.5 },
+  { id: "LegendaryRune_SorcererStrongAttack4", name: "冰霜光束符文 (宏伟)", type: "grand", rarity: 3, cls: 2,
+    stat: {"manaMax":{"base":15.0,"per":1.0}}, ability: [{"id":"s_frostbeam","levels":4,"everyN":3,"so":"SorcererStrongAttack4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_WarriorBasicAttack", name: "英勇打击符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"str":{"base":15.0,"per":1.0}}, ability: [{"id":"w_val","levels":4,"everyN":3,"so":"WarriorBasicAttack"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_WarriorBasicAttack2", name: "横扫符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"hpPct":{"base":15.0,"per":1.0}}, ability: [{"id":"w_cleave","levels":4,"everyN":3,"so":"WarriorBasicAttack2"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_WarriorBasicAttack3", name: "血刃打击符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"manaMax":{"base":15.0,"per":1.0}}, ability: [{"id":"w_blood","levels":4,"everyN":3,"so":"WarriorBasicAttack3"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_WarriorBasicAttack4", name: "稳固打击符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"str":{"base":15.0,"per":1.0}}, ability: [{"id":"w_steady","levels":4,"everyN":3,"so":"WarriorBasicAttack4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_WarriorHeavyAttack1", name: "烈焰打击符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"armorPct":{"base":24.0,"per":2.5}}, ability: [{"id":"w_flame","levels":4,"everyN":3,"so":"WarriorHeavyAttack1"}], levelBase: 24, levelGrow: 2.5 },
+  { id: "LegendaryRune_WarriorHeavyAttack2", name: "半月斩符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"magicResistPct":{"base":0.24,"per":0.025}}, ability: [{"id":"w_half","levels":4,"everyN":3,"so":"WarriorHeavyAttack2"}], levelBase: 0.24, levelGrow: 0.025 },
+  { id: "LegendaryRune_WarriorHeavyAttack3", name: "旋风斩符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"moveSpeed":{"base":6.5,"per":0.5}}, ability: [{"id":"w_whirl","levels":4,"everyN":3,"so":"WarriorHeavyAttack3"}], levelBase: 6.5, levelGrow: 0.5 },
+  { id: "LegendaryRune_WarriorHeavyAttack4", name: "裂血连击符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"manaMax":{"base":15.0,"per":1.0}}, ability: [{"id":"w_rend","levels":4,"everyN":3,"so":"WarriorHeavyAttack4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_WarriorRageShield", name: "狂怒护盾符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"str":{"base":15.0,"per":1.0}}, ability: [{"id":"w_shield","levels":4,"everyN":3,"so":"WarriorRageShield"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_WarriorRageShout", name: "怒吼符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"potionFind":{"base":47.5,"per":5.0}}, ability: [{"id":"w_shout","levels":4,"everyN":3,"so":"WarriorRageShout"}], levelBase: 47.5, levelGrow: 5 },
+  { id: "LegendaryRune_WarriorSpecial3", name: "夺命钩爪符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"moveSpeed":{"base":6.5,"per":0.5}}, ability: [{"id":"w_hook","levels":4,"everyN":3,"so":"WarriorSpecial3"}], levelBase: 6.5, levelGrow: 0.5 },
+  { id: "LegendaryRune_WarriorSpecial4", name: "裂地击符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"hpPct":{"base":15.0,"per":1.0}}, ability: [{"id":"w_earth","levels":4,"everyN":3,"so":"WarriorSpecial4"}], levelBase: 15, levelGrow: 1 },
+  { id: "LegendaryRune_WarriorSpecial5", name: "铁棘符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"armorPct":{"base":24.0,"per":2.5}}, ability: [{"id":"w_thorn","levels":4,"everyN":3,"so":"WarriorSpecial5"}], levelBase: 24, levelGrow: 2.5 },
+  { id: "LegendaryRune_WarriorSpecial6", name: "熔铸之力符文 (宏伟)", type: "grand", rarity: 3, cls: 1,
+    stat: {"magicResistPct":{"base":0.24,"per":0.025}}, ability: [{"id":"w_molten","levels":4,"everyN":3,"so":"WarriorSpecial6"}], levelBase: 0.24, levelGrow: 0.025 },
+  { id: "MonkSetRune1_1", name: "百手符文 (I)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune1",
+    stat: {}, ability: [{"id":"m_fist","levels":4,"everyN":3,"so":"MonkBasicAttack2"}], levelBase: 0, levelGrow: 0 },
+  { id: "MonkSetRune1_2", name: "百手符文 (II)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune1",
+    stat: {"basic":{"base":15.0,"per":10.0}}, ability: [{"id":"m_fist","levels":2,"everyN":3,"so":"MonkBasicAttack2"}], levelBase: 15, levelGrow: 10 },
+  { id: "MonkSetRune1_3", name: "百手符文 (III)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune1",
+    stat: {"dex":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "MonkSetRune1_4", name: "百手符文 (IV)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune1",
+    stat: {"as":{"base":8.0,"per":1.2}}, ability: [], levelBase: 8, levelGrow: 1.2 },
+  { id: "MonkSetRune1_5", name: "百手符文 (V)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune1",
+    stat: {"lifeOnHit":{"base":10.0,"per":1.0}}, ability: [], levelBase: 10, levelGrow: 1 },
+  { id: "MonkSetRune1_6", name: "百手符文 (VI)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune1",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "MonkSetRune2_1", name: "九天轮符文 (I)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune2",
+    stat: {}, ability: [{"id":"m_orbs","levels":4,"everyN":3,"so":"MonkSpecial1"}], levelBase: 0, levelGrow: 0 },
+  { id: "MonkSetRune2_2", name: "九天轮符文 (II)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune2",
+    stat: {"stat22":{"base":2.0,"per":0.2}}, ability: [{"id":"m_orbs","levels":2,"everyN":3,"so":"MonkSpecial1"}], levelBase: 2, levelGrow: 0.2 },
+  { id: "MonkSetRune2_3", name: "九天轮符文 (III)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune2",
+    stat: {"dex":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "MonkSetRune2_4", name: "九天轮符文 (IV)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune2",
+    stat: {"lightning":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "MonkSetRune2_5", name: "九天轮符文 (V)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune2",
+    stat: {"cdr":{"base":5.0,"per":1.0}}, ability: [], levelBase: 5, levelGrow: 1 },
+  { id: "MonkSetRune2_6", name: "九天轮符文 (VI)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune2",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "MonkSetRune3_1", name: "蛇信符文 (I)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune3",
+    stat: {}, ability: [{"id":"m_lunge","levels":4,"everyN":3,"so":"MonkHeavyAttack2"}], levelBase: 0, levelGrow: 0 },
+  { id: "MonkSetRune3_2", name: "蛇信符文 (II)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune3",
+    stat: {"stat22":{"base":2.0,"per":0.2}}, ability: [{"id":"m_lunge","levels":2,"everyN":3,"so":"MonkHeavyAttack2"}], levelBase: 2, levelGrow: 0.2 },
+  { id: "MonkSetRune3_3", name: "蛇信符文 (III)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune3",
+    stat: {"dex":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "MonkSetRune3_4", name: "蛇信符文 (IV)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune3",
+    stat: {"physical":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "MonkSetRune3_5", name: "蛇信符文 (V)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune3",
+    stat: {"vs.vulnerable":{"base":15.0,"per":3.0}}, ability: [], levelBase: 15, levelGrow: 3 },
+  { id: "MonkSetRune3_6", name: "蛇信符文 (VI)", type: "set", rarity: 5, cls: 8, setId: "MonkSetRune3",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "RareRune_HunterBasicAttack1", name: "毒箭符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"dex":{"base":10.0,"per":1.0}}, ability: [{"id":"h_poison","levels":2,"everyN":3,"so":"HunterBasicAttack1"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_HunterBasicAttack2", name: "奥术炸弹符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [{"id":"h_bomb","levels":2,"everyN":3,"so":"HunterBasicAttack2"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_HunterBasicAttack3", name: "飞刀连击符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"manaMax":{"base":10.0,"per":1.0}}, ability: [{"id":"h_knife","levels":2,"everyN":3,"so":"HunterBasicAttack3"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_HunterBasicAttack4", name: "二连矢符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"dex":{"base":10.0,"per":1.0}}, ability: [{"id":"h_twin","levels":2,"everyN":3,"so":"HunterBasicAttack4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_HunterHeavyAttack1", name: "稳固射击符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"armorPct":{"base":20.0,"per":2.0}}, ability: [{"id":"h_steady","levels":2,"everyN":3,"so":"HunterHeavyAttack1"}], levelBase: 20, levelGrow: 2 },
+  { id: "RareRune_HunterHeavyAttack2", name: "多重射击符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"magicResistPct":{"base":0.2,"per":0.02}}, ability: [{"id":"h_multi","levels":2,"everyN":3,"so":"HunterHeavyAttack2"}], levelBase: 0.2, levelGrow: 0.02 },
+  { id: "RareRune_HunterHeavyAttack3", name: "急速射击符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"moveSpeed":{"base":5.0,"per":0.5}}, ability: [{"id":"h_rapid","levels":2,"everyN":3,"so":"HunterHeavyAttack3"}], levelBase: 5, levelGrow: 0.5 },
+  { id: "RareRune_HunterHeavyAttack4", name: "剧毒弹符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"manaMax":{"base":10.0,"per":1.0}}, ability: [{"id":"h_venom","levels":2,"everyN":3,"so":"HunterHeavyAttack4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_HunterSpecial1", name: "毒陷阱符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"potionFind":{"base":40.0,"per":4.0}}, ability: [{"id":"h_trap","levels":2,"everyN":3,"so":"HunterSpecial1"}], levelBase: 40, levelGrow: 4 },
+  { id: "RareRune_HunterSpecial2", name: "冲击波符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"dex":{"base":10.0,"per":1.0}}, ability: [{"id":"h_shock","levels":2,"everyN":3,"so":"HunterSpecial2"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_HunterSpecial3", name: "奥术陷阱符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"magicResistPct":{"base":0.2,"per":0.02}}, ability: [{"id":"h_flare","levels":2,"everyN":3,"so":"HunterSpecial3"}], levelBase: 0.2, levelGrow: 0.02 },
+  { id: "RareRune_HunterSpecial4", name: "奥术箭雨符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [{"id":"h_arrowstorm","levels":2,"everyN":3,"so":"HunterSpecial4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_HunterSpecial5", name: "幻影形态符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"armorPct":{"base":20.0,"per":2.0}}, ability: [{"id":"h_phantom","levels":2,"everyN":3,"so":"HunterSpecial5"}], levelBase: 20, levelGrow: 2 },
+  { id: "RareRune_HunterSpecial6", name: "照明弹符文", type: "gold", rarity: 2, cls: 4,
+    stat: {"moveSpeed":{"base":5.0,"per":0.5}}, ability: [{"id":"h_arctrap","levels":2,"everyN":3,"so":"HunterSpecial6"}], levelBase: 5, levelGrow: 0.5 },
+  { id: "RareRune_MonkBasicAttack1", name: "三重击符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"dex":{"base":10.0,"per":1.0}}, ability: [{"id":"m_three","levels":2,"everyN":3,"so":"MonkBasicAttack1"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_MonkBasicAttack2", name: "怒拳符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [{"id":"m_fist","levels":2,"everyN":3,"so":"MonkBasicAttack2"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_MonkBasicAttack3", name: "震地击符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"manaMax":{"base":10.0,"per":1.0}}, ability: [{"id":"m_seismic","levels":2,"everyN":3,"so":"MonkBasicAttack3"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_MonkBasicAttack4", name: "气弹符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"dex":{"base":10.0,"per":1.0}}, ability: [{"id":"m_chi","levels":2,"everyN":3,"so":"MonkBasicAttack4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_MonkHeavyAttack1", name: "圣裁之击符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"armorPct":{"base":20.0,"per":2.0}}, ability: [{"id":"m_judgment","levels":2,"everyN":3,"so":"MonkHeavyAttack1"}], levelBase: 20, levelGrow: 2 },
+  { id: "RareRune_MonkHeavyAttack2", name: "穿刺突进符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"magicResistPct":{"base":0.2,"per":0.02}}, ability: [{"id":"m_lunge","levels":2,"everyN":3,"so":"MonkHeavyAttack2"}], levelBase: 0.2, levelGrow: 0.02 },
+  { id: "RareRune_MonkHeavyAttack3", name: "旋风棍式符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"moveSpeed":{"base":5.0,"per":0.5}}, ability: [{"id":"m_staff","levels":2,"everyN":3,"so":"MonkHeavyAttack3"}], levelBase: 5, levelGrow: 0.5 },
+  { id: "RareRune_MonkHeavyAttack4", name: "双金掌符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"manaMax":{"base":10.0,"per":1.0}}, ability: [{"id":"m_palms","levels":2,"everyN":3,"so":"MonkHeavyAttack4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_MonkSpecial1", name: "神圣法球符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"potionFind":{"base":40.0,"per":4.0}}, ability: [{"id":"m_orbs","levels":2,"everyN":3,"so":"MonkSpecial1"}], levelBase: 40, levelGrow: 4 },
+  { id: "RareRune_MonkSpecial2", name: "灵气涌流符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"dex":{"base":10.0,"per":1.0}}, ability: [{"id":"m_stream","levels":2,"everyN":3,"so":"MonkSpecial2"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_MonkSpecial3", name: "冲锋符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"moveSpeed":{"base":5.0,"per":0.5}}, ability: [{"id":"m_charge","levels":2,"everyN":3,"so":"MonkSpecial3"}], levelBase: 5, levelGrow: 0.5 },
+  { id: "RareRune_MonkSpecial4", name: "灵体分身符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [{"id":"m_twin","levels":2,"everyN":3,"so":"MonkSpecial4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_MonkSpecial5", name: "踏风步符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"armorPct":{"base":20.0,"per":2.0}}, ability: [{"id":"m_wind","levels":2,"everyN":3,"so":"MonkSpecial5"}], levelBase: 20, levelGrow: 2 },
+  { id: "RareRune_MonkSpecial6", name: "神圣雷霆符文", type: "gold", rarity: 2, cls: 8,
+    stat: {"magicResistPct":{"base":0.2,"per":0.02}}, ability: [{"id":"m_thunder","levels":2,"everyN":3,"so":"MonkSpecial6"}], levelBase: 0.2, levelGrow: 0.02 },
+  { id: "RareRune_SorcererBasicAttack1", name: "火球符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"int":{"base":10.0,"per":1.0}}, ability: [{"id":"s_fireball","levels":2,"everyN":3,"so":"SorcererBasicAttack1"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_SorcererBasicAttack2", name: "冰碎片符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [{"id":"s_ice","levels":2,"everyN":3,"so":"SorcererBasicAttack2"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_SorcererBasicAttack3", name: "电击符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"manaMax":{"base":10.0,"per":1.0}}, ability: [{"id":"s_electro","levels":2,"everyN":3,"so":"SorcererBasicAttack3"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_SorcererBasicAttack4", name: "烈焰雷电符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"int":{"base":10.0,"per":1.0}}, ability: [{"id":"s_flamelight","levels":2,"everyN":3,"so":"SorcererBasicAttack4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_SorcererSpecial1", name: "冰霜新星符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"potionFind":{"base":40.0,"per":4.0}}, ability: [{"id":"s_nova","levels":2,"everyN":3,"so":"SorcererSpecial1"}], levelBase: 40, levelGrow: 4 },
+  { id: "RareRune_SorcererSpecial2", name: "火元素符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"int":{"base":10.0,"per":1.0}}, ability: [{"id":"s_elemental","levels":2,"everyN":3,"so":"SorcererSpecial2"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_SorcererSpecial3", name: "寒冰屏障符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"moveSpeed":{"base":5.0,"per":0.5}}, ability: [{"id":"s_iceblock","levels":2,"everyN":3,"so":"SorcererSpecial3"}], levelBase: 5, levelGrow: 0.5 },
+  { id: "RareRune_SorcererSpecial4", name: "火陨石符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [{"id":"s_meteor","levels":2,"everyN":3,"so":"SorcererSpecial4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_SorcererSpecial5", name: "烈焰光环符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"armorPct":{"base":20.0,"per":2.0}}, ability: [{"id":"s_aura","levels":2,"everyN":3,"so":"SorcererSpecial5"}], levelBase: 20, levelGrow: 2 },
+  { id: "RareRune_SorcererSpecial6", name: "雷云符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"magicResistPct":{"base":0.2,"per":0.02}}, ability: [{"id":"s_cloud","levels":2,"everyN":3,"so":"SorcererSpecial6"}], levelBase: 0.2, levelGrow: 0.02 },
+  { id: "RareRune_SorcererStrongAttack1", name: "烈焰吐息符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"armorPct":{"base":20.0,"per":2.0}}, ability: [{"id":"s_breath","levels":2,"everyN":3,"so":"SorcererStrongAttack1"}], levelBase: 20, levelGrow: 2 },
+  { id: "RareRune_SorcererStrongAttack2", name: "冰陨石符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"magicResistPct":{"base":0.2,"per":0.02}}, ability: [{"id":"s_icemeteor","levels":2,"everyN":3,"so":"SorcererStrongAttack2"}], levelBase: 0.2, levelGrow: 0.02 },
+  { id: "RareRune_SorcererStrongAttack3", name: "闪电风暴符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"moveSpeed":{"base":5.0,"per":0.5}}, ability: [{"id":"s_storm","levels":2,"everyN":3,"so":"SorcererStrongAttack3"}], levelBase: 5, levelGrow: 0.5 },
+  { id: "RareRune_SorcererStrongAttack4", name: "冰霜光束符文", type: "gold", rarity: 2, cls: 2,
+    stat: {"manaMax":{"base":10.0,"per":1.0}}, ability: [{"id":"s_frostbeam","levels":2,"everyN":3,"so":"SorcererStrongAttack4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_WarriorBasicAttack", name: "英勇打击符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"str":{"base":10.0,"per":1.0}}, ability: [{"id":"w_val","levels":2,"everyN":3,"so":"WarriorBasicAttack"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_WarriorBasicAttack2", name: "横扫符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [{"id":"w_cleave","levels":2,"everyN":3,"so":"WarriorBasicAttack2"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_WarriorBasicAttack3", name: "血刃打击符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"manaMax":{"base":10.0,"per":1.0}}, ability: [{"id":"w_blood","levels":2,"everyN":3,"so":"WarriorBasicAttack3"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_WarriorBasicAttack4", name: "稳固打击符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"str":{"base":10.0,"per":1.0}}, ability: [{"id":"w_steady","levels":2,"everyN":3,"so":"WarriorBasicAttack4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_WarriorHeavyAttack1", name: "烈焰打击符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"armorPct":{"base":20.0,"per":2.0}}, ability: [{"id":"w_flame","levels":2,"everyN":3,"so":"WarriorHeavyAttack1"}], levelBase: 20, levelGrow: 2 },
+  { id: "RareRune_WarriorHeavyAttack2", name: "半月斩符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"magicResistPct":{"base":0.2,"per":0.02}}, ability: [{"id":"w_half","levels":2,"everyN":3,"so":"WarriorHeavyAttack2"}], levelBase: 0.2, levelGrow: 0.02 },
+  { id: "RareRune_WarriorHeavyAttack3", name: "旋风斩符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"moveSpeed":{"base":5.0,"per":0.5}}, ability: [{"id":"w_whirl","levels":2,"everyN":3,"so":"WarriorHeavyAttack3"}], levelBase: 5, levelGrow: 0.5 },
+  { id: "RareRune_WarriorHeavyAttack4", name: "裂血连击符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"manaMax":{"base":10.0,"per":1.0}}, ability: [{"id":"w_rend","levels":2,"everyN":3,"so":"WarriorHeavyAttack4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_WarriorRageShield", name: "狂怒护盾符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"str":{"base":10.0,"per":1.0}}, ability: [{"id":"w_shield","levels":2,"everyN":3,"so":"WarriorRageShield"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_WarriorRageShout", name: "怒吼符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"potionFind":{"base":40.0,"per":4.0}}, ability: [{"id":"w_shout","levels":2,"everyN":3,"so":"WarriorRageShout"}], levelBase: 40, levelGrow: 4 },
+  { id: "RareRune_WarriorSpecial3", name: "夺命钩爪符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"moveSpeed":{"base":5.0,"per":0.5}}, ability: [{"id":"w_hook","levels":2,"everyN":3,"so":"WarriorSpecial3"}], levelBase: 5, levelGrow: 0.5 },
+  { id: "RareRune_WarriorSpecial4", name: "裂地击符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [{"id":"w_earth","levels":2,"everyN":3,"so":"WarriorSpecial4"}], levelBase: 10, levelGrow: 1 },
+  { id: "RareRune_WarriorSpecial5", name: "铁棘符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"armorPct":{"base":20.0,"per":2.0}}, ability: [{"id":"w_thorn","levels":2,"everyN":3,"so":"WarriorSpecial5"}], levelBase: 20, levelGrow: 2 },
+  { id: "RareRune_WarriorSpecial6", name: "熔铸之力符文", type: "gold", rarity: 2, cls: 1,
+    stat: {"magicResistPct":{"base":0.2,"per":0.02}}, ability: [{"id":"w_molten","levels":2,"everyN":3,"so":"WarriorSpecial6"}], levelBase: 0.2, levelGrow: 0.02 },
+  { id: "SorcererSetRune1_1", name: "炼狱盟约符文 (I)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune1",
+    stat: {}, ability: [{"id":"s_elemental","levels":4,"everyN":3,"so":"SorcererSpecial2"}], levelBase: 0, levelGrow: 0 },
+  { id: "SorcererSetRune1_2", name: "炼狱盟约符文 (II)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune1",
+    stat: {}, ability: [{"id":"s_elemental","levels":4,"everyN":3,"so":"SorcererSpecial2"}], levelBase: 0, levelGrow: 0 },
+  { id: "SorcererSetRune1_3", name: "炼狱盟约符文 (III)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune1",
+    stat: {"int":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "SorcererSetRune1_4", name: "炼狱盟约符文 (IV)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune1",
+    stat: {"manaMax":{"base":50.0,"per":2.0}}, ability: [], levelBase: 50, levelGrow: 2 },
+  { id: "SorcererSetRune1_5", name: "炼狱盟约符文 (V)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune1",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "SorcererSetRune1_6", name: "炼狱盟约符文 (VI)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune1",
+    stat: {"lifeOnHit":{"base":15.0,"per":1.0}}, ability: [], levelBase: 15, levelGrow: 1 },
+  { id: "SorcererSetRune2_1", name: "冰封弹幕符文 (I)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune2",
+    stat: {}, ability: [{"id":"s_ice","levels":4,"everyN":3,"so":"SorcererBasicAttack2"}], levelBase: 0, levelGrow: 0 },
+  { id: "SorcererSetRune2_2", name: "冰封弹幕符文 (II)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune2",
+    stat: {}, ability: [{"id":"s_ice","levels":4,"everyN":3,"so":"SorcererBasicAttack2"}], levelBase: 0, levelGrow: 0 },
+  { id: "SorcererSetRune2_3", name: "冰封弹幕符文 (III)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune2",
+    stat: {"int":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "SorcererSetRune2_4", name: "冰封弹幕符文 (IV)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune2",
+    stat: {"basic":{"base":20.0,"per":1.0}}, ability: [], levelBase: 20, levelGrow: 1 },
+  { id: "SorcererSetRune2_5", name: "冰封弹幕符文 (V)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune2",
+    stat: {"as":{"base":8.0,"per":1.2}}, ability: [], levelBase: 8, levelGrow: 1.2 },
+  { id: "SorcererSetRune2_6", name: "冰封弹幕符文 (VI)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune2",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "SorcererSetRune3_1", name: "唤雷者符文 (I)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune3",
+    stat: {}, ability: [{"id":"s_storm","levels":4,"everyN":3,"so":"SorcererStrongAttack3"}], levelBase: 0, levelGrow: 0 },
+  { id: "SorcererSetRune3_2", name: "唤雷者符文 (II)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune3",
+    stat: {}, ability: [{"id":"s_storm","levels":4,"everyN":3,"so":"SorcererStrongAttack3"}], levelBase: 0, levelGrow: 0 },
+  { id: "SorcererSetRune3_3", name: "唤雷者符文 (III)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune3",
+    stat: {"int":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "SorcererSetRune3_4", name: "唤雷者符文 (IV)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune3",
+    stat: {"hpPct":{"base":10.0,"per":1.0}}, ability: [], levelBase: 10, levelGrow: 1 },
+  { id: "SorcererSetRune3_5", name: "唤雷者符文 (V)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune3",
+    stat: {"strong":{"base":15.0,"per":1.0}}, ability: [], levelBase: 15, levelGrow: 1 },
+  { id: "SorcererSetRune3_6", name: "唤雷者符文 (VI)", type: "set", rarity: 5, cls: 2, setId: "SorcererSetRune3",
+    stat: {"vs.healthy":{"base":20.0,"per":1.0}}, ability: [], levelBase: 20, levelGrow: 1 },
+  { id: "UncommonRune_DamageVsBleeding", name: "放血", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.bleeding":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "UncommonRune_DamageVsDistant", name: "远射", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.distant":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "UncommonRune_DamageVsElite", name: "巨人杀手", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.elite":{"base":15.0,"per":1.5}}, ability: [], levelBase: 15, levelGrow: 1.5 },
+  { id: "UncommonRune_DamageVsHealthy", name: "伏击", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.healthy":{"base":30.0,"per":3.0}}, ability: [], levelBase: 30, levelGrow: 3 },
+  { id: "UncommonRune_DamageVsInjured", name: "处决", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.injured":{"base":30.0,"per":3.0}}, ability: [], levelBase: 30, levelGrow: 3 },
+  { id: "UncommonRune_DamageVsPoisoned", name: "疫病", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.poisoned":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "UncommonRune_DamageVsSlowed", name: "罗网", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.slowed":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "UncommonRune_DamageVsStunned", name: "恍惚", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.immobilized":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "UncommonRune_VulnerableDamage", name: "脆弱", type: "blue", rarity: 1, cls: 15,
+    stat: {"vs.vulnerable":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "WarriorSetRune1_1", name: "阿瑟隆之盾符文 (I)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune1",
+    stat: {}, ability: [{"id":"w_shield","levels":4,"everyN":3,"so":"WarriorRageShield"}], levelBase: 0, levelGrow: 0 },
+  { id: "WarriorSetRune1_2", name: "阿瑟隆之盾符文 (II)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune1",
+    stat: {"maxHealth":{"base":100.0,"per":10.0},"armor":{"base":50.0,"per":5.0}}, ability: [], levelBase: 100, levelGrow: 10 },
+  { id: "WarriorSetRune1_3", name: "阿瑟隆之盾符文 (III)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune1",
+    stat: {"maxHealth":{"base":250.0,"per":10.0}}, ability: [{"id":"w_shield","levels":2,"everyN":3,"so":"WarriorRageShield"}], levelBase: 250, levelGrow: 10 },
+  { id: "WarriorSetRune1_4", name: "阿瑟隆之盾符文 (IV)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune1",
+    stat: {"armor":{"base":50.0,"per":5.0},"magicResist":{"base":50.0,"per":5.0}}, ability: [], levelBase: 50, levelGrow: 5 },
+  { id: "WarriorSetRune1_5", name: "阿瑟隆之盾符文 (V)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune1",
+    stat: {"armorPct":{"base":20.0,"per":1.0}}, ability: [], levelBase: 20, levelGrow: 1 },
+  { id: "WarriorSetRune1_6", name: "阿瑟隆之盾符文 (VI)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune1",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "WarriorSetRune2_1", name: "风暴之眼符文 (I)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune2",
+    stat: {}, ability: [{"id":"w_whirl","levels":4,"everyN":3,"so":"WarriorHeavyAttack3"}], levelBase: 0, levelGrow: 0 },
+  { id: "WarriorSetRune2_2", name: "风暴之眼符文 (II)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune2",
+    stat: {"cd":{"base":15.0,"per":1.0}}, ability: [{"id":"w_whirl","levels":2,"everyN":3,"so":"WarriorHeavyAttack3"}], levelBase: 15, levelGrow: 1 },
+  { id: "WarriorSetRune2_3", name: "风暴之眼符文 (III)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune2",
+    stat: {"str":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "WarriorSetRune2_4", name: "风暴之眼符文 (IV)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune2",
+    stat: {"physical":{"base":20.0,"per":2.0}}, ability: [], levelBase: 20, levelGrow: 2 },
+  { id: "WarriorSetRune2_5", name: "风暴之眼符文 (V)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune2",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "WarriorSetRune2_6", name: "风暴之眼符文 (VI)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune2",
+    stat: {"lifeOnHit":{"base":10.0,"per":1.0}}, ability: [], levelBase: 10, levelGrow: 1 },
+  { id: "WarriorSetRune3_1", name: "山岳之重符文 (I)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune3",
+    stat: {}, ability: [{"id":"w_earth","levels":4,"everyN":3,"so":"WarriorSpecial4"}], levelBase: 0, levelGrow: 0 },
+  { id: "WarriorSetRune3_2", name: "山岳之重符文 (II)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune3",
+    stat: {"basic":{"base":20.0,"per":2.0}}, ability: [{"id":"w_earth","levels":2,"everyN":3,"so":"WarriorSpecial4"}], levelBase: 20, levelGrow: 2 },
+  { id: "WarriorSetRune3_3", name: "山岳之重符文 (III)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune3",
+    stat: {"as":{"base":8.0,"per":1.2}}, ability: [], levelBase: 8, levelGrow: 1.2 },
+  { id: "WarriorSetRune3_4", name: "山岳之重符文 (IV)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune3",
+    stat: {"cd":{"base":25.0,"per":5.0}}, ability: [], levelBase: 25, levelGrow: 5 },
+  { id: "WarriorSetRune3_5", name: "山岳之重符文 (V)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune3",
+    stat: {"maxHealth":{"base":500.0,"per":20.0}}, ability: [], levelBase: 500, levelGrow: 20 },
+  { id: "WarriorSetRune3_6", name: "山岳之重符文 (VI)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune3",
+    stat: {"str":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+  { id: "WarriorSetRune4_1", name: "秋收之月符文 (I)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune4",
+    stat: {}, ability: [{"id":"w_half","levels":4,"everyN":3,"so":"WarriorHeavyAttack2"}], levelBase: 0, levelGrow: 0 },
+  { id: "WarriorSetRune4_2", name: "秋收之月符文 (II)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune4",
+    stat: {"magicResistPct":{"base":0.1,"per":0.01}}, ability: [{"id":"w_half","levels":2,"everyN":3,"so":"WarriorHeavyAttack2"}], levelBase: 0.1, levelGrow: 0.01 },
+  { id: "WarriorSetRune4_3", name: "秋收之月符文 (III)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune4",
+    stat: {"manaRegen":{"base":6.0,"per":1.2}}, ability: [], levelBase: 6, levelGrow: 1.2 },
+  { id: "WarriorSetRune4_4", name: "秋收之月符文 (IV)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune4",
+    stat: {"manaMax":{"base":40.0,"per":4.0}}, ability: [], levelBase: 40, levelGrow: 4 },
+  { id: "WarriorSetRune4_5", name: "秋收之月符文 (V)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune4",
+    stat: {"cd":{"base":25.0,"per":5.0}}, ability: [], levelBase: 25, levelGrow: 5 },
+  { id: "WarriorSetRune4_6", name: "秋收之月符文 (VI)", type: "set", rarity: 5, cls: 1, setId: "WarriorSetRune4",
+    stat: {"str":{"base":20.0,"per":3.0}}, ability: [], levelBase: 20, levelGrow: 3 },
+];
+
+/* 把 cfg.runes=[{id, level}] 的单件加成注入 engine.js 的属性对象 s。
+   - 属性加成 -> s 的扁平键（cc/cd/as/main 等；vs.* 写入 s.vs）
+   - 技能等级授予 -> cfg.skillLevels[id]（engine 的 pctAtLevel 用它缩放倍率）
+     同时写入 s.runeAbilityLevels 作为追踪；
+     不写 s.ability[id]——engine 中该键是「技能专属 +% 伤害」乘区，不是技能等级，写了会串乘区。
+   - 若 cfg.runeLevelGrants/runeLevels 也填了，引擎会再加一次，请勿重复配置。 */
+function applyRunes(cfg, s) {
+  if (!cfg || !s || !Array.isArray(cfg.runes) || !Array.isArray(RUNES)) return s;
+  if (!s.runeAbilityLevels) s.runeAbilityLevels = {};
+  cfg.skillLevels = cfg.skillLevels || {};
+  const byId = {};
+  for (const r of RUNES) { byId[r.id] = r; if (r.name) byId[r.name] = r; }
+  const addTo = (obj, key, v) => { obj[key] = (obj[key] || 0) + v; };
+  for (const item of cfg.runes) {
+    if (!item) continue;
+    const r = byId[item.id] || byId[item.name];
+    if (!r) continue;
+    const lv = Math.max(1, Number(item.level) || 1);
+    for (const key in r.stat) {
+      const g = r.stat[key];
+      const v = g.base + (lv - 1) * g.per;
+      if (!v) continue;
+      if (key.indexOf("vs.") === 0) {
+        if (!s.vs) s.vs = {};
+        s.vs[key.slice(3)] = (s.vs[key.slice(3)] || 0) + v;
+      } else addTo(s, key, v);
+    }
+    for (const a of (r.ability || [])) {
+      if (!a || !a.id) continue;
+      const add = grantedLevels(lv, a.levels == null ? 2 : a.levels);
+      const base = cfg.skillLevels[a.id] != null ? cfg.skillLevels[a.id] : 10;
+      cfg.skillLevels[a.id] = base + add;
+      s.runeAbilityLevels[a.id] = (s.runeAbilityLevels[a.id] || 0) + add;
+    }
+  }
+  return s;
+}
+
+/* 便捷：直接按 cfg.equippedSets=[{setId,count}] 套用套装数值部分（机制 flag 由引擎处理）。
+   注意：engine.js aggregate 已自行调用 applySetBonus，重复调用会双计；此处仅供独立 vm 验证使用。 */
+function applyRuneSets(cfg, s) {
+  if (!cfg || !s || !Array.isArray(cfg.equippedSets)) return s;
+  const addTo = (obj, key, v) => { obj[key] = (obj[key] || 0) + v; };
+  for (const eq of cfg.equippedSets) {
+    const set = SETS.find(x => x.id === eq.setId);
+    if (!set || !set.bonus || !set.bonus[eq.count]) continue;
+    const b = set.bonus[eq.count];
+    if (b.stat) for (const k in b.stat) addTo(s, k, b.stat[k]);
+    if (b.dmg) for (const k in b.dmg) addTo(s, k, b.dmg[k]);
+    if (b.vs) { if (!s.vs) s.vs = {}; for (const k in b.vs) s.vs[k] = (s.vs[k] || 0) + b.vs[k]; }
+    if (b.ability) for (const k in b.ability) { s.ability = s.ability || {}; addTo(s.ability, k, b.ability[k]); }
+    if (b.flag) { s.flags = s.flags || {}; s.flags["set_" + b.flag] = true; }
+  }
+  return s;
+}
+
+if (typeof window !== "undefined") window.RuneData = { SETS, RUNES, grantedLevels, applyRunes, applyRuneSets };
+else globalThis.RuneData = { SETS, RUNES, grantedLevels, applyRunes, applyRuneSets };

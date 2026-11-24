@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>桌面破坏神 · 伤害计算专家</title>
+<style>
+:root{
+  --bg:#080706; --bg2:#0d0b09; --panel:#12100d; --panel2:#171310; --panel3:#1d1813;
+  --line:#2b2318; --line2:#3a2f1f; --gold:#c9a24d; --gold2:#e8cd8a; --gold3:#8a6d33;
+  --text:#e9e2d4; --muted:#8f8474; --dim:#655c4e;
+  --red:#d24b34; --red2:#f26a4d; --green:#6d9b6f; --blue:#5f8fc4; --purple:#a97bd4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(120,80,30,.16), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(90,30,20,.12), transparent 55%),
+    linear-gradient(180deg,#0a0907 0%, #080706 40%, #060504 100%);
+  color:var(--text);
+  font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",-apple-system,sans-serif;
+  font-size:13px; line-height:1.6; min-height:100vh;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.28;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+}
+.serif{font-family:"Noto Serif SC","Songti SC",Georgia,"Times New Roman",serif}
+.num{font-family:"DIN Alternate",Georgia,"Times New Roman",serif;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+
+/* ---------- shell ---------- */
+.shell{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:0 22px 60px}
+header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,rgba(8,7,6,.98),rgba(8,7,6,.86));backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hd{max-width:1560px;margin:0 auto;padding:0 22px;height:68px;display:flex;align-items:center;gap:22px}
+.brand{display:flex;align-items:center;gap:12px;min-width:300px}
+.brand .mark{width:37px;height:37px;flex:0 0 37px}
+.brand h1{font-size:16px;letter-spacing:3px;font-weight:600;color:var(--gold2)}
+.brand .sub{font-size:10px;letter-spacing:2.6px;color:var(--dim);text-transform:uppercase}
+.ver{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:11px;color:var(--muted)}
+.ver .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.ver b{color:var(--gold2);font-weight:500}
+.hdstat{display:flex;align-items:baseline;gap:10px;padding:0 4px 0 24px;margin-left:8px;border-left:1px solid var(--line)}
+.hdstat .hs-k{font-size:10px;letter-spacing:1.4px;color:var(--dim)}
+.hdstat .hs-cls{font-size:13px;color:var(--text);letter-spacing:1px}
+.hdstat .hs-dps{font-size:19px;color:var(--gold2);letter-spacing:.5px;padding:0 4px}
+.hbtn{display:inline-flex;align-items:center;gap:6px;background:rgba(201,162,77,.08);border:1px solid var(--gold3);color:var(--gold2);
+  font-family:inherit;font-size:11.5px;letter-spacing:1px;padding:6px 12px;cursor:pointer;transition:.16s}
+.hbtn:hover{background:rgba(201,162,77,.16);border-color:var(--gold)}
+.savepill{font-size:10px;letter-spacing:.6px;padding:2px 8px;border:1px solid var(--line2);color:var(--dim)}
+.savepill.dirty{color:var(--gold2);border-color:var(--gold3)}
+.savepill.ok{color:#8fb28f;border-color:#38513a}
+nav{max-width:1560px;margin:0 auto;padding:0 22px;display:flex;gap:20px;overflow-x:auto}
+.navgroup{display:flex;align-items:stretch;gap:2px;position:relative}
+.navgroup+.navgroup{padding-left:20px}
+.navgroup+.navgroup::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:1px;background:var(--line)}
+.nglabel{font-size:9px;letter-spacing:2px;color:#4c4438;align-self:center;padding-right:8px;text-transform:uppercase}
+nav button{
+  background:none;border:none;color:var(--muted);padding:12px 14px;font-size:12.5px;letter-spacing:1.2px;
+  cursor:pointer;position:relative;font-family:inherit;white-space:nowrap;transition:.18s
+}
+nav button:hover{color:var(--text)}
+nav button.on{color:var(--gold2)}
+nav button.on::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+main{padding-top:22px}
+.page{display:none}
+.page.on{display:block;animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- page head ---------- */
+.pagehead{display:flex;align-items:flex-end;gap:16px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.pagehead h2{font-size:17px;letter-spacing:3px;font-weight:600;color:var(--gold2)}
+.pagehead .desc{font-size:11.5px;color:var(--dim);letter-spacing:.4px;margin-bottom:2px}
+.pagehead .aside{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted)}
+.pagehead .aside b{color:var(--gold2);font-weight:500}
+.kv{display:inline-flex;align-items:baseline;gap:5px}
+.kv .k{font-size:10px;color:var(--dim);letter-spacing:1px}
+.kv .v{font-size:13px;color:var(--text)}
+
+/* ---------- drawer / toast / error bar ---------- */
+.scrim{position:fixed;inset:0;background:rgba(4,3,2,.62);backdrop-filter:blur(2px);z-index:80;opacity:0;pointer-events:none;transition:.2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:92vw;z-index:90;background:linear-gradient(180deg,#141009,#0b0906);
+  border-left:1px solid var(--line2);box-shadow:-24px 0 60px rgba(0,0,0,.6);transform:translateX(102%);transition:transform .24s cubic-bezier(.3,.7,.3,1);
+  display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.drawer .dh{display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+.drawer .dh h3{font-size:12px;letter-spacing:2.4px;color:var(--gold2);text-transform:uppercase;font-weight:600}
+.drawer .dh .x{margin-left:auto;background:none;border:1px solid var(--line2);color:var(--muted);width:26px;height:26px;cursor:pointer;font-size:15px;line-height:1;font-family:inherit}
+.drawer .dh .x:hover{color:var(--text);border-color:var(--gold3)}
+.drawer .db{padding:16px 18px;overflow:auto;flex:1}
+.savebox{display:flex;gap:8px;margin-bottom:10px}
+.savebox input{flex:1;min-width:0}
+.btn{background:#1b1610;border:1px solid var(--line2);color:var(--text);font-family:inherit;font-size:11.5px;letter-spacing:.8px;padding:7px 12px;cursor:pointer;transition:.16s;white-space:nowrap}
+.btn:hover{border-color:var(--gold3);color:var(--gold2)}
+.btn.gold{border-color:var(--gold3);color:var(--gold2);background:rgba(201,162,77,.1)}
+.btn.gold:hover{background:rgba(201,162,77,.2)}
+.btn.ghost{background:none;color:var(--muted)}
+.btn.ghost:hover{color:var(--text)}
+.btn.danger:hover{border-color:#7a3226;color:var(--red2)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.dhint{font-size:11px;line-height:1.8;color:#8a8070;letter-spacing:.2px}
+.savelist{display:grid;gap:8px;margin:14px 0}
+.saveitem{border:1px solid var(--line);background:#0f0d0a;padding:10px 12px;position:relative;cursor:pointer;transition:.16s}
+.saveitem:hover{border-color:var(--line2);background:#141009}
+.saveitem.on{border-color:var(--gold3);background:#1a140d}
+.saveitem .t{display:flex;align-items:baseline;gap:8px}
+.saveitem .nm{font-size:12.5px;color:var(--text);font-weight:500}
+.saveitem .badge{font-size:9px;letter-spacing:.8px;padding:0 5px;border:1px solid var(--line2);color:var(--dim)}
+.saveitem .badge.warn{color:#d9a05a;border-color:#5a4324}
+.saveitem .m{display:flex;gap:10px;margin-top:4px;font-size:10.5px;color:var(--dim)}
+.saveitem .m b{color:var(--gold2);font-weight:500}
+.saveitem .ops{position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:.3;transition:.14s}
+.saveitem:hover .ops{opacity:1}
+.saveitem .ops button{background:#0a0806;border:1px solid var(--line2);color:var(--muted);font-size:10px;padding:2px 6px;cursor:pointer;font-family:inherit}
+.saveitem .ops button:hover{color:var(--gold2);border-color:var(--gold3)}
+.saveitem .ops button.del:hover{color:var(--red2);border-color:#7a3226}
+.empty{font-size:11.5px;color:var(--dim);text-align:center;padding:28px 10px;border:1px dashed var(--line);line-height:1.9}
+
+#toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+#toast div{background:#1c1710;border:1px solid var(--gold3);color:var(--gold2);font-size:11.5px;letter-spacing:.5px;padding:8px 16px;opacity:0;transform:translateY(8px);transition:.22s}
+#toast div.on{opacity:1;transform:none}
+#toast div.err{border-color:#7a3226;color:var(--red2);background:#1d100c}
+.errbar{position:sticky;top:0;z-index:70;display:none;align-items:flex-start;gap:10px;padding:10px 16px;background:#1d100c;
+  border:1px solid #7a3226;color:#f0b7a8;font-size:11.5px;line-height:1.6;margin-bottom:14px}
+.errbar.on{display:flex}
+.errbar b{color:var(--red2)}
+.errbar .x{margin-left:auto;background:none;border:1px solid #7a3226;color:#f0b7a8;cursor:pointer;font-family:inherit;font-size:11px;padding:2px 8px}
+
+/* ---------- shared ---------- */
+.panel{background:linear-gradient(180deg,rgba(23,19,16,.92),rgba(15,12,10,.92));border:1px solid var(--line);position:relative}
+.panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;border:1px solid var(--gold3);opacity:.7}
+.panel::before{left:-1px;top:-1px;border-right:0;border-bottom:0}
+.panel::after{right:-1px;bottom:-1px;border-left:0;border-top:0}
+.ph{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.ph h3{font-size:12px;letter-spacing:2.4px;font-weight:600;color:var(--gold2);text-transform:uppercase}
+.ph .hint{font-size:10.5px;color:var(--dim);letter-spacing:.5px;margin-left:auto}
+.pb{padding:16px}
+.gold{color:var(--gold2)} .muted{color:var(--muted)} .dim{color:var(--dim)}
+.red{color:var(--red2)} .green{color:var(--green)}
+.grid2{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* ---------- overview hero ---------- */
+.hero{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;margin-bottom:18px}
+.dpsbox{padding:22px 24px 20px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.dpsbox::after{content:"";position:absolute;right:-60px;top:-80px;width:260px;height:260px;background:radial-gradient(circle,rgba(210,75,52,.18),transparent 65%)}
+.dpslabel{font-size:11px;letter-spacing:3px;color:var(--muted)}
+.dpsvalue{font-size:64px;line-height:1.02;color:#f4e3bd;text-shadow:0 0 26px rgba(230,160,80,.22);margin:2px 0 0}
+.dpsvalue small{font-size:14px;letter-spacing:2px;color:var(--dim);margin-left:8px}
+.dpsrow{display:flex;gap:26px;margin-top:auto;padding-top:18px;flex-wrap:wrap}
+.dpsrow .k{font-size:10.5px;color:var(--dim);letter-spacing:1px}
+.dpsrow .v{font-size:17px;color:var(--gold2)}
+.dpsrow .v.red{color:var(--red2)}
+.classline{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.classline .nm{font-size:19px;letter-spacing:2px;color:var(--text)}
+.classline .tg{font-size:11px;color:var(--dim);letter-spacing:1px}
+.crest{width:44px;height:44px;border:1px solid var(--line2);display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(201,162,77,.12),transparent 70%)}
+.crest svg{width:26px;height:26px}
+
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.metric{background:var(--panel);padding:14px 16px}
+.metric .k{font-size:10.5px;color:var(--dim);letter-spacing:1.4px}
+.metric .v{font-size:23px;color:var(--text);margin-top:2px}
+.metric .v span{font-size:11px;color:var(--dim);margin-left:4px}
+
+/* charts */
+.chartwrap{position:relative}
+canvas{display:block;width:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.legend i{display:inline-block;width:8px;height:8px;margin-right:6px;vertical-align:1px}
+.legend span{font-size:11px;color:var(--muted)}
+
+/* composition */
+.compbar{display:flex;height:14px;border:1px solid var(--line);background:#0a0908;margin:4px 0 14px;overflow:hidden}
+.compbar div{height:100%;transition:width .4s}
+.complist{display:grid;gap:7px}
+.comprow{display:grid;grid-template-columns:1fr 64px 52px;gap:8px;align-items:center;font-size:12px}
+.comprow .nm{display:flex;align-items:center;gap:8px;color:var(--text)}
+.comprow .bar{height:4px;background:#1c1712;position:relative}
+.comprow .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--gold)}
+.comprow .pc{text-align:right;color:var(--muted);font-size:11px}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-weight:500;color:var(--dim);font-size:10.5px;letter-spacing:1.2px;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid rgba(43,35,24,.55);vertical-align:middle}
+tr:hover td{background:rgba(201,162,77,.035)}
+td.r,th.r{text-align:right}
+.tag{display:inline-block;font-size:9.5px;letter-spacing:1px;padding:1px 6px;border:1px solid var(--line2);color:var(--muted);margin-left:6px;vertical-align:1px}
+.tag.b{color:#d9a05a;border-color:#5a4324}
+.tag.s{color:#8fb28f;border-color:#38513a}
+.tag.sp{color:#a9a2d6;border-color:#453f63}
+
+/* controls */
+.field{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed rgba(43,35,24,.7)}
+.field:last-child{border-bottom:0}
+.field label{font-size:11.5px;color:var(--muted);letter-spacing:.4px}
+.field .val{display:flex;align-items:center;gap:6px}
+.fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}
+.fieldgrid>.field:nth-last-child(-n+2){border-bottom:0}
+.fgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:11px 12px;padding:10px 0 4px}
+.fitem{grid-column:span 2}
+.fitem.wide{grid-column:span 3}
+.fitem{display:flex;flex-direction:column;gap:5px;font-size:10.5px;color:var(--muted);letter-spacing:.3px;min-width:0}
+.fitem>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fitem input,.fitem select{width:100%;max-width:none;text-align:left;background:#0b0906;border:1px solid var(--line);color:var(--text);
+  font-family:inherit;font-size:12px;padding:5px 7px;outline:none}
+.fitem input:focus,.fitem select:focus{border-color:var(--gold3)}
+.fitem .pair{display:flex;gap:4px}
+.fitem .pair select{flex:1;min-width:0;max-width:92px}
+.fitem .pair input{width:56px;flex:0 0 56px}
+.fgrid.narrow{grid-template-columns:repeat(4,minmax(0,1fr))}
+.encrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.encbtn{background:#100e0a;border:1px solid var(--line);color:var(--muted);font-family:inherit;cursor:pointer;
+  padding:8px 14px;text-align:left;transition:.15s;min-width:132px}
+.encbtn:hover{border-color:var(--line2);background:#161110}
+.encbtn.on{border-color:var(--gold3);background:rgba(201,162,77,.09);color:var(--gold2)}
+.encbtn b{display:block;font-size:12px;font-weight:500;letter-spacing:.6px}
+.encbtn span{display:block;font-size:9.5px;color:var(--dim);margin-top:2px;letter-spacing:.4px}
+.encbtn.on span{color:#a08d68}
+.encnote{font-size:11px;line-height:1.8;color:#8a8070;border-left:2px solid var(--line2);padding-left:12px}
+.fwhy{display:block;font-style:normal;font-size:9.5px;line-height:1.5;color:#6f6656;margin-top:1px;min-height:14px}
+.calibrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.calibcard{border:1px solid var(--line);background:#0e0c09;padding:12px 14px}
+.calibcard b{font-size:12.5px;letter-spacing:.8px;display:block;margin-bottom:6px}
+.calibcard p{font-size:11px;line-height:1.85;color:#a2988a;margin-bottom:6px}
+.calibcard span{font-size:10.5px}
+@media(max-width:1180px){.hdstat{display:none}}
+@media(max-width:960px){
+  .grid2{grid-template-columns:1fr!important}
+  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fitem,.fitem.wide{grid-column:span 1}
+  .leglist{grid-template-columns:1fr}
+  .pagehead{flex-wrap:wrap;gap:8px}
+  .pagehead .aside{margin-left:0;width:100%}
+}
+.grouphead{font-size:9.5px;letter-spacing:2px;color:#5b5142;text-transform:uppercase;padding:14px 0 6px;border-bottom:1px solid var(--line)}
+.grouphead:first-child{padding-top:2px}
+input[type=number],select{
+  background:#0c0a08;border:1px solid var(--line2);color:var(--text);font-family:inherit;font-size:12px;
+  padding:5px 8px;outline:none;transition:.15s
+}
+input[type=number]{width:78px;text-align:right;font-variant-numeric:tabular-nums}
+input:focus,select:focus{border-color:var(--gold3);box-shadow:0 0 0 2px rgba(201,162,77,.08)}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:#241d15;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--gold);border:2px solid #0a0806;cursor:pointer}
+.switchrow{display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--text);cursor:pointer;padding:7px 9px;background:#0f0d0a;border:1px solid #2b2318}
+.switchrow input{accent-color:#c9a24d;margin:0}
+.star{font-size:12px;color:#332a1e;line-height:1}
+.star.on{color:var(--gold)}
+select{cursor:pointer;max-width:220px}
+select option{background:#12100d}
+
+.btn{background:linear-gradient(180deg,#241c12,#191410);border:1px solid #4a3a20;color:var(--gold2);font-family:inherit;font-size:11.5px;letter-spacing:1.2px;padding:7px 13px;cursor:pointer;transition:.16s}
+.btn:hover{border-color:var(--gold);background:linear-gradient(180deg,#2e2416,#1d1712)}
+.btn.primary{background:linear-gradient(180deg,#7a2a1c,#4d1a12);border-color:#9a4229;color:#f3c9a8}
+.btn.primary:hover{background:linear-gradient(180deg,#933424,#5c2016)}
+.btn.ghost{background:none}
+.btn.on{border-color:var(--gold);color:#fff2cf;background:linear-gradient(180deg,#3a2c17,#241b10)}
+
+.seg{display:flex;border:1px solid var(--line2)}
+.seg button{flex:1;background:none;border:none;border-right:1px solid var(--line2);color:var(--muted);font-family:inherit;font-size:11px;padding:6px 4px;cursor:pointer;letter-spacing:.5px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:rgba(201,162,77,.12);color:var(--gold2)}
+
+.classcards{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
+.classcard{border:1px solid var(--line);background:linear-gradient(180deg,#15110e,#0e0c0a);padding:12px 8px;text-align:center;cursor:pointer;transition:.18s;position:relative}
+.classcard:hover{border-color:var(--line2);transform:translateY(-1px)}
+.classcard.on{border-color:var(--gold3);background:linear-gradient(180deg,#241c12,#14100c);box-shadow:inset 0 0 24px rgba(201,162,77,.06)}
+.classcard svg{width:30px;height:30px;margin-bottom:5px}
+.classcard .nm{font-size:13px;color:var(--text);letter-spacing:2px}
+.classcard .st{font-size:10px;color:var(--dim);margin-top:1px}
+.classcard.on .nm{color:var(--gold2)}
+
+/* tabs inside */
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.subtab{background:none;border:1px solid var(--line);color:var(--muted);font-family:inherit;font-size:11.5px;padding:6px 12px;cursor:pointer}
+.subtab.on{color:var(--gold2);border-color:var(--gold3);background:rgba(201,162,77,.07)}
+.ctpane{display:none}
+.ctpane.on{display:block;animation:fade .2s ease}
+.legtools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.legtools input[type=search]{flex:1;min-width:180px;background:#0c0a08;border:1px solid var(--line2);color:var(--text);
+  font-family:inherit;font-size:11.5px;padding:7px 10px;outline:none}
+.legtools input[type=search]:focus{border-color:var(--gold3)}
+.leglist{display:grid;grid-template-columns:1fr 1fr;gap:7px;max-height:620px;overflow:auto;padding-right:4px}
+@media(max-width:1100px){.leglist{grid-template-columns:1fr}}
+.legrow{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);background:#0f0d0a;cursor:pointer;transition:.14s}
+.legrow:hover{border-color:var(--line2);background:#13100c}
+.legrow.on{border-color:#5c4826;background:#191410}
+.legrow input{margin-top:3px;flex:0 0 auto;accent-color:#c9a24d}
+.legrow .lb{flex:1;min-width:0}
+.legrow .ln{display:block;font-size:11.5px;color:var(--text);line-height:1.5}
+.legrow.on .ln{color:var(--gold2)}
+.legrow .ln em{font-style:normal;font-size:9.5px;color:var(--dim);margin-left:6px}
+.legrow .lc{font-size:9px;margin-left:6px;letter-spacing:.4px}
+.legrow .lc.official{color:#7ba05b}
+.legrow .lc.modeled{color:#c9a24d}
+.legrow .lc.none{color:#6b6255}
+.legrow .ld{display:block;font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:2px}
+
+/* talents */
+.tree{display:grid;gap:10px}
+.trow{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start;padding:10px 0;border-bottom:1px dashed rgba(43,35,24,.6)}
+.trow:last-child{border-bottom:0}
+.trow.locked{opacity:.38}
+.trow.caprow{background:linear-gradient(90deg,rgba(201,162,77,.06),transparent)}
+.tmeta{font-size:10px;color:var(--dim);letter-spacing:1px;padding-top:9px}
+.tmeta b{display:block;font-size:14px;color:var(--gold3);font-weight:500}
+.titems{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
+.tal{border:1px solid var(--line);background:#0f0d0a;padding:8px 9px;cursor:pointer;position:relative;transition:.15s;min-height:56px}
+.tal:hover{border-color:var(--line2);background:#15110d}
+.tal.on{border-color:#5c4826;background:linear-gradient(180deg,#1e1810,#12100c)}
+.tal.max{border-color:var(--gold3);box-shadow:inset 0 0 18px rgba(201,162,77,.07)}
+.tal .n{font-size:11.5px;color:var(--text);display:flex;justify-content:space-between;gap:6px}
+.tal.on .n{color:var(--gold2)}
+.tal .r{font-size:10px;color:var(--dim)}
+.tal .maxr{color:var(--gold)}
+.tal .d{font-size:10px;color:var(--dim);line-height:1.45;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tal.on .d{color:var(--muted)}
+.pips{display:flex;gap:2px;margin-top:5px}
+.pips i{width:100%;height:2px;background:#2a2218}
+.pips i.f{background:var(--gold3)}
+
+/* minions */
+.mingrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.minion{border:1px solid var(--line);background:linear-gradient(180deg,#14110d,#0d0b09);padding:12px;cursor:pointer;transition:.16s}
+.minion:hover{border-color:var(--line2)}
+.minion.on{border-color:var(--gold3);background:linear-gradient(180deg,#211a11,#100d0a)}
+.minion .top{display:flex;justify-content:space-between;align-items:center}
+.minion .nm{font-size:12.5px;color:var(--text)}
+.minion.on .nm{color:var(--gold2)}
+.minion .rar{font-size:9px;letter-spacing:1px;padding:1px 5px;border:1px solid var(--line2);color:var(--muted)}
+.minion .rar.传说{color:#e0b45e;border-color:#6b5122}
+.minion .rar.稀有{color:#7fa6d4;border-color:#31465e}
+.minion .bo{font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.55}
+.minion .cap{font-size:10px;color:var(--dim);margin-top:5px}
+
+/* affix bars */
+.affrow{display:grid;grid-template-columns:132px 1fr 58px;gap:10px;align-items:center;padding:5px 0}
+.affrow .nm{font-size:11.5px;color:var(--muted)}
+.affrow .tr{height:6px;background:#191510;position:relative}
+.affrow .tr i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#6b4d1f,var(--gold));opacity:.85}
+.affrow .pc{text-align:right;font-size:11.5px;color:var(--gold2)}
+.ztable{display:flex;flex-direction:column;gap:1px}
+.zrow{display:grid;grid-template-columns:1fr 74px 96px;gap:10px;align-items:baseline;padding:6px 10px;background:#0f0d0a;border-left:2px solid #241d14}
+.zrow:nth-child(even){background:#12100c}
+.zrow .zn{font-size:11.5px;color:var(--text)}
+.zrow .zn em{display:block;font-style:normal;font-size:9.5px;color:var(--muted);margin-top:2px;letter-spacing:.02em}
+.zrow .zx{text-align:right;font-size:11px;color:var(--gold2)}
+.zrow .zv{text-align:right;font-size:11.5px;color:#b9b0a0}
+.zrow.hi{border-left-color:var(--red)}
+.zrow.hi .zn{color:#e8b9a6}
+.zrow.sum{background:#1a1409;border-left-color:var(--gold);margin-top:3px}
+.zrow.sum .zn{color:var(--gold2);font-size:12px}
+.zrow.sum .zv{font-size:13px}
+.agentwrap{display:grid;grid-template-columns:1fr 380px;gap:16px;align-items:start}
+.chatpanel{position:sticky;top:16px}
+.chatpb{display:flex;flex-direction:column;height:calc(100vh - 240px);min-height:520px}
+.aglog{flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px;padding-right:6px}
+.msg{max-width:86%;width:fit-content;align-self:flex-start;font-size:12px;line-height:1.75;padding:10px 13px;border:1px solid #2b2318;background:#100e0a;color:var(--text)}
+.msg.me{align-self:flex-end;background:#1a1409;border-color:#4a3a1d;color:var(--gold2)}
+.msg.bot b{color:var(--gold2);font-weight:600}
+.msg.bot .kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:8px 0;font-size:11px}
+.msg.bot .kv span:nth-child(even){text-align:right;color:var(--gold2);font-family:var(--mono)}
+.msg.bot code{font-family:var(--mono);font-size:11px;background:#1a1509;padding:1px 4px;color:#d8c9a4}
+.msg.bot .src{margin-top:8px;font-size:9.5px;color:#655c4e;letter-spacing:.03em}
+.agquick{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.agquick button{font-size:10.5px;padding:5px 9px;background:#0e0c09;border:1px solid #2b2318;color:var(--muted);cursor:pointer;font-family:inherit}
+.agquick button:hover{border-color:#5c4826;color:var(--gold2)}
+.aginput{display:flex;gap:8px}
+.aginput input{flex:1;background:#0b0906;border:1px solid #2b2318;color:var(--text);font-family:inherit;font-size:12px;padding:10px 11px;outline:none}
+.aginput input:focus{border-color:#5c4826}
+.aginput button{padding:0 18px;background:#1d1608;border:1px solid #5c4826;color:var(--gold2);font-family:inherit;font-size:12px;cursor:pointer;letter-spacing:.06em}
+.aginput button:hover{background:#2a2010}
+.trace{margin-bottom:12px;padding:9px 11px;border-left:2px solid #3a2f1d;background:#0f0d0a}
+.trace .th{font-size:10.5px;color:var(--gold2);margin-bottom:4px}
+.trace .tb{font-size:10px;color:var(--muted);line-height:1.7;max-height:96px;overflow:hidden}
+.trace .tk{font-size:9px;color:#655c4e;margin-top:4px}
+.slotgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slotcard{border:1px solid var(--line);padding:10px;background:#0f0d0a}
+.slotcard .s{font-size:10px;color:var(--dim);letter-spacing:1.4px}
+.slotcard .a{font-size:11.5px;color:var(--text);margin-top:3px}
+.slotcard .v{font-size:10.5px;color:var(--gold);margin-top:2px}
+.slotcard.flex{border-color:rgba(201,162,77,.28);background:linear-gradient(180deg,#14100b,#0f0d0a)}
+.slotcard .s em{font-style:normal;font-size:8.5px;letter-spacing:1px;color:var(--gold);border:1px solid rgba(201,162,77,.35);padding:0 3px;margin-left:5px;vertical-align:1px}
+
+/* formula */
+.formula{border-left:2px solid var(--gold3);padding:12px 16px;background:#0c0a08;font-size:12.5px;line-height:2;color:#cfc6b4}
+.formula em{color:var(--gold2);font-style:normal}
+.steps{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:14px}
+.step{display:grid;grid-template-columns:150px 1fr;gap:14px;background:var(--panel);padding:12px 14px}
+.step .n{font-size:11px;color:var(--gold);letter-spacing:1px}
+.step .d{font-size:12px;color:var(--muted);line-height:1.7}
+.step .d b{color:var(--text);font-weight:500}
+.src{font-size:11.5px;color:var(--muted);line-height:1.9}
+.src a{color:var(--gold);text-decoration:none;border-bottom:1px dotted #5c4826}
+.note{border:1px solid #3a2b1a;background:rgba(201,162,77,.04);padding:12px 14px;font-size:11.5px;color:#bdb09a;line-height:1.75}
+
+.footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:20px;font-size:10.5px;color:var(--dim);letter-spacing:.6px;flex-wrap:wrap}
+
+@media (max-width:1100px){
+  .grid2{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .slotgrid{grid-template-columns:repeat(2,1fr)}
+  .brand{min-width:0}
+  .ver{display:none}
+}
+/* ---------- 一期新增：口径 / 未决项 / 对比 / 数值面板 ---------- */
+.statusbar{display:flex;align-items:center;gap:12px;padding:0 22px 8px;max-width:1560px;margin:0 auto;font-size:11px;color:var(--muted)}
+.statusbar .spacer{flex:1}
+.scopebadge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gold3);color:var(--gold2);background:rgba(201,162,77,.08);
+  font-size:10.5px;letter-spacing:.8px;padding:3px 9px;white-space:nowrap}
+.scopebadge.single{border-color:#7a5a3a;color:#e8b98a;background:rgba(210,120,52,.08)}
+.scopebadge::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+.pendbtn{border:1px solid var(--line2);background:none;color:var(--muted);font-family:inherit;font-size:10.5px;letter-spacing:.6px;padding:3px 9px;cursor:pointer}
+.pendbtn:hover{border-color:var(--gold3);color:var(--gold2)}
+.pendbtn b{color:var(--gold2);font-weight:600}
+.pendbtn.hot{border-color:#7a5a3a;color:#e8b98a}
+
+.badge{display:inline-block;font-size:9px;letter-spacing:.6px;padding:1px 5px;border:1px solid var(--line2);color:var(--dim);vertical-align:1px}
+.badge.warn{color:#d9a05a;border-color:#5a4324}
+.badge.good{color:#8fb28f;border-color:#38513a}
+.badge.me{color:#a9a2d6;border-color:#453f63}
+.redline{border:1px solid #6a3527;background:rgba(210,75,52,.07);color:#e8b9a6;padding:9px 12px;font-size:11.5px;line-height:1.7}
+.bigresult{display:flex;align-items:baseline;gap:12px;padding:6px 0 14px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.bigresult .v{font-size:38px;line-height:1;color:var(--gold2);font-family:var(--num,"DIN Alternate",Georgia,serif)}
+.bigresult .k{font-size:11px;color:var(--muted);letter-spacing:1px}
+.bigresult .u{font-size:12px;color:var(--dim)}
+
+.pcard{border:1px solid var(--line);background:#0f0d0a;margin-bottom:10px}
+.pcard .ph2{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.pcard .ph2 .t{font-size:12px;color:var(--text);font-weight:500}
+.pcard .pb2{padding:11px 12px}
+.pcard .src{font-size:10.5px;color:var(--dim);line-height:1.7;margin-bottom:8px}
+.pcard .opts{display:flex;flex-direction:column;gap:6px}
+.pcard .opt{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);cursor:pointer;padding:4px 6px}
+.pcard .opt:hover{background:rgba(201,162,77,.05)}
+.pcard .opt input{accent-color:var(--gold);margin:0}
+.pcard .opt b{color:var(--text);font-weight:500}
+.pcard .why{border:1px solid var(--line2);background:none;color:var(--muted);font-family:inherit;font-size:10px;padding:1px 6px;cursor:pointer;margin-left:auto;white-space:nowrap}
+.pcard .why:hover{color:var(--gold2);border-color:var(--gold3)}
+.pcard .evidence{display:none;margin-top:8px;padding:9px 11px;border-left:2px solid var(--gold3);background:rgba(201,162,77,.04);font-size:11px;color:#bdb09a;line-height:1.8}
+.pcard .evidence.on{display:block}
+.pcard .measure{margin-top:8px;padding:10px;border:1px dashed var(--line2);background:#0a0908}
+.pcard .measure .row{display:flex;align-items:center;gap:8px;margin:5px 0}
+.pcard .measure label{font-size:10.5px;color:var(--dim);width:82px;flex:0 0 82px}
+.pcard .measure input,.pcard .measure select{flex:1;min-width:0;font-size:11px;padding:5px 7px}
+.pcard .measure .hintline{font-size:10px;color:var(--dim);line-height:1.6;margin-top:6px}
+.dectitle{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dectitle h3{font-size:12px;letter-spacing:2px;color:var(--gold2);font-weight:600}
+
+.lockbox{border:1px solid var(--line);background:#0f0d0a;margin-bottom:14px}
+.lockbox summary{cursor:pointer;padding:10px 12px;font-size:11.5px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:8px}
+.lockbox summary::-webkit-details-marker{display:none}
+.lockbox summary::before{content:"锁";font-size:9px;color:var(--gold2);border:1px solid var(--gold3);padding:0 4px}
+.lockbox[open] summary::before{content:"改"}
+.lockbox .lockbody{padding:0 12px 12px;border-top:1px solid var(--line)}
+.lockbox .lockbody .field{padding:6px 0}
+
+.cmpcol{border:1px solid var(--line);background:#0f0d0a;padding:12px}
+.cmpcol h4{font-size:11px;letter-spacing:1.5px;color:var(--gold2);font-weight:600;margin-bottom:8px}
+.cmpcol .field{padding:5px 0}
+.cmpcol .field label{font-size:10.5px}
+.cmpcol input,.cmpcol select{font-size:11px;padding:4px 6px;max-width:130px}
+.verdict{border:1px solid var(--gold3);background:linear-gradient(90deg,rgba(201,162,77,.14),rgba(201,162,77,.03));padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--gold2)}
+.verdict .sub{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+.cmptable{width:100%;border-collapse:collapse;font-size:11.5px}
+.cmptable th,.cmptable td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right}
+.cmptable th:first-child,.cmptable td:first-child{text-align:left;color:var(--muted)}
+.cmptable thead th{color:var(--gold2);font-weight:500;font-size:10.5px;letter-spacing:.6px}
+.cmptable td.best{color:var(--gold2)}
+.cmptable td.diff{color:#8fb28f}
+.inlinebtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.talentgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 12px}
+.talentgrid .field{padding:3px 0}
+.talentgrid input{width:46px;font-size:11px;padding:2px 4px}
+input,select{background:#0a0908;border:1px solid var(--line2);color:var(--text);font-family:inherit;border-radius:0}
+input:focus,select:focus{outline:none;border-color:var(--gold3)}
+/* ---- 最优解页 ---- */
+.svtabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 14px}
+.svtab{background:#100d0a;border:1px solid var(--line2);color:var(--muted);font-family:inherit;font-size:11px;letter-spacing:.5px;padding:7px 11px;cursor:pointer;transition:.16s;position:relative}
+.svtab:hover{color:var(--gold2);border-color:var(--gold3)}
+.svtab.on{border-color:var(--gold3);background:rgba(201,162,77,.1);color:var(--gold2)}
+.svtab .dot{position:absolute;top:3px;right:4px;width:5px;height:5px;border-radius:50%;background:#5b8c5b}
+.svtab .dot.run{background:#d9a05a}
+.svbar{height:9px;border:1px solid var(--line2);background:#0a0908;overflow:hidden;margin:10px 0 6px}
+.svbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold3),var(--gold2));transition:width .2s linear}
+.svstage{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);letter-spacing:.6px}
+.svstage b{color:var(--gold2);font-weight:500}
+.svcard{border:1px solid var(--line);background:#0e0c09;padding:14px 16px}
+.svmetrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:14px}
+.svmetrics>div{background:var(--panel);padding:12px 14px}
+.svmetrics .k{font-size:9.5px;letter-spacing:1.2px;color:var(--dim);margin-bottom:5px}
+.svmetrics .v{font-size:19px;color:var(--gold2)}
+.svmetrics .v.green{color:#8fb28f}
+.svalloc{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:12px}
+.svalloc>div{background:var(--panel);padding:6px 10px;display:flex;justify-content:space-between;font-size:11px}
+.svalloc>div span:last-child{color:var(--gold2)}
+.svnote{font-size:10.5px;line-height:1.8;color:var(--muted);border-left:2px solid var(--line2);padding-left:11px;margin-top:10px}
+.svgeargrid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+
+/* ---------- 易用性升级：引导条 / 快捷入口 / 提示 / loading ---------- */
+.onboard{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 0;padding:11px 14px;
+  border:1px solid var(--gold3);background:linear-gradient(90deg,rgba(201,162,77,.13),rgba(201,162,77,.02))}
+.onboard[hidden]{display:none!important}
+.ob-mark{flex:0 0 26px;width:26px;height:26px;border:1px solid var(--gold3);display:grid;place-items:center;
+  color:var(--gold2);font-size:13px;background:rgba(201,162,77,.08)}
+.ob-body{font-size:11.5px;color:var(--muted);letter-spacing:.2px;line-height:1.7;min-width:0}
+.ob-body b{color:var(--gold2);letter-spacing:1px;margin-right:8px}
+.ob-body .ob-step{color:var(--text)}
+.ob-acts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.ob-btn{border:1px solid var(--line2);background:#141009;color:var(--gold2);font-family:inherit;font-size:11px;
+  letter-spacing:.6px;padding:6px 10px;cursor:pointer;white-space:nowrap;transition:.16s}
+.ob-btn:hover{border-color:var(--gold3);background:#1d1710}
+.ob-x{border:1px solid var(--line2);background:none;color:var(--dim);font-family:inherit;font-size:15px;
+  line-height:1;width:26px;height:26px;cursor:pointer;flex:0 0 26px}
+.ob-x:hover{color:var(--text);border-color:var(--gold3)}
+
+.scope-wrap{position:relative;display:inline-flex;align-items:center;gap:6px}
+.scopehelp{width:18px;height:18px;flex:0 0 18px;border:1px solid var(--gold3);border-radius:50%;background:none;
+  color:var(--gold2);font-family:inherit;font-size:11px;line-height:16px;text-align:center;padding:0;cursor:pointer}
+.scopehelp:hover{background:rgba(201,162,77,.16)}
+.scopepop{position:absolute;top:calc(100% + 9px);left:0;width:min(390px,86vw);z-index:75;background:#17120d;
+  border:1px solid var(--gold3);box-shadow:0 18px 44px rgba(0,0,0,.65);padding:14px 16px;
+  font-size:11.5px;color:#bdb09a;line-height:1.85;display:none}
+.scopepop.on{display:block}
+.scopepop b{color:var(--gold2)}
+.scopepop p+p{margin-top:9px}
+.scopepop .popx{position:absolute;top:7px;right:8px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px}
+
+.stbtn{border:1px solid var(--line2);background:rgba(201,162,77,.05);color:var(--muted);font-family:inherit;
+  font-size:10.5px;letter-spacing:.6px;padding:5px 9px;cursor:pointer;white-space:nowrap;transition:.16s}
+.stbtn:hover{border-color:var(--gold3);color:var(--gold2);background:rgba(201,162,77,.12)}
+.stbtn.demo{border-color:#5c4826;color:#d9b576}
+.btn.busy,.stbtn.busy,.ob-btn.busy{opacity:.6;cursor:progress;pointer-events:none}
+.minispin{width:10px;height:10px;border:1.5px solid rgba(201,162,77,.3);border-top-color:var(--gold2);
+  border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-left:4px;display:none}
+.minispin.on{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rangehint{display:block;font-size:9px;color:#6f6656;margin-top:1px;white-space:nowrap}
+.dashwhy{display:block;font-size:9px;color:var(--dim);margin-top:2px;letter-spacing:.2px}
+.savepill.just{animation:pillflash .9s ease}
+@keyframes pillflash{0%{box-shadow:0 0 0 0 rgba(143,178,143,.55)}100%{box-shadow:0 0 0 9px rgba(143,178,143,0)}}
+[title]{cursor:help}
+
+/* ---------- 窄屏：导航横滑 / 卡片单列 / 数字不溢出 / 点击区 ---------- */
+@media(max-width:960px){
+  nav button{flex:0 0 auto;min-height:40px;-webkit-overflow-scrolling:touch}
+  .statusbar{flex-wrap:wrap;gap:8px;padding-bottom:10px}
+  .statusbar .spacer{display:none}
+  .statusbar .stbtn,.statusbar .pendbtn{min-height:40px;padding:6px 12px}
+  .grid3,.grid4,.classcards,.talentgrid,.svmetrics,.svalloc{grid-template-columns:repeat(2,1fr)}
+  .dpsvalue{font-size:clamp(34px,10vw,64px);overflow-wrap:anywhere}
+  .bigresult{flex-wrap:wrap;gap:6px}
+  .bigresult .v{font-size:clamp(26px,8vw,38px);overflow-wrap:anywhere}
+  .ob-acts{margin-left:0;width:100%}
+  .onboard .ob-btn{flex:1;min-height:40px}
+  .scopehelp{width:26px;height:26px;flex-basis:26px;line-height:24px;font-size:13px}
+}
+@media(max-width:560px){
+  .shell{padding:0 12px 44px}
+  .hd,header nav,.statusbar{padding-left:12px;padding-right:12px}
+  .grid3,.grid4,.classcards,.talentgrid,.svmetrics,.svalloc,.metrics,.fieldgrid,
+  .fgrid,.fgrid.narrow,.calibrow,.svgeargrid{grid-template-columns:1fr!important}
+  .grid2{grid-template-columns:1fr!important}
+  .dpsrow{gap:14px}
+  .scopepop{left:auto;right:0}
+  .ob-body{min-width:100%}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd">
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 40 40" fill="none">
+          <path d="M20 3 34 11v18L20 37 6 29V11z" stroke="#8a6d33" stroke-width="1.2"/>
+          <path d="M20 8 29.5 13.5v13L20 32l-9.5-5.5v-13z" stroke="#c9a24d" stroke-width=".7" opacity=".55"/>
+          <path d="M20 11v15M14 18l6-7 6 7" stroke="#e8cd8a" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="20" cy="26.5" r="1.6" fill="#d24b34"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="serif">桌面破坏神 · 伤害实验室</h1>
+        <div class="sub">DESKRAWL DAMAGE LAB</div>
+      </div>
+    </div>
+    <div class="hdstat">
+      <span class="hs-k">当前</span>
+      <span class="hs-cls" id="hdCls">—</span>
+      <span class="hs-dps num" id="hdDps">—</span>
+      <span class="hs-k">秒伤</span>
+    </div>
+    <div class="ver">
+      <span class="dot"></span>
+      <span>数据 <b id="hdVer">1.1.11a</b></span>
+      <span class="savepill" id="hdSaveState">未保存</span>
+      <button class="hbtn" id="btnSaves">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M2.5 2.5h8L13.5 5v8.5h-11z" stroke="currentColor" stroke-width="1.2"/><path d="M5 2.5v4h5v-4M5 13.5v-4h6v4" stroke="currentColor" stroke-width="1.1"/></svg>
+        配置
+      </button>
+    </div>
+  </div>
+  <nav id="nav">
+    <div class="navgroup">
+      <span class="nglabel">计算</span>
+      <button data-tab="overview" class="on" title="总览：期望秒伤、伤害构成与提升方向">总览</button>
+      <button data-tab="damage" title="伤害计算：单跳瞬时 / 周期期望两套口径硬隔离">伤害计算</button>
+      <button data-tab="compare" title="装备取舍：A/B 对比装备、天赋或单条词条">装备取舍</button>
+      <button data-tab="rotation" title="技能轴：逐帧模拟冷却、法力与动作锁">技能轴</button>
+    </div>
+    <div class="navgroup">
+      <span class="nglabel">构筑</span>
+      <button data-tab="character" title="角色：面板、对敌模型与传奇特效">角色</button>
+      <button data-tab="gear" title="装备：词条边际收益与 12 部位推荐">装备</button>
+      <button data-tab="talents" title="天赋：按门槛解锁，每点收益用引擎实测">天赋</button>
+      <button data-tab="solver" title="最优解：黑盒实测候选分配，近似最优">最优解</button>
+      <button data-tab="minions" title="仆从：星级、装备槽与被动成长">仆从</button>
+    </div>
+    <div class="navgroup">
+      <span class="nglabel">资料</span>
+      <button data-tab="model" title="公式与数据：乘区定义、模型假设与数据来源">公式与数据</button>
+      <button data-tab="agent" title="智能问答：本地知识库 + 引擎计算，不联网">智能问答</button>
+    </div>
+  </nav>
+  <div class="statusbar">
+    <span class="scope-wrap">
+      <span class="scopebadge" id="hdScope" title="当前计算口径：周期期望或单跳瞬时">周期期望</span>
+      <button class="scopehelp" id="scopeHelp" title="点开看两种口径的区别与使用场景" aria-label="口径说明">?</button>
+      <span class="scopepop" id="scopePop" role="dialog" aria-label="口径说明">
+        <button class="popx" id="scopePopX" aria-label="关闭说明">×</button>
+        <p><b>周期期望</b>：按场景时间占比加权（易伤、健康/受伤、减速定身等覆盖率都摊进去），得到长期平均每秒伤害。用于评估整套构筑、配装与升级取舍。</p>
+        <p><b>单跳瞬时</b>：只看这一发，假设命中瞬间所有可达状态成立，按 100% 计、不摊覆盖率。用于看技能上限与乘区结构，<b>不能当平均秒伤</b>。</p>
+        <p><b>口径硬隔离</b>：切换后两套结果互不混用；装备取舍页也有自己的口径选择。</p>
+      </span>
+    </span>
+    <span id="hdScopeHint">按场景时间占比加权</span>
+    <span class="spacer"></span>
+    <button class="stbtn" id="btnDemo" title="重新打开示例构筑：一键载入战士/法师推荐配置">示例构筑</button>
+    <button class="stbtn" id="btnShare" title="把整套配置编码成链接并复制到剪贴板">复制分享码</button>
+    <button class="stbtn" id="btnReset" title="把当前构筑恢复到默认推荐配置（需确认）">重置构筑</button>
+    <button class="stbtn" id="btnSaveMgr" title="打开存档管理：载入 / 改名 / 导出 / 导入">存档管理</button>
+    <button class="pendbtn" id="btnPending" title="打开未决项裁决：选择口径或录入自己的实测">未决项 <b id="hdPendingCount">0</b> 条，点此裁决</button>
+  </div>
+</header>
+
+<div class="shell">
+<div class="onboard" id="onboard" role="note" aria-label="新手引导">
+  <div class="ob-mark">?</div>
+  <div class="ob-body"><b>3 步上手</b><span class="ob-step">① 角色页选职业/技能/装备 → ② 总览看秒伤 → ③ 未决项去裁决</span></div>
+  <div class="ob-acts">
+    <button class="ob-btn" id="obDemoWarrior" title="一键载入战士推荐构筑（职业/技能/天赋/装备/传奇已配好）">战士示例</button>
+    <button class="ob-btn" id="obDemoMage" title="一键载入法师推荐构筑（职业/技能/天赋/装备/传奇已配好）">法师示例</button>
+  </div>
+  <button class="ob-x" id="obClose" title="关闭引导，之后不再显示" aria-label="关闭引导">×</button>
+</div>
+<main>
+  <div class="errbar" id="errbar"><span id="errbarMsg"></span><button class="x" id="errbarClose">知道了</button></div>
+  <!-- ================= 总览 ================= -->
+  <section class="page on" id="page-overview">
+    <div class="pagehead">
+      <h2>总览</h2>
+      <div class="desc">一眼看当前构筑的期望秒伤、伤害构成与下一步提升方向</div>
+    </div>
+    <div class="hero">
+      <div class="panel dpsbox">
+        <div class="classline">
+          <div class="crest" id="ovCrest"></div>
+          <div>
+            <div class="nm serif" id="ovClass">战士</div>
+            <div class="tg" id="ovTag">近战爆发 · 流血引擎</div>
+          </div>
+        </div>
+        <div class="dpslabel">对当前敌人模型的期望秒伤</div>
+        <div class="dpsvalue num" id="ovDps">0</div>
+        <div class="dpsrow">
+          <div title="秒伤倍率 = 期望秒伤 ÷ 武器伤害，衡量每点武器伤害产出"><div class="k">秒伤倍率</div><div class="v num" id="ovDpsPct">0%</div></div>
+          <div title="周期期望倍率 = 一个完整法力循环内总伤害 ÷ 武器伤害，按场景时间占比加权"><div class="k">周期期望倍率</div><div class="v num" id="ovCyclePct">0%</div></div>
+          <div title="技能轴周期：0.05 秒步长模拟一个完整法力循环的时长"><div class="k">技能轴周期</div><div class="v num" id="ovCycle">0s</div></div>
+          <div title="击杀时间 = 目标生命 ÷ 期望秒伤，未计算完成时显示破折号"><div class="k">击杀时间</div><div class="v num" id="ovTtk">—</div></div>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric" title="单发最高期望倍率：当前配置下伤害最高的一发，相对武器伤害的倍数"><div class="k">单发最高期望倍率</div><div class="v num" id="mBest">—</div></div>
+        <div class="metric" title="武器伤害 = 武器 DPS ÷ 武器速度 + 平伤；同 DPS 下慢武器对技能更有利"><div class="k">武器伤害</div><div class="v num" id="mWd">—</div></div>
+        <div class="metric" title="主属性倍率 = 1 + 主属性/100，每 1 点主属性 +1%"><div class="k">主属性倍率</div><div class="v num" id="mAttr">—</div></div>
+        <div class="metric" title="暴击期望 = 1 + 暴率 × 暴伤 × (1 − 目标暴伤减免)；暴击率上限 85%"><div class="k">暴击期望</div><div class="v num" id="mCrit">—</div></div>
+        <div class="metric" title="DoT（持续伤害）不吃类型伤与随机浮动，但吃持续伤害%、元素伤、条件伤与易伤"><div class="k">DoT 占比</div><div class="v num" id="mDot">—</div></div>
+        <div class="metric" title="法力循环：基础攻击回蓝 + 自然回复 − 强力/特殊消耗，衡量能否持续施放"><div class="k">法力循环</div><div class="v num" id="mMana">—</div></div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-bottom:18px">
+      <div class="panel">
+        <div class="ph"><h3>伤害构成</h3><div class="hint">按技能归因</div></div>
+        <div class="pb">
+          <div class="compbar" id="compBar"></div>
+          <div class="complist" id="compList"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>秒伤曲线</h3><div class="hint">每秒伤害 · 含技能轴与 DoT</div></div>
+        <div class="pb"><div class="chartwrap"><canvas id="dpsChart" height="190"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:18px">
+      <div class="ph"><h3>专家诊断</h3><div class="hint">按当前模型自动生成</div></div>
+      <div class="pb" id="diagnosis"></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="ph"><h3>下一步变强</h3><div class="hint">单位词条收益</div></div>
+        <div class="pb" id="ovAffix"></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>当前方案</h3><div class="hint" id="ovSetName">—</div></div>
+        <div class="pb" id="ovBuild"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 角色 ================= -->
+  <section class="page" id="page-character">
+    <div class="pagehead">
+      <h2>角色</h2>
+      <div class="desc">面板、对敌模型、传奇特效分三块调，改哪块看哪块</div>
+      <div class="aside">
+        <span class="kv"><span class="k">职业</span><span class="v" id="pcCls">—</span></span>
+        <span class="kv"><span class="k">套装</span><span class="v" id="pcSet">—</span></span>
+        <span class="kv"><span class="k">传奇</span><span class="v" id="pcLeg">0</span></span>
+      </div>
+    </div>
+    <div class="subtabs" id="charTabs">
+      <button class="subtab on" data-ct="build">基础面板</button>
+      <button class="subtab" data-ct="enemy">对敌模型</button>
+      <button class="subtab" data-ct="leg">传奇特效</button>
+    </div>
+
+    <!-- ---- 基础面板 ---- -->
+    <div class="ctpane on" id="ct-build">
+      <div class="grid2" style="grid-template-columns:1.25fr .85fr">
+        <div>
+          <div class="panel" style="margin-bottom:16px">
+            <div class="ph"><h3>职业与装备档</h3><div class="hint">切换职业会重置为该职业推荐流派</div></div>
+            <div class="pb">
+              <div class="classcards" id="classCards"></div>
+              <div class="field"><label>装备档位</label>
+                <div class="seg" id="gearPreset" style="max-width:230px">
+                  <button data-p="starter">起步</button>
+                  <button data-p="mid" class="on">中配</button>
+                  <button data-p="end">毕业</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph"><h3>面板参数</h3><div class="hint">直接抄游戏内属性页</div></div>
+            <div class="pb">
+              <div class="grouphead">输出</div>
+              <div class="fgrid">
+                <label class="fitem" title="武器伤害 = DPS ÷ 速度 + 平伤；同 DPS 下慢武器对技能更有利">武器 DPS<input type="number" id="gDps" step="1" min="1" max="10000"></label>
+                <label class="fitem" title="武器速度范围 0.2–4；限制基础攻击频率，不直接改变技能倍率">武器速度<input type="number" id="gSpeed" step="0.01" min="0.2" max="4"></label>
+                <label class="fitem" title="主属性每 1 点 +1%，乘区为 1 + 主属性/100">主属性<input type="number" id="gMain" step="10" min="0" max="5000"></label>
+                <label class="fitem">平伤<input type="number" id="gFlat" step="5" min="0" max="10000"></label>
+                <div class="fitem"><span>每秒攻击次数</span><b class="num gold" id="gAps" style="font-size:13px">—</b></div>
+              </div>
+
+              <div class="grouphead">暴击</div>
+              <div class="fgrid">
+                <label class="fitem">暴击率 %<input type="number" id="gCc" step="1" min="0" max="100"></label>
+                <label class="fitem" title="暴伤基础 150%；暴击期望 = 1 + 暴率 × 暴伤 × (1 − 目标暴伤减免)">暴击伤害 %<input type="number" id="gCd" step="5" min="0" max="2000"></label>
+                <label class="fitem">攻击速度 %<input type="number" id="gAs" step="1" min="-50" max="300"></label>
+              </div>
+
+              <div class="grouphead">增伤</div>
+              <div class="fgrid">
+                <div class="fitem" title="元素伤与全伤害在同一个括号里加算；DoT 也吃元素伤，不吃类型伤"><span>元素伤害 %</span>
+                  <div class="pair">
+                    <select id="gElement">
+                      <option value="physical">物理</option><option value="fire">火焰</option><option value="cold">冰霜</option>
+                      <option value="lightning">闪电</option><option value="poison">毒素</option><option value="arcane">奥术</option>
+                    </select>
+                    <input type="number" id="gEle" step="5" min="0" max="500">
+                  </div>
+                </div>
+                <div class="fitem" title="类型伤只作用于基础/强力/特殊对应标签；DoT 不吃这一项。与元素伤是不同乘区"><span>类型伤害 %</span>
+                  <div class="pair">
+                    <select id="gTypeSel">
+                      <option value="basic">基础</option><option value="strong" selected>强力</option><option value="special">特殊</option>
+                    </select>
+                    <input type="number" id="gType" step="5" min="0" max="500">
+                  </div>
+                </div>
+                <label class="fitem">全伤害 %<input type="number" id="gAll" step="5" min="0" max="500"></label>
+                <label class="fitem" title="对精英 % 是条件伤：与目标是否精英相关，不是「易伤 +30%」那一通道">对精英 %<input type="number" id="gElite" step="5" min="0" max="500"></label>
+                <label class="fitem" title="对易伤目标 +X% 属于条件伤；易伤本身的 +30% 在「目标受到伤害」通道">对易伤 %<input type="number" id="gVuln" step="5" min="0" max="500"></label>
+              </div>
+
+              <div class="grouphead">资源</div>
+              <div class="fgrid">
+                <label class="fitem">最大法力<input type="number" id="gMana" step="10" min="0"></label>
+                <label class="fitem">法力回复 /s<input type="number" id="gRegen" step="1" min="0"></label>
+                <label class="fitem">减耗 %<input type="number" id="gCost" step="5" min="0" max="85"></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:16px">
+            <div class="ph"><h3>符文套装</h3><div class="hint">2/4/6 件逐档生效</div></div>
+            <div class="pb">
+              <div class="field"><label>套装</label><select id="setSelect"></select></div>
+              <div class="field"><label>件数</label>
+                <div class="seg" id="setCount" style="max-width:240px">
+                  <button data-n="0">0</button><button data-n="2">2</button><button data-n="4">4</button><button data-n="6">6</button>
+                </div>
+              </div>
+              <div class="note" id="setNote" style="margin-top:12px">—</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph"><h3>怎么填才准</h3></div>
+            <div class="pb">
+              <div class="dhint" style="line-height:1.9">
+                · 武器 DPS 取角色面板上的<b class="gold">武器伤害/秒</b>，不是单次伤害。<br>
+                · 主属性填<b class="gold">总力量/敏捷/智力</b>（含装备与天赋），引擎按 ÷100 折算。<br>
+                · 元素伤害只填与主技能同元素的那一项；全伤单独填，两者<b class="gold">加算</b>在一个括号里。<br>
+                · 对精英 / 对易伤属于条件乘区，只在该条件成立时计入。<br>
+                · 有传奇或天赋改过上限（暴击率 85%、冷却缩减 80%）时，引擎会自动夹紧。
+              </div>
+              <div class="dhint" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+                这套面板会随配置一起存档。想对比两套装备，直接存两个配置来回切。
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- 对敌模型 ---- -->
+    <div class="ctpane" id="ct-enemy" hidden>
+      <div class="panel" style="margin-bottom:16px">
+        <div class="ph"><h3>场景预设</h3><div class="hint">按职业与打法一键填覆盖率</div></div>
+        <div class="pb">
+          <div class="encrow" id="encRow"></div>
+          <div class="encnote" id="encNote">选一个场景，下面六个覆盖率会自动填好，并在每个输入框下方写明依据。这些都是<b>时间占比</b>，只用于周期期望与秒伤。</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="ph"><h3>目标</h3><div class="hint">决定有效生命与减伤</div></div>
+          <div class="pb">
+            <div class="field"><label>敌人预设</label><select id="enemySelect"></select></div>
+            <div class="field"><label>难度系数</label><div class="seg" id="diffSeg">
+              <button data-m="1">普通</button><button data-m="3.5">噩梦</button><button data-m="6" class="on">地狱</button>
+            </div></div>
+            <div class="grouphead">数值</div>
+            <div class="fgrid narrow">
+              <label class="fitem">生命<input type="number" id="eHp" step="10000" min="1"></label>
+              <label class="fitem">护甲<input type="number" id="eArmor" step="50" min="0"></label>
+              <label class="fitem">魔抗<input type="number" id="eMr" step="50" min="0"></label>
+              <label class="fitem">目标数量<input type="number" id="eCount" step="1" min="1" max="20"></label>
+              <label class="fitem">暴伤减免 %<input type="number" id="eCritdr" step="5" max="90" min="0"></label>
+            </div>
+            <div class="grouphead">开关</div>
+            <div class="field"><label>精英 / Boss</label><div class="val"><input type="checkbox" id="eElite"></div></div>
+            <div class="note" id="enemyNote" style="margin-top:12px">—</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><h3>状态覆盖率</h3><div class="hint">条件伤按占比折算</div></div>
+          <div class="pb">
+            <div class="fgrid">
+              <label class="fitem">远处覆盖 %<input type="number" id="eDistant" step="5" max="100" min="0"><em class="fwhy" id="whyDistant"></em></label>
+              <label class="fitem">健康段占比 %<input type="number" id="eHealthy" step="5" max="100" min="0"><em class="fwhy" id="whyHealthy"></em></label>
+              <label class="fitem">受伤段占比 %<input type="number" id="eInjured" step="5" max="100" min="0"><em class="fwhy" id="whyInjured"></em></label>
+              <label class="fitem" title="易伤覆盖：目标处于易伤状态的时间占比，只用于周期期望；单跳口径恒按 100% 计"><span title="易伤覆盖 %：易伤状态的时间占比">易伤覆盖 %</span><input type="number" id="eVuln" step="5" max="100" min="0"><em class="fwhy" id="whyVuln"></em></label>
+              <label class="fitem">减速覆盖 %<input type="number" id="eSlow" step="5" max="100" min="0"><em class="fwhy" id="whySlow"></em></label>
+              <label class="fitem">定身覆盖 %<input type="number" id="eImmob" step="5" max="100" min="0"><em class="fwhy" id="whyImmob"></em></label>
+            </div>
+            <div class="grouphead" style="margin-top:6px">折算后</div>
+            <div id="enemyCalc" style="max-width:560px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <div class="ph"><h3>两种口径别混用</h3><div class="hint">周期期望 vs 单跳</div></div>
+        <div class="pb">
+          <div class="calibrow">
+            <div class="calibcard">
+              <b class="gold">周期期望 / 秒伤</b>
+              <p>用上面这套覆盖率加权。回答「这套构筑打这个场景平均每秒多少」。这里假设长时间战斗，状态按时间占比摊平。</p>
+              <span class="dim">总览、技能轴秒伤、词条收益排行都走这个口径。</span>
+            </div>
+            <div class="calibcard">
+              <b class="gold">单跳伤害</b>
+              <p>不算覆盖率，直接看「这一发命中时目标处于什么状态」。目标带易伤就吃满 30%，没带就是 0，不存在 45%。</p>
+              <span class="dim">技能轴页的「单跳乘区验算」可以切到「条件全开」看上限。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- 传奇 ---- -->
+    <div class="ctpane" id="ct-leg" hidden>
+      <div class="panel">
+        <div class="ph">
+          <h3>传奇特效</h3>
+          <div class="hint" id="legCount">—</div>
+        </div>
+        <div class="pb">
+          <div class="legtools">
+            <input type="search" id="legSearch" placeholder="搜索名称或效果，如 奥术、护胫、暴击">
+            <div class="seg" id="legFilter" style="max-width:330px">
+              <button data-lf="all" class="on">全部</button>
+              <button data-lf="on">已选</button>
+              <button data-lf="official">官方</button>
+              <button data-lf="modeled">折算</button>
+            </div>
+          </div>
+          <div class="note" style="margin:10px 0 12px;font-size:10.5px">64 件全量入库。同部位只能带 1 件（戒指 2 件），勾选会自动顶替同部位旧件。标注「需覆盖率折算」的被动按假设覆盖率计入，数值不是游戏内实测。</div>
+          <div id="legList" class="leglist"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 技能轴 ================= -->
+  <section class="page" id="page-rotation">
+    <div class="pagehead">
+      <h2>技能轴</h2>
+      <div class="desc">逐帧模拟冷却、法力与动作锁，再按乘区验算单跳</div>
+      <div class="aside">
+        <span class="kv"><span class="k">循环</span><span class="v" id="phCycle">—</span></span>
+        <span class="kv"><span class="k">强攻/分</span><span class="v" id="phCast">—</span></span>
+        <span class="kv"><span class="k">法力收支</span><span class="v" id="phMana">—</span></span>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="ph"><h3>技能槽</h3><div class="hint">1 基础 + 1 强力 + 2 特殊</div></div>
+        <div class="pb">
+          <div id="slotBox"></div>
+          <div class="field" style="margin-top:6px"><label>公共施放间隔 (秒)</label><div class="val"><input type="number" id="gGcd" step="0.05" min="0.2" max="2"></div></div>
+          <div class="note" style="margin-top:12px">
+            自动战斗按“特殊技能优先、强力攻击法力够就放、其余时间基础攻击填充”的规则推演。
+            冷却、法力、引导时间、DoT 刷新与 buff 时长都进入逐帧模拟。
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>技能明细</h3><div class="hint">单发期望倍率 / 占比</div></div>
+          <div class="pb" style="padding:0"><div id="rotTable"></div></div>
+        </div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>施放记录</h3><div class="hint">前 30 秒</div></div>
+          <div class="pb"><canvas id="castChart" height="190"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>法力曲线</h3><div class="hint" id="manaHint">0 – 60 秒 · 是否卡法力</div></div>
+          <div class="pb"><canvas id="manaChart" height="150"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="ph">
+        <h3>单跳乘区验算</h3>
+        <div class="seg" id="zoneMode" style="max-width:230px;margin-left:auto">
+          <button data-zm="cycle" class="on">周期期望</button>
+          <button data-zm="single">单跳瞬时</button>
+        </div>
+        <div class="hint" id="zoneHint">逐乘区连乘</div>
+      </div>
+      <div class="pb">
+        <div class="grid2" style="grid-template-columns:1fr 300px;gap:20px">
+          <div id="zoneTable"></div>
+          <div>
+            <div class="field" title="静电层数：仅闪电伤害，每层 +5%，最多 10 层；与易伤加算进同一括号"><label>静电层数（0–10）</label>
+              <div class="val">
+                <input type="number" id="zElectro" step="1" min="0" max="10" style="width:74px">
+                <button class="btn ghost" id="zElectroReset" style="padding:3px 8px;font-size:10.5px">自动</button>
+              </div>
+            </div>
+            <div class="note" style="margin-top:12px" id="zoneNote"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 装备 ================= -->
+  <section class="page" id="page-gear">
+    <div class="pagehead">
+      <h2>装备</h2>
+      <div class="desc">按当前面板算每条词条的边际收益，再给 12 个部位的最优解</div>
+      <div class="aside">
+        <span class="kv"><span class="k">当前部位</span><span class="v" id="phSlot">—</span></span>
+        <span class="kv"><span class="k">最高收益</span><span class="v" id="phBestAffix">—</span></span>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="ph"><h3>词条边际收益</h3><div class="hint" id="gearHint">在当前面板下，追加一条 ilvl700 传奇中值词条的提升</div></div>
+      <div class="pb">
+        <div class="subtabs" id="slotTabs"></div>
+        <div class="grid2" style="grid-template-columns:1fr 340px">
+          <div id="affixRank"></div>
+          <div>
+            <div class="note" style="margin-bottom:12px">
+              伤害是乘法结构：<b>主属性 × 元素 × 类型 × 暴击 × 条件</b>。
+              收益最高的词条，永远是当前乘区里最“欠”的那一项。堆到同一条上会稀释。
+            </div>
+            <div id="gearSummary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="ph"><h3>装分 × 稀有度 → 词条数值</h3><div class="hint">按 AffixMath 反编译系数实时换算<span class="minispin" id="agBusy"></span></div></div>
+      <div class="pb">
+        <div class="grid2" style="grid-template-columns:1fr 320px">
+          <div>
+            <div class="fieldgrid">
+              <div class="field"><label>装分（ilvl）</label><div class="val"><input type="number" id="agIlvl" min="100" max="1200" step="10" style="width:80px"></div></div>
+              <div class="field"><label>稀有度</label><div class="val"><select id="agRarity" style="max-width:130px">
+                <option value="common">普通</option><option value="uncommon">优秀</option><option value="rare">稀有</option>
+                <option value="legendary" selected>传奇</option><option value="blackMist">黑雾（850/满掷）</option><option value="divine">神圣（固定表）</option>
+              </select></div></div>
+              <div class="field"><label>掷骰档</label><div class="val"><select id="agRoll" style="max-width:110px"><option value="1">中值</option><option value="1.15">满掷</option></select></div></div>
+              <div class="field"><label>词条</label><div class="val"><select id="agStat" style="max-width:150px"></select></div></div>
+            </div>
+            <div class="note" style="margin-top:10px" id="agFormula">—</div>
+          </div>
+          <div>
+            <div class="field"><label>该词条数值</label><span class="num gold" id="agValue" style="font-size:20px">—</span></div>
+            <div class="field"><label>中值 / 满掷</label><span class="num" id="agRange">—</span></div>
+            <div class="field"><label>4 主 + 1 副（同档）</label><span class="num" id="agSum">—</span></div>
+            <div class="note" style="margin-top:10px">百分比类词条显示的是游戏面板单位（如暴伤 67.2 即 67.2%）。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>12 部位推荐</h3><div class="hint">每格追加一条中值词条后的秒伤增量 · 取该部位最优</div></div>
+      <div class="pb"><div class="slotgrid" id="slotGrid"></div>
+        <div class="note" style="margin-top:10px">标注「黑雾」的护腿 / 肩甲是工坊可重铸基底，词条池不设限，因此常能吃到武器/项链才有的高阶词条（对精英、元素伤等）。<b>披风是纯外观</b>：没有基础属性、没有词条、没有被动。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 天赋 ================= -->
+  <section class="page" id="page-talents">
+    <div class="pagehead">
+      <h2>天赋</h2>
+      <div class="desc">按门槛逐行解锁；每点收益都用引擎实测增量，不靠估</div>
+      <div class="aside">
+        <span class="kv"><span class="k">职业</span><span class="v" id="phTpCls">—</span></span>
+        <span class="kv"><span class="k">已投</span><span class="v" id="phTpPts">0 / 70</span></span>
+        <span class="kv"><span class="k">相对无点</span><span class="v" id="phTpGain">—</span></span>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="ph"><h3>战斗天赋</h3><div class="hint"><span id="tpCount">0</span> / 70 点</div></div>
+        <div class="pb">
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <button class="btn primary" id="tpAuto">自动规划 70 点</button>
+            <button class="btn ghost" id="tpClear">清空</button>
+            <button class="btn ghost" id="tpBuild">套用推荐流派</button>
+          </div>
+          <div class="note" style="margin-bottom:14px">左键加点，右键减点。行门槛按已投入总点数解锁；10 / 30 / 60 点为三排专精（capstone），每排只能选一个。</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>加点收益</h3><div class="hint">相对 0 点的秒伤提升</div></div>
+        <div class="pb" id="tpSummary"></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="ph"><h3>天赋树</h3><div class="hint" id="tpClass">战士</div></div>
+      <div class="pb"><div class="tree" id="talentTree"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= 最优解 ================= -->
+  <section class="page" id="page-solver">
+    <div class="pagehead">
+      <h2>装备 / 天赋毕业最优解</h2>
+      <div class="desc" title="黑盒调用 = 把候选构筑交给 Engine.simulate 实测秒伤，而不是用公式外推；近似最优 = 专精选定精确枚举，其余靠启发式逼近，不是严格全局最优">黑盒实测每个候选分配 · 专精选定后坐标全范围扫描 · 高质量近似</div>
+      <div class="aside">
+        <span class="kv"><span class="k">当前秒伤</span><span class="v" id="svCurDps">—</span></span>
+        <span class="kv"><span class="k">运行方式</span><span class="v" id="svMode">—</span></span>
+        <span class="kv"><span class="k">数据版本</span><span class="v" id="svVer">—</span></span>
+      </div>
+    </div>
+    <div class="grid2" style="grid-template-columns:360px 1fr">
+      <div class="panel">
+        <div class="ph"><h3>求解设置</h3><div class="hint">各模板同口径可比</div></div>
+        <div class="pb">
+          <div class="field"><label>精度档位</label><div class="val">
+            <button class="btn gold" id="svTierQuick">快速档</button>
+            <button class="btn" id="svTierStd">标准档</button>
+          </div></div>
+          <div class="field" title="黑盒调用：一次 Engine.simulate 实测，用真实模拟结果给候选打分，不靠公式外推"><label>模拟时长</label><div class="val"><span class="num" id="svDuration">16</span> 秒 / 次黑盒调用</div></div>
+          <div style="margin-top:16px;font-size:10px;letter-spacing:1.6px;color:var(--dim)">流派模板（<span id="svClsName">战士</span>）</div>
+          <div class="svtabs" id="svTemplates" style="margin-top:8px"></div>
+          <div class="note" id="svTemplateDesc" style="font-size:10.5px;line-height:1.7;min-height:34px"></div>
+          <div class="inlinebtns">
+            <button class="btn primary" id="svStart">开始计算</button>
+            <button class="btn danger" id="svCancel" disabled>中断</button>
+          </div>
+          <div class="svbar"><i id="svBarFill"></i></div>
+          <div class="svstage"><span>阶段：<b id="svStage">待机</b></span><span class="num" id="svPct">0%</span></div>
+          <div class="svnote" id="svRunnerNote">求解器在独立线程运行；file:// 直开时自动降级为主线程分片，界面不会卡死。</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>结果</h3><div class="hint" id="svResultHint">尚未计算</div></div>
+        <div class="pb" id="svResult"><div class="empty">选择模板后点「开始计算」。<br>命中缓存时秒开。</div></div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="ph"><h3>说明</h3><div class="hint">算法与口径</div></div>
+      <div class="pb svnote">
+        黑盒接口：<code>score(talents) = Engine.simulate({...当前构筑, talents:t}, {duration, lite:true}).dps</code>。
+        求解器不读引擎公式、不假设梯度或凸性。专精行（10 / 30 / 60）三排互斥精确枚举；非专精天赋单变量全范围扫描以跨过阈值山谷；再用块重置 / 2-opt 与多起点跳出局部极小。所有候选走记忆化缓存，结果含调用次数与耗时作为收敛证据。<br>
+        <b class="gold" title="近似最优：专精选定被精确枚举，连续阈值与协同效应靠启发式搜索逼近；档位越高调用越多、越接近最优，但不保证严格全局最优">结果标注：高质量近似解，非严格全局最优。</b> 仅专精选定被精确枚举，连续阈值与协同效应靠启发式搜索逼近；档位越高调用越多、越接近最优。
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 仆从 ================= -->
+  <section class="page" id="page-minions">
+    <div class="pagehead">
+      <h2>仆从</h2>
+      <div class="desc">星级决定仆从装备槽是否解锁；被动随技能等级成长</div>
+      <div class="aside">
+        <span class="kv"><span class="k">出战</span><span class="v" id="phMinion">—</span></span>
+        <span class="kv"><span class="k">有效等级</span><span class="v" id="phMinionLv">—</span></span>
+      </div>
+    </div>
+    <div class="grid2" style="grid-template-columns:360px 1fr;margin-bottom:16px">
+      <div class="panel">
+        <div class="ph"><h3>出战仆从</h3><div class="hint">只有召唤中的那只生效</div></div>
+        <div class="pb">
+          <div class="field"><label>当前仆从</label><div class="val"><b id="minionCurrent" class="gold">—</b></div></div>
+          <div class="field" style="margin-top:10px">
+            <label>技能等级 <span class="num" id="mnLevelVal">10</span> / 10</label>
+            <div class="val"><input type="range" id="mnLevel" min="1" max="10" step="1"></div>
+          </div>
+          <label class="switchrow" style="margin-top:12px">
+            <input type="checkbox" id="mnReins"><span>传奇缰绳强化（+5 级，48 小时）</span>
+          </label>
+          <div class="field" style="margin-top:10px"><label>仆从装备（抽象）</label><div class="val"><select id="mnGear"></select></div></div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line2)">
+            <div style="font-size:10px;letter-spacing:1.6px;color:var(--dim);margin-bottom:8px">第 13 件装备（真实词条池）</div>
+            <label class="switchrow"><input type="checkbox" id="mn13On"><span>启用第 13 件装备</span></label>
+            <label class="switchrow"><input type="checkbox" id="mn13Gate" checked><span>遵守训练等级门槛（≥ <span id="mn13Star">5</span> 级）</span></label>
+            <div class="svgeargrid" style="margin-top:8px">
+              <div class="field"><label>部位</label><div class="val"><select id="mn13Slot"></select></div></div>
+              <div class="field"><label>稀有度</label><div class="val"><select id="mn13Rarity"></select></div></div>
+              <div class="field"><label>装分</label><div class="val"><input type="number" id="mn13Ilvl" min="100" max="1000" step="10" value="700" style="width:72px"></div></div>
+              <div class="field"><label>主词条</label><div class="val"><select id="mn13Main"></select></div></div>
+              <div class="field"><label>副词条</label><div class="val"><select id="mn13Sec"></select></div></div>
+              <div class="field"><label>掷骰 <span class="num" id="mn13RollVal">1.00</span></label><div class="val"><input type="range" id="mn13Roll" min="50" max="115" step="5" value="100" style="width:92px"></div></div>
+            </div>
+            <div id="mn13Preview" class="note" style="font-size:10.5px;line-height:1.7;margin-top:8px"></div>
+          </div>
+          <div id="mnStars" style="margin-top:14px"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>这只仆从给了什么</h3><div class="hint">被动随技能等级成长</div></div>
+        <div class="pb" id="mnDetail"></div>
+      </div>
+    </div>
+    <div class="mingrid" id="minionGrid"></div>
+    <div class="note" style="margin-top:14px">
+      当前收录 <b>31 只主力仆从</b>（覆盖全部有伤害/生存价值的被动）。完整 67 只可在 <b>data.js</b> 的 <b>MINIONS</b> 直接追加：字段为 <b>bonus</b>（被动，键位与装备一致）、<b>cap</b>（车厢容量）、<b>selfEle</b>（自身技能元素）。
+    </div>
+  </section>
+
+  <!-- ================= 公式 ================= -->
+  <section class="page" id="page-model">
+    <div class="pagehead">
+      <h2>公式与数据</h2>
+      <div class="desc">模型假设、乘区定义、数据来源与版本更迭流程</div>
+      <div class="aside">
+        <span class="kv"><span class="k">数据版本</span><span class="v" id="phVer">—</span></span>
+        <span class="kv"><span class="k">校对日期</span><span class="v" id="phDate">—</span></span>
+      </div>
+    </div>
+    <div class="grid2" style="grid-template-columns:1.18fr 1fr">
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>伤害主公式</h3></div>
+          <div class="pb">
+            <div class="formula serif">
+              单次伤害 = [（武器伤害 + 平伤）× 技能倍率]<br>
+              × (1 + 主属性 / 100)<br>
+              × (1 + 元素伤害% + 全伤害%)<br>
+              × (1 + 暴击率 × 暴击伤害% × (1 − 目标暴伤减免))<br>
+              × (1 + Σ 条件伤害%)<br>
+              × (1 + 基础/强力/特殊 类型伤害%)<br>
+              × (1 + 技能专属加成%)<br>
+              × (1 + 易伤 30% + 静电 5%/层)<br>
+              × (1 − 护甲或魔抗 / (护甲或魔抗 + 50 × 攻击者等级))
+            </div>
+            <div class="note" style="margin-top:12px">
+              每个括号都是独立乘区。DoT 不吃类型伤与随机浮动（波动仅数据声明、引擎未采样），但吃持续伤害%、元素伤、条件伤与易伤。<br>
+              <b class="gold">全伤与元素伤在同一个括号里加算</b>；易伤与静电则在"目标受到伤害"通道里加算。
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>计算顺序</h3></div>
+          <div class="pb" style="padding:0">
+            <div class="steps">
+              <div class="step"><div class="n">01 基础伤害</div><div class="d"><b>(武器 DPS ÷ 武器速度 + 平伤) × 技能倍率</b>。武器速度只影响基础攻击频率，同 DPS 下慢武器对技能更有利。</div></div>
+              <div class="step"><div class="n">02 主属性</div><div class="d">每 1 点 <b>+1%</b>，乘区为 1 + 属性/100。力量/敏捷/智力三选一，装备只出本职业主属性。</div></div>
+              <div class="step"><div class="n">03 元素</div><div class="d"><b>1 + 元素伤% + 全伤害%</b>。技能多元素时逐元素结算，例如烈焰闪电是火焰与闪电两段。</div></div>
+              <div class="step"><div class="n">04 暴击</div><div class="d">暴击率上限 85%，期望系数 <b>1 + 暴率 × 暴伤 × (1 − 目标暴伤减免)</b>；基础 5% / 150%。</div></div>
+              <div class="step"><div class="n">05 条件伤</div><div class="d">对健康、受伤、减速、定身、精英、流血、中毒、燃烧、远处、易伤等，全部<b>加算进同一括号</b>，再与其它乘区相乘。</div></div>
+              <div class="step"><div class="n">06 类型伤</div><div class="d">基础攻击 / 强力攻击 / 特殊技能三条独立词条，<b>只作用于对应标签</b>。DoT 不吃这一项。</div></div>
+              <div class="step"><div class="n">07 目标受伤</div><div class="d">易伤固定 <b>+30%</b>，静电每层 <b>+5%</b>（仅闪电，最多 10 层）。两者<b>加算进同一括号</b>，再与其它乘区相乘。注意「对易伤目标 +X%」是条件伤，不是这一项。</div></div>
+              <div class="step"><div class="n">08 减伤</div><div class="d">物理走护甲，火冰雷毒奥走魔抗，公式 <b>R / (R + 50 × 等级)</b>。70 级时 3500 护甲 = 50%。普通怪默认 0。</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>技能轴模型</h3></div>
+          <div class="pb">
+            <div class="src">
+              以 0.05 秒为步长推进战斗：<br>
+              · 基础攻击间隔 = 1 ÷ ((1 + 攻速) × 武器速度)<br>
+              · 强力攻击在<b>冷却结束且法力足够</b>时施放<br>
+              · 每次施放占用「公共施放间隔」作为动作时长；若实测某重击动画约 1 秒，把该值改成 1.0 即可（它同时限制基础攻击的插入频率）<br>
+              · 特殊技能按槽位优先级，冷却好即施放<br>
+              · 引导类技能锁定动作条，按 tick 结算<br>
+              · DoT 独立计时，重复施加继承剩余伤害并刷新<br>
+              · buff（狂暴怒吼、熔火、幻影、双子）按真实持续时间叠加<br>
+              · 法力：基础攻击回蓝 + 自然回复 − 强力/特殊消耗
+            </div>
+            <div class="formula" style="margin-top:12px;font-size:12px">
+              周期期望倍率 = 一个完整法力循环内的总伤害 ÷ 武器伤害<br>
+              秒伤倍率 = 期望秒伤 ÷ 武器伤害
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>版本与数据</h3></div>
+          <div class="pb">
+            <div class="src" id="patchList"></div>
+            <div class="note" style="margin-top:12px" id="dataNote"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>版本更迭怎么更新</h3></div>
+          <div class="pb">
+            <div class="src">
+              1. 打开 <b>data.js</b>，把补丁改动的技能倍率 / 冷却 / 法力填进对应技能对象。<br>
+              2. 天赋数值改在 <b>talents</b> 数组的 <b>mods</b> 里，每点数值 × 点数即生效。<br>
+              3. 新传奇写进 <b>LEGENDARIES</b> 的 <b>fx</b>（声明式增量），引擎按通用规则解释，不需要改代码。<br>
+              4. 官方改了规则（乘区、上限、状态数值）只改 <b>MECHANICS</b>。<br>
+              5. 跑 <b>node agent/tools/build-kb.mjs</b> 重建知识库，智能体自动同步。
+            </div>
+            <div class="note" style="margin-top:10px">数据 / 算法 / 知识库三层分离：每个补丁只校对数值，不会把算盘打翻，也不会让顾问背错数字。</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>智能体与知识库</h3></div>
+          <div class="pb">
+            <div class="src">
+              · <b>agent/SKILL.md</b>：技能定义，写清触发条件、工具用法与乘区红线，可直接放进 <b>~/.codebuddy/skills/</b>。<br>
+              · <b>agent/knowledge/</b>：9 篇知识库（伤害模型、状态、职业、天赋、传奇、仆从、词条、敌人与版本、应答手册）。<br>
+              · <b>agent/tools/calc.mjs</b>：命令行计算器，支持 <b>--hit</b> 单跳乘区、<b>--affix</b> 词条收益、<b>--check</b> 自洽校验。<br>
+              · <b>agent/tools/build-kb.mjs</b>：从 data.js 重新生成知识库与网页检索用的 kb.json。
+            </div>
+            <div class="formula" style="margin-top:12px;font-size:11.5px">
+              node agent/tools/calc.mjs --class sorcerer --hit s_storm --electro 8
+            </div>
+            <div class="note" style="margin-top:10px">网页里的「智能体」页是同一套东西的本地版：检索命中知识片段，再直接调引擎算数，不联网、不编答案。</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>来源</h3></div>
+          <div class="pb">
+            <div class="src">
+              技能与天赋：deskrawl.tools、afkmeta（2026-11-01 数据镜像）<br>
+              伤害/减伤公式：wikily.gg/deskrawl/stats/damage-formula<br>
+              词条区间：deskrawl.tools 物品掷骰计算器（ilvl 700 传奇）<br>
+              补丁：官方 Steam 公告 1.0.0i → 1.1.11a<br>
+              敌人缩放：deskrawl.tools 敌人缩放表<br><br>
+              未建模：闪避、格挡、护盾、荆棘暴击、部分触发型传奇。防御属性只影响生存，不影响本页秒伤。<br><br>
+              跨职业对比只在「同一装备档 + 同一敌人 + 当前技能组与天赋」口径下成立；换技能组或换流派后请重新比较，不要把它当成职业强度榜。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 智能体 ================= -->
+  <section class="page" id="page-agent">
+    <div class="pagehead">
+      <h2>智能问答</h2>
+      <div class="desc">本地检索知识库 + 直接调用引擎计算，不联网、不编造数值</div>
+      <div class="aside">
+        <span class="kv"><span class="k">知识库</span><span class="v" id="phKb">—</span></span>
+      </div>
+    </div>
+    <div class="agentwrap">
+      <div class="panel chatpanel">
+        <div class="ph"><h3>伤害顾问</h3><div class="hint" id="agHint">本地推理 · 不联网 · 数据与你当前构筑同步</div></div>
+        <div class="pb chatpb">
+          <div id="agLog" class="aglog"></div>
+          <div class="agquick" id="agQuick"></div>
+          <div class="aginput">
+            <input id="agInput" type="text" placeholder="问：烈焰打击单跳多少 / 武器该选什么词条 / 静电怎么算">
+            <button id="agSend">提问</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>它在查什么</h3><div class="hint">检索到的知识片段</div></div>
+        <div class="pb" id="agTrace" style="max-height:640px;overflow:auto">
+          <div class="note">提问后会显示命中的知识片段与调用记录。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ================= 伤害计算（一期新增） ================= -->
+  <section class="page" id="page-damage">
+    <div class="pagehead">
+      <h2>伤害计算</h2>
+      <div class="desc">先选口径：这一发打多少，还是每秒平均多少</div>
+      <div class="aside">
+        <span class="kv"><span class="k">当前构筑</span><span class="v" id="dmBuild">—</span></span>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="ph">
+        <h3>计算口径</h3>
+        <div class="seg" id="dmScope" style="max-width:330px;margin-left:auto">
+          <button data-dm="cycle" class="on">每秒平均（周期）</button>
+          <button data-dm="single">这一发（单跳）</button>
+        </div>
+      </div>
+      <div class="pb" style="padding:12px 16px">
+        <div class="redline" id="dmRedline">周期期望：按场景时间占比加权，得到长期平均每秒伤害。结果里不出现任何单跳瞬时数字。</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3 id="dmInputTitle">周期条件</h3><div class="hint" id="dmInputHint">沿用角色页的敌人与场景</div></div>
+          <div class="pb">
+            <div id="dmPaneCycle">
+              <div class="field"><label>场景预设</label><div class="val"><select id="dmEnc" style="max-width:170px"></select></div></div>
+              <div class="field"><label>模拟时长（秒）</label><div class="val"><input type="number" id="dmDur" min="20" max="180" step="10" style="width:74px"></div></div>
+              <div class="note" style="margin-top:10px">各状态覆盖率来自所选场景，改敌人请到「角色」页。</div>
+            </div>
+            <div id="dmPaneSingle" style="display:none">
+              <div class="field"><label>看哪个技能</label><div class="val"><select id="dmSkill" style="max-width:170px"></select></div></div>
+              <div class="field" title="静电层数：仅闪电伤害，每层 +5%，最多 10 层；与易伤加算进同一括号"><label>静电层数（0–10）</label><div class="val">
+                <input type="number" id="dmElectro" min="0" max="10" step="1" style="width:64px">
+                <button class="btn ghost" id="dmElectroAuto" style="padding:3px 8px;font-size:10.5px">自动</button>
+              </div></div>
+              <div class="field"><label>静电 × 易伤结构</label><div class="val"><span class="badge" id="dmTaken">—</span>
+                <button class="btn ghost" data-open-pending style="padding:3px 8px;font-size:10.5px">裁决</button>
+              </div></div>
+              <div class="note" style="margin-top:10px">假设这一发命中时目标带易伤、是精英、处于健康/受伤段、被减速与定身、且在远处，全部按 100% 计。<b>这是上限参照，不是平均；不要用群怪 AOE 的这一发去比单体 Boss。</b></div>
+            </div>
+            <div class="grouphead" style="margin-top:12px">目标状态 · 脆裂</div>
+            <div class="fgrid narrow">
+              <label class="fitem"><span>脆裂层数（0–100）</span><input type="number" id="brittleStacks" min="0" max="100" step="1" value="0" title="敌人身上的脆裂层数，每层+5%受到暴击伤害；真源SO max=100，本地构筑默认10"></label>
+              <label class="fitem"><span>脆裂归属</span><select id="brittleZone" title="脆裂归属：暴击区（真源文案方向，推断，默认）/ 受伤区（与易伤同通道）/ 不启用；也可到「未决项」裁决"><option value="crit">暴击区（推断）</option><option value="taken">受伤区（与易伤同通道）</option><option value="off">不启用</option></select></label>
+            </div>
+            <div class="note" style="margin-top:8px">每层 +5% 受到暴击伤害来自本地化文案；真源 SO 中 <code>Behaviors:[]</code> 无数值，归属无实证，默认按暴击乘区计入并标为推断，可在「未决项」中裁决。</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>全技能单发</h3><div class="hint">按当前面板 · 可折叠附表</div></div>
+          <div class="pb" style="padding:0"><div id="dmPerHit"></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>结果</h3><div class="hint" id="dmBadge">—</div></div>
+          <div class="pb">
+            <div class="bigresult"><span class="v num" id="dmBig">—</span><span class="u" id="dmUnit">/秒</span><span class="k" id="dmBigLabel"></span></div>
+            <div class="fieldgrid" id="dmMeta"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>逐乘区连乘</h3><div class="hint" id="dmZoneHint">—</div></div>
+          <div class="pb">
+            <div id="dmZoneTable"></div>
+            <div class="note" style="margin-top:12px" id="dmNote"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 装备取舍（一期新增） ================= -->
+  <section class="page" id="page-compare">
+    <div class="pagehead">
+      <h2>装备取舍</h2>
+      <div class="desc">锁住其他条件，只看换这件 / 这样点到底值不值</div>
+      <div class="aside"><span class="kv"><span class="k">口径</span><span class="v" id="cmpBadge">—</span></span></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="ph">
+        <h3>对比什么</h3>
+        <div class="seg" id="cmpMode" style="max-width:380px;margin-left:auto">
+          <button data-cm="gear" class="on">装备 A vs B</button>
+          <button data-cm="talent">天赋 A vs B</button>
+          <button data-cm="affix">单条词条边际</button>
+        </div>
+      </div>
+      <div class="pb">
+        <details class="lockbox" id="cmpLockBox">
+          <summary>公共条件（敌人 / 场景 / 口径 / 时长）已锁定，点此展开修改</summary>
+          <div class="lockbody">
+            <div class="field"><label>场景预设</label><div class="val"><select id="cmpEnc" style="max-width:170px"></select></div></div>
+            <div class="field"><label>时长（秒）</label><div class="val"><input type="number" id="cmpDur" min="20" max="180" step="10" style="width:74px"></div></div>
+            <div class="field"><label>口径</label><div class="val"><select id="cmpScope"><option value="cycle">周期期望</option><option value="single">单跳（只看这一发）</option></select></div></div>
+            <div class="note" style="margin-top:8px">锁定的目的是防止偷换变量：A 与 B 只在被比较的那一项上不同。</div>
+          </div>
+        </details>
+        <div id="cmpInput"></div>
+        <div class="inlinebtns">
+          <button class="btn gold" id="cmpRun">开始对比</button>
+          <button class="btn ghost" id="cmpApply" style="display:none">把优者应用到当前构筑</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>对比结果</h3><div class="hint" id="cmpStamp">—</div></div>
+      <div class="pb">
+        <div class="verdict" id="cmpVerdict">选好条件后点「开始对比」。</div>
+        <div id="cmpResult"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+<div class="footer">
+  <div>DESKRAWL DAMAGE LAB · 非官方计算器 · 数据版本 1.1.11a</div>
+  <div>伤害为期望值模型，实战因目标数量、走位与触发浮动存在偏差</div>
+</div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="saveDrawer">
+  <div class="dh">
+    <h3>配置存档</h3>
+    <button class="x" id="saveClose">×</button>
+  </div>
+  <div class="db">
+    <div class="savebox">
+      <input type="text" id="saveName" placeholder="给这套配置起个名字" maxlength="40">
+      <button class="btn gold" id="saveNew">保存当前</button>
+    </div>
+    <div class="quick">
+      <button class="btn ghost" id="saveExport">导出 JSON</button>
+      <button class="btn ghost" id="saveImport">从文件导入</button>
+      <button class="btn ghost" id="saveShare">复制分享链接</button>
+      <input type="file" id="saveFile" accept="application/json,.json" hidden>
+    </div>
+    <div class="dhint" id="saveHint">存档保存在本机浏览器；当前配置改动会自动记为草稿，刷新不丢。</div>
+    <div class="savelist" id="saveList"></div>
+    <div class="dhint" style="margin-top:16px">
+      分享链接把整套配置编码进 URL，对方打开即是同一套构筑。<br>
+      导出文件可跨设备导入；导入时会按当前数据版本重新校验，非法字段会被丢弃而不是报错。
+    </div>
+  </div>
+</aside>
+<aside class="drawer" id="pendDrawer">
+  <div class="dh">
+    <h3>未决项裁决</h3>
+    <button class="x" id="pendClose">×</button>
+  </div>
+  <div class="db">
+    <div class="dhint" id="pendIntro">这些口径没有定论。系统默认只是临时占位，不冒充权威。你可以三选一：用默认、用另一口径，或录入自己的游戏实测——实测优先于默认值并进入计算。</div>
+    <div id="pendList" style="margin-top:14px"></div>
+    <div class="dhint" style="margin-top:18px">
+      你的选择与实测保存在本机浏览器；数据版本变更时，系统默认项会重新审视，<b>你的实测会保留</b>。
+    </div>
+  </div>
+</aside>
+<div id="toast"></div>
+
+<script src="./data.js"></script>
+<script src="./engine.js"></script>
+<script src="./affix.js"></script>
+<script src="./runes.js"></script>
+<script src="./agent/kb-data.js"></script>
+<script src="./store.js"></script>
+<script src="./solver.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
