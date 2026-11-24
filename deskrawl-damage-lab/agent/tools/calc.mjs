@@ -15,6 +15,7 @@
  *   node agent/tools/calc.mjs --class warrior --skill-level w_val:20
  *   node agent/tools/calc.mjs --class warrior --runes RareRune_WarriorBasicAttack:6
  *   node agent/tools/calc.mjs --class sorcerer --taken-mode multiply
+ *   node agent/tools/calc.mjs --class sorcerer --element lightning --gems '{"1":[{"fam":"topaz","lv":7}]}'
  */
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -66,6 +67,7 @@ if (has('help') || argv.length === 0) {
 --brittle    脆裂层数（1.0.4 真源：进暴伤池 +5%/层，来自传奇戒指，默认 0）
 --brittle-zone crit|taken|off                    脆裂归属（默认 crit=暴击区；1.0.4 真源进暴伤池）
 --reckoning  清算锤叠层数 0-50（需先在 --legendaries 装备 divinemace2/ancientdivinemace2）
+--gems       JSON 宝石镶嵌 '{"槽位":[{"fam":"家族","lv":1-7}]}'；家族 diamond/ruby/sapphire/topaz/emerald/amethyst；槽位1武器/2头/3胸/7戒/8链
 --affix      部位（weapon/helm/ring…）输出词条 Top8
 --hit        技能 id，输出单跳乘区（默认瞬时口径：条件项按命中瞬间 0/1）
 --hit-coverage  --hit 改用周期口径（易伤/健康/受伤等按覆盖率加权，非单跳瞬时）
@@ -178,12 +180,21 @@ if (gearArg && /[,\d]/.test(String(gearArg)) && !E.GEAR_PRESETS[gearArg]) {
 const skillLevels = parseSkillLevels(arg('skill-level'));
 const runes = parseRunes(arg('runes'));
 const takenMode = parseTakenMode(arg('taken-mode'));
+/* 宝石镶嵌：--gems '{"1":[{"fam":"topaz","lv":7},...],"3":[...]}' key=槽位号 */
+let gems = null;
+if (has('gems')) {
+  try {
+    gems = JSON.parse(arg('gems'));
+    if (!gems || typeof gems !== 'object') throw new Error('gems 必须是对象');
+  } catch (e) { console.error('--gems JSON 解析失败：' + e.message); process.exit(1); }
+}
 
 const c = {
   classKey,
   element, primaryType,
   gear: Object.assign({}, E.GEAR_PRESETS[E.GEAR_PRESETS[gearArg] ? gearArg : 'mid']),
   gearBuild,
+  gems,
   skills, talents,
   setId: null, setCount: 0,
   legendaries: arg('legendaries') ? String(arg('legendaries')).split(',').filter(Boolean) : [],

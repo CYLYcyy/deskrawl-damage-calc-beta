@@ -226,6 +226,8 @@ ${rows}
 
 只有**召唤中的那一只**生效。被动随技能等级成长，缰绳强化对每个被动/主动技能都生效。
 
+> **被动成长（真源 1.0.4）**：\`被动值(L) = Base + PerLevel×(L−1)\`，Base 是 1 级值。下表列的是 **1 级基准值**；有效等级 L（含缰绳 +5）下按 \`基准×(1+ratio×(L−1))\` 放大，ratio 绝大多数为 0.10（每级相对 +10%）。例如南瓜王「对受伤 +50%」在 L10 = 95%、缰绳 L15 = 120%。只有 31 个仆从有真源 PerLevel 并建模成长，其余保持基准值。
+
 ## 等级与解锁
 
 | 等级 | 解锁 |
@@ -339,6 +341,54 @@ ${rows}
   files.push(w('09-playbook.md', body));
 }
 
+/* ---------------- 10 宝石 ---------------- */
+{
+  const G = D.GEMS;
+  let body = `# 宝石镶嵌（1.0.4 真源 GemData）
+
+6 个宝石家族 × 7 个品级 = 42 颗。**同一颗宝石镶在不同部位给完全不同的加成**——加成由镶嵌部位类型决定，且是固定值、不随等级成长。
+
+## 品级（全家族通用）
+
+| 级 | 名称前缀 | 形状 | 武器槽元素伤% |
+| --- | --- | --- | --- |
+`;
+  for (const g of G.GRADES) body += `| ${g.lv} | ${g.prefix} | ${g.shape} | ${(g.weapon * 100).toFixed(0)}% |\n`;
+  body += `\n## 家族与三部位加成
+
+| 家族 | 武器槽（元素伤%，进DPS） | 护甲槽（进属性/生存） | 饰品槽（减伤，不进DPS） |
+| --- | --- | --- | --- |
+`;
+  const eleName = { physical:'物理', fire:'火焰', cold:'冰霜', lightning:'闪电', poison:'毒素', arcane:'奥术' };
+  for (const [id, f] of Object.entries(G.FAMILIES)) {
+    const w = `${eleName[f.element]}伤 ${(G.GRADES[0].weapon*100).toFixed(0)}→${(G.GRADES[6].weapon*100).toFixed(0)}%`;
+    const a = `${f.armor.name} ${f.armor.values[0]}→${f.armor.values[6]}${f.armor.isPct ? '' : ''}`;
+    const ac = `${f.accessory.name} ${(f.accessory.values[0]*100).toFixed(0)}→${(f.accessory.values[6]*100).toFixed(0)}%`;
+    body += `| ${f.name} | ${w} | ${a} | ${ac} |\n`;
+  }
+  body += `
+## 孔位规则
+
+- 镶嵌开放等级 **30**（\`MinLevelForSockets\`）。
+- 孔位上限：武器 **3**、胸甲 2、护腿 2、头盔/戒指/项链各 1，其余 0。
+- 存档：\`SocketCount\` + \`SocketedGemBaseIds\`。
+
+## 对 DPS 的影响（关键）
+
+1. **武器槽元素宝石直接进元素加算池**：\`1 + 元素伤% + 全伤%\`。武器镶 3 颗 7 级同元素 = **+210% 该元素伤**。
+2. **只被同元素技能吃到**：镶红宝石（火伤）只提升火系技能，对闪电技能无效——回答时必须核对技能元素。
+3. **护甲槽主属性**（红力量/黄敏捷/紫智力）吃 \`1+主属性/100\`；钻石 CDR、蓝宝石生命%、绿宝石荆棘属功能/生存向。
+4. **饰品槽减伤不进 DPS**，只在承伤/生存场景有意义。
+
+## 怎么用
+
+- 前端「装备」页有宝石面板：每槽选家族 + 品级，实时看元素伤汇总与 DPS 变化。
+- CLI：\`--gems '{"1":[{"fam":"topaz","lv":7}]}'\`（key=槽位号，1武器/3胸甲/7戒指/8项链；家族 diamond/ruby/sapphire/topaz/emerald/amethyst）。
+- 验证例：战士火系镶 3 颗 7 级红宝石，DPS 146.9万→227.1万；换 3 颗黄玉（闪电）回基线。
+`;
+  files.push(w('10-gems.md', body));
+}
+
 /* ---------------- kb.json：网页问答用 ---------------- */
 const kb = {
   version: D.VERSION,
@@ -353,7 +403,8 @@ const kb = {
     status: D.MECHANICS.status,
     minion: D.MECHANICS.minion,
     legendaries: D.LEGENDARIES.length,
-    minions: D.MINIONS.length
+    minions: D.MINIONS.length,
+    gems: { families: Object.keys(D.GEMS.FAMILIES).length, grades: D.GEMS.GRADES.length, slotCap: D.GEMS.SLOT_CAP }
   }
 };
 fs.writeFileSync(path.join(root, 'agent/kb.json'), JSON.stringify(kb, null, 1), 'utf8');

@@ -19,6 +19,8 @@
 | 武器白字 | `Final(WeaponDamage=20)` 进伤害基项、乘倍率 | `Player.bjr` 原式 | ✅ `weaponDamage` 走 stat20；白字勿塞 baseDamage |
 | BaseDamage 固定项 | 玩家 49/49 段全为 0 | `DamageEffect.BaseDamage` 穷举 | ✅ 引擎 `s.baseDamage=0` |
 | 装备词条 Roll | `(1+rarityMul)×ilvl×perLevel×rollFactor`（stat20 +5） | `ItemizationConfig` + `docs/04` §6.3 | ✅ affix.js 一致，55 项系数未变 |
+| **宝石镶嵌** | 6家族×7级；武器槽元素伤 10/15/20/25/35/50/70%（按家族元素）、护甲槽主属性/CDR/生命%/荆棘、饰品槽元素减伤；孔位武器3/胸甲2/护腿2/头戒链各1，L30 开放 | `GemData.json` 42 条 `WeaponBonuses/ArmorBonuses/AccessoryBonuses`；`ItemizationConfig` 孔位；docs/04 §GemData「固定值不随等级」 | ✅ 2026-11-25 建模（data.js GEMS + engine.js gemsToMods + 装备页 UI + `--gems` CLI）；武器元素伤进 `1+元素%+全伤%` 池、只被同元素技能吃 |
+| **仆从被动成长** | `Value(L)=Base+PerLevel×(L−1)`；83 个被动 PerLevel≠0（多数 ratio=0.10，即每级相对1级+10%） | `SlaveData.json` `Passives[].Modifier.Value.{Base,PerLevel}` 逐条读取；此前「77/77 全0」为读错字段误判 | ✅ 2026-11-25 修正：31/39 仆从按 statId 灌入 `bonusPerLevel=PerLevel/Base`；引擎成长基准 `skillLv−10`→`eff−1`；缰绳+5 推动成长 |
 
 ## 二、真源给了证据但结构仍无定论（保留敏感性口径）
 
@@ -41,7 +43,7 @@
 | 项 | 真源情况 | 处理 |
 | --- | --- | --- |
 | 充能之戒 K 值 | 仅 `MaxBonus=0.5`，无独立 K/曲线 | 本地"50%×0.7 uptime"近似，维持 |
-| 仆从被动成长 | 68 条 SlaveData 无被动 PerLevel 成长字段；养成是 1.1.0 引入 | 保留成长路径，标"真源未给系数"，不编造 |
+| ~~仆从被动成长~~ | ~~68 条 SlaveData 无被动 PerLevel 成长字段~~ → **2026-11-25 已证伪**：真源 83 个被动有非零 PerLevel，此前读错字段 | 已移到第一节「已实证」，31/39 仆从灌入真值，按 `Base+PerLevel×(L−1)` 计算 |
 | 新增传奇的机制折算 | 棱彩之心/终斩印戒/噬魂肩甲等依赖覆盖率/敌人数 | 标 `conf:'mechanism'`、记真源数值，不折算固定 fx |
 
 ## 五、回答机制问题时的标准话术

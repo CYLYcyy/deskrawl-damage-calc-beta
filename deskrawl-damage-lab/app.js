@@ -41,6 +41,7 @@
     brittleStacks: 0,
     brittleZone: 'crit',
     reckoningStacks: 0,   // 清算锤叠层数（1.0.4 真源，暴击触发动态层，用户录入）
+    gems: {},             // 宝石镶嵌 { [数字槽位]: [{ fam, lv }, ...] }，真源 GemData
     enemy: { hp: 2400000, baseHp: 2400000, armor: 0, mr: 0, count: 1, elite: true, distant: 5, vuln: 45, slow: 10, immob: 25, healthy: 20, injured: 20, critdr: 0, name: '区域首领 (L70)' },
     encounter: null,
     diff: 6,
@@ -71,7 +72,7 @@
 
   const PERSIST_KEYS = ['classKey', 'element', 'primaryType', 'gear', 'skills', 'talents', 'setId', 'setCount',
     'legendaries', 'minionId', 'minionLevel', 'minionReins', 'minionGear', 'minionGearGate', 'minionGearBuild', 'minionStars',
-    'electroStacks', 'brittleStacks', 'brittleZone', 'reckoningStacks', 'enemy', 'encounter', 'diff', 'duration', 'gcd', 'preset', 'slot', 'decisions'];
+    'electroStacks', 'brittleStacks', 'brittleZone', 'reckoningStacks', 'gems', 'enemy', 'encounter', 'diff', 'duration', 'gcd', 'preset', 'slot', 'decisions'];
 
   function snapshot() { return Store.normalize(state); }
 
@@ -810,6 +811,7 @@
       brittleStacks: state.brittleStacks || 0,
       brittleZone: pendingVal('brittleZone') || 'crit',
       reckoningStacks: state.reckoningStacks || 0,
+      gems: state.gems || {},
       enemy: {
         hp: state.enemy.hp, armor: state.enemy.armor, mr: state.enemy.mr, count: state.enemy.count,
         elite: state.enemy.elite, distant: (state.enemy.distant || 0) / 100,
@@ -1242,8 +1244,103 @@
     ['neck', '项链'], ['ring', '戒指 ①'], ['ring', '戒指 ②'], ['back', '披风']
   ];
 
+  /* 宝石镶嵌面板（真源 GemData）：按数字槽位渲染孔位选择器 + 贡献汇总 */
+  function renderGems() {
+    const G = D.GEMS;
+    const host = $('#gemSlots');
+    if (!host || !G) return;
+    host.innerHTML = '';
+    // 有孔槽位（按数字序），映射回中文名
+    const slotNames = { 1:'武器', 2:'头盔', 3:'胸甲', 4:'护腿', 7:'戒指', 8:'项链' };
+    const famKeys = Object.keys(G.FAMILIES);
+    const gemList = state.gems || (state.gems = {});
+    Object.keys(slotNames).map(Number).sort((a,b)=>a-b).forEach(slot => {
+      const cap = G.SLOT_CAP[slot] || 0;
+      const type = G.SLOT_TYPE[slot];
+      const typeLabel = type === 'weapon' ? '元素伤' : (type === 'armor' ? '主属性/防御' : '元素减伤');
+      const card = el('div', 'panel');
+      card.style.cssText = 'padding:10px;background:var(--panel2)';
+      let h = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="color:var(--gold2);font-size:12.5px">${slotNames[slot]}</span>
+        <span style="font-size:10px;color:var(--dim)">${cap} 孔 · ${typeLabel}</span></div>`;
+      const arr = Array.isArray(gemList[slot]) ? gemList[slot] : [];
+      for (let i = 0; i < cap; i++) {
+        const g = arr[i] || null;
+        const famSel = famKeys.map(fk => `<option value="${fk}" ${g && g.fam===fk?'selected':''}>${G.FAMILIES[fk].name}</option>`).join('');
+        const lvSel = G.GRADES.map((gr,gi) => `<option value="${gi+1}" ${g && g.lv===(gi+1)?'selected':''}>${gr.lv} · ${gr.prefix}${gr.shape}</option>`).join('');
+        h += `<div style="display:flex;gap:5px;align-items:center;margin-bottom:5px">
+          <span style="font-size:10px;color:var(--dim);width:22px">孔${i+1}</span>
+          <select class="gem-fam" data-slot="${slot}" data-idx="${i}" style="flex:1;max-width:110px">${g?'':'<option value="">— 空 —</option>'}${famSel}</select>
+          <select class="gem-lv" data-slot="${slot}" data-idx="${i}" style="flex:1">${g?lvSel:'<option value="">—</option>'}</select>
+          <button class="gem-clr" data-slot="${slot}" data-idx="${i}" title="取下宝石" style="padding:2px 7px">×</button>
+        </div>`;
+      }
+      card.innerHTML = h;
+      host.appendChild(card);
+    });
+
+    // 事件接线（每次重渲染重新绑定）
+    host.querySelectorAll('.gem-fam').forEach(sel => sel.addEventListener('change', e => {
+      setGem(+e.target.dataset.slot, +e.target.dataset.idx, e.target.value || null);
+    }));
+    host.querySelectorAll('.gem-lv').forEach(sel => sel.addEventListener('change', e => {
+      setGem(+e.target.dataset.slot, +e.target.dataset.idx, null, +e.target.value);
+    }));
+    host.querySelectorAll('.gem-clr').forEach(btn => btn.onclick = () => {
+      setGem(+btn.dataset.slot, +btn.dataset.idx, null, null, true);
+    });
+    renderGemSummary();
+  }
+
+  function setGem(slot, idx, fam, lv, clear) {
+    const G = D.GEMS;
+    const cap = G.SLOT_CAP[slot] || 0;
+    const arr = Array.isArray(state.gems[slot]) ? state.gems[slot].slice() : [];
+    if (clear || !fam) { arr[idx] = null; }
+    else {
+      const cur = arr[idx] || { fam, lv: 7 };
+      arr[idx] = { fam, lv: isFinite(lv) && lv >= 1 ? lv : (cur.lv || 7) };
+    }
+    // 压缩前导空洞但保留位置（孔位有序）
+    while (arr.length > cap) arr.pop();
+    state.gems[slot] = arr;
+    state._cache = {}; state._gearKey = null;
+    // recomputeAll 会在 gear 页触发 renderGear → renderGems（含汇总），避免双重渲染与读到旧 agg
+    recomputeAll();
+    if (!onPage('gear')) { renderGems(); }
+  }
+
+  function renderGemSummary() {
+    const G = D.GEMS, host = $('#gemSummary');
+    if (!host || !G) return;
+    const agg = (state._result && state._result.agg) || {};
+    const eleParts = [], statParts = [], drParts = [];
+    const gemDR = agg.gemDR || {};
+    for (const slot in (state.gems || {})) {
+      const type = G.SLOT_TYPE[slot];
+      (state.gems[slot] || []).forEach(g => {
+        if (!g) return;
+        const f = G.FAMILIES[g.fam]; if (!f) return;
+        if (type === 'weapon') {
+          const pct = G.GRADES[g.lv - 1].weapon * 100;
+          eleParts.push(`${f.name} ${pct}%`);
+        } else if (type === 'armor') {
+          const a = f.armor, v = a.values[g.lv - 1];
+          statParts.push(`${G.name(g.fam, g.lv)} → ${a.name} ${v > 1 ? v : (v * 100).toFixed(0) + '%'}`);
+        }
+      });
+    }
+    for (const k in gemDR) if (gemDR[k]) drParts.push(`${k.replace('DR','')}减伤 ${gemDR[k].toFixed(0)}%`);
+    host.innerHTML = `<div class="note" style="line-height:1.9">
+      <div><b class="gold">元素伤（进 DPS）</b>：${eleParts.length ? eleParts.join(' + ') : '<span class="dim">未镶嵌武器宝石</span>'}</div>
+      <div><b class="gold">护甲槽（进属性）</b>：${statParts.length ? statParts.join(' · ') : '<span class="dim">未镶嵌护甲宝石</span>'}</div>
+      <div><b>减伤（生存向，不进 DPS）</b>：${drParts.length ? drParts.join(' · ') : '<span class="dim">—</span>'}</div>
+    </div>`;
+  }
+
   function renderGear() {
     safeRun('装备数值面板', renderAffixLab);
+    safeRun('宝石镶嵌', renderGems);
     const tabs = $('#slotTabs');
     if (tabs) {
       tabs.innerHTML = '';
@@ -2250,6 +2347,24 @@
     return '';
   }).filter(Boolean).join('；') || '防御向被动';
 
+  /* 真源成长口径：被动值(L) = base × (1 + bonusPerLevel × (eff-1))。
+     只放大数值型被动（vs/dmg/stat/statPct/mana），mana/def 等描述型保持原文。 */
+  const bonusTextAtLevel = (m, eff) => {
+    const ratio = m.bonusPerLevel || 0;
+    const k = 1 + ratio * Math.max(0, (eff || 1) - 1);
+    const fmt = v => (Math.abs(v - Math.round(v)) < 0.05 ? Math.round(v) : v.toFixed(1));
+    return Object.keys(m.bonus || {}).map(key => {
+      const scale = v => fmt(v * k);
+      if (key === 'vs') return Object.entries(m.bonus.vs).map(([x, v]) => `对${BONUS_LABEL[x] || x} +${scale(v)}%`).join('，');
+      if (key === 'dmg') return Object.entries(m.bonus.dmg).map(([x, v]) => `${BONUS_LABEL[x] || x} +${scale(v)}%`).join('，');
+      if (key === 'stat') return Object.entries(m.bonus.stat).map(([x, v]) => `${BONUS_LABEL[x] || x} +${scale(v)}${x === 'manaMax' ? '' : '%'}`).join('，');
+      if (key === 'statPct') return Object.entries(m.bonus.statPct).map(([x, v]) => `${BONUS_LABEL[x] || x} +${scale(v)}%`).join('，');
+      if (key === 'mana') return '法力消耗 -10%';
+      if (key === 'def') return '防御向';
+      return '';
+    }).filter(Boolean).join('；') || '防御向被动';
+  };
+
   /* ---------------- 仆从第 13 件装备（affix.js 真实词条池 / 数值公式） ---------------- */
   const MN13_RARITIES = [
     { id: 'rare', name: '稀有' }, { id: 'legendary', name: '传奇' },
@@ -2409,12 +2524,18 @@
 
     if (!info) { $('#mnDetail').innerHTML = '<div class="note">未选择仆从。</div>'; return; }
     const selfDps = (r.agg.weaponDamage) * info.selfPct / 100;
+    const growth = curMin && curMin.bonusPerLevel ? curMin.bonusPerLevel : 0;
+    const baseTxt = bonusText(curMin);
+    const lvTxt = bonusTextAtLevel(curMin, info.eff);
+    const grew = growth > 0 && info.eff > 1;
     $('#mnDetail').innerHTML = `
-      <div class="field"><label>被动加成（恒定）</label><span class="num">${bonusText(D.MINIONS.find(m => m.id === state.minionId))}</span></div>
-      <div class="field"><label>技能等级 / 强化后</label><span class="num">${info.level} → ${info.eff}</span></div>
+      <div class="field"><label>被动加成（${grew ? 'L' + info.eff + ' 成长后' : '1 级基准'}</label><span class="num">${grew ? lvTxt : baseTxt}</span></div>
+      ${grew ? `<div class="field"><label>被动成长系数</label><span class="num">每级 +${(growth * 100).toFixed(growth < 0.1 ? 2 : 1)}%（相对 1 级）· 真源 PerLevel/Base</span></div>
+      <div class="field"><label>1 级基准值</label><span class="num dim">${baseTxt}</span></div>` : ''}
+      <div class="field"><label>技能等级 / 强化后</label><span class="num">${info.level} → ${info.eff}${state.minionReins ? '（缰绳 +' + M.reinsBonus + '）' : ''}</span></div>
       <div class="field"><label>仆从装备</label><span class="num">${info.gear === 'custom' ? '第13件（自定义词条）' : (info.gear && info.gear !== 'none' ? (M.gearOptions.find(g => g.id === info.gear) || {}).name : '—')}</span></div>
       <div class="field"><label>自身技能输出</label><span class="num gold">${fmt(selfDps)} / 秒</span></div>
-      <div class="note" style="margin-top:10px">仆从的自身输出不吃你的天赋与装备乘区，因此单列。它的价值主要来自上面的被动与缰绳强化带来的生存/清怪效率，而不是这张表里的秒伤。</div>`;
+      <div class="note" style="margin-top:10px">被动随有效技能等级成长（真源 <b>Base + PerLevel×(L-1)</b>），缰绳 +${M.reinsBonus} 级同样作用于被动。自身输出不吃你的天赋与装备乘区，单列显示。</div>`;
   }
 
   function bindMinions() {

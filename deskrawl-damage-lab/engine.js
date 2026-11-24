@@ -97,6 +97,47 @@ window.Engine = (function () {
     return s;
   }
 
+  /* 宝石镶嵌 -> mods。真源 GemData.json：每颗宝石按镶嵌部位类型给三套加成。
+     cfg.gems = { [slot]: [{ fam, lv }, ...] }，slot 遵循 affix.js SLOT_POOLS。
+     武器槽：家族对应元素伤% (0.10~0.70 → 10~70 百分点)，进 s[element]，
+             由 eleMultOf 按技能元素取 agg[ele]，与全伤同池；
+     护甲槽：主属性(str/dex/int)、cdr、hpPct、thorns（固定值，真源不随等级）；
+     饰品槽：对应元素减伤%，存 s.gemDR 仅供生存视图展示，不进 DPS。
+     每槽宝石数受 GEM_SLOT_CAP 约束，超出部分忽略（防御 UI 传入异常）。 */
+  function gemsToMods(cfg, s) {
+    const G = D.GEMS;
+    if (!G || !cfg.gems) return;
+    const gemDR = {};
+    for (const slot in cfg.gems) {
+      const list = cfg.gems[slot];
+      if (!Array.isArray(list)) continue;
+      const cap = G.SLOT_CAP[slot] || 0;
+      const type = G.SLOT_TYPE[slot];
+      const used = list.slice(0, cap);
+      for (const gem of used) {
+        if (!gem) continue;
+        const fam = G.FAMILIES[gem.fam];
+        const lv = Math.max(1, Math.min(G.GRADES.length, gem.lv | 0));
+        if (!fam) continue;
+        if (type === 'weapon') {
+          const pct = G.GRADES[lv - 1].weapon * 100; // 0.70 -> 70
+          s[fam.element] = (s[fam.element] || 0) + pct;
+        } else if (type === 'armor') {
+          const a = fam.armor;
+          const v = a.values[lv - 1];
+          if (a.stat === 'str' || a.stat === 'dex' || a.stat === 'int') s[a.stat] += v;
+          else if (a.stat === 'cdr') s.cdr += v * 100;   // 0.05 -> 5 百分点
+          else if (a.stat === 'hpPct') s.hpPct += v * 100;
+          else if (a.stat === 'thorns') s.thorns += v;
+        } else if (type === 'accessory') {
+          const ac = fam.accessory;
+          gemDR[ac.stat] = (gemDR[ac.stat] || 0) + ac.values[lv - 1] * 100; // 0.17 -> 17
+        }
+      }
+    }
+    s.gemDR = gemDR;
+  }
+
   /* 把一套 mods 的数值标量累加进另一套（用于仆从装备并入玩家属性池） */
   function addMods(target, src) {
     for (const k in src) {
@@ -165,6 +206,9 @@ window.Engine = (function () {
     const gear = resolveGear(cfg);
     const s = statsFromCfg(cfg, gear);
     s.gear = gear;
+
+    // 宝石镶嵌（真源 GemData）：武器元素伤进元素加算池、护甲主属性/CDR/生命/荆棘、饰品减伤仅展示
+    gemsToMods(cfg, s);
 
     // 天赋
     const ranks = cfg.talents || {};
@@ -246,19 +290,20 @@ window.Engine = (function () {
         scaleMods(extra, MM.resonanceBonus / 100);
         mergeMods(s, extra);
       }
-      // B5: 被动随技能等级成长（旧「被动不成长」口径已删除）
-      // 真源核查（BASEDAMAGE_RESEARCH.md §2）：2026-10-16 dump（1.0.3 时期）中 77/77 被动
-      // PerLevel=0、无仆从等级字段/配置/存档位，该版本被动固定。但仆从养成是 1.1.0（10-29）
-      // 才引入、当前 1.1.11，真源版本落后于游戏版本，不能据此断定当前版本被动不成长。
-      // 采信度处理：保留成长路径、不编造系数；数据层一旦提供 min.bonusPerLevel 即按
-      // 「每级相对增量线性放大（0.05 = 每级 +5%）」生效，否则保持 base。此项列为真源版本未决。
+      // B5: 被动随技能等级成长（真源 SlaveData.json 精确口径）
+      // 真源：Value(L) = Base + PerLevel × (L - 1)，Base 为 1 级值。
+      // data.js 的 bonus = Base×100（百分点），bonusPerLevel = PerLevel/Base（每级相对增量），
+      // 故 base × (1 + ratio×(L-1)) = base + PerLevel×100×(L-1)，与真源逐位一致。
+      // 2026-11-25 复核：真源 83 个被动 PerLevel≠0（此前"77/77 全 0"为误判，读了错误字段），
+      // 32 个已建模 DPS 仆从按 statId 精确匹配并灌入 ratio（绝大多数 0.10，灰烬领主 CDR 0.0667）。
+      // 成长等级用 eff（含缰绳 +5、可超 10；继承槽固定 10、不吃缰绳），与自身技能口径一致。
       const perLv = min.bonusPerLevel;
-      if (perLv && skillLv > 10) {
+      if (perLv && eff > 1) {
         const extra = JSON.parse(JSON.stringify(min.bonus || {}));
-        scaleMods(extra, perLv * (skillLv - 10));
+        scaleMods(extra, perLv * (eff - 1));
         mergeMods(s, extra);
       }
-      // 无 min.bonusPerLevel 时被动保持 base，不静默外推成长值。
+      // 无 bonusPerLevel 的仆从（如 buff 类）被动保持 base，不静默外推。
 
       // 第 13 件装备：优先 gearBuild（无宝石孔、训练等级 ≥ gearStar），属性并入玩家属性池
       let minionGearLabel = null;

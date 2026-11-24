@@ -25,6 +25,85 @@ window.DESKRAWL_DATA = (function () {
     arcane: { name: '奥术', color: '#a97bd4' }
   };
 
+  /* ================================================================
+     宝石镶嵌系统（1.0.4 SO 真源 GemData.json，42 条 = 6 家族 × 7 品级）
+     ----------------------------------------------------------------
+     真源字段：每颗宝石按"镶嵌部位类型"给三套完全不同的加成：
+       WeaponBonuses    → 武器槽：元素伤害%（Stat 23-28），进元素加算池
+       ArmorBonuses     → 护甲槽：主属性/CDR/生命%/荆棘
+       AccessoryBonuses → 饰品槽：对应元素减伤%（生存向，不进 DPS）
+     宝石加成是固定值、不随等级成长（docs/04 §GemData）。
+     数值直接从 SO 浮点字段读出，未做外推。
+     ================================================================ */
+  const GEM_GRADES = [
+    { lv: 1, prefix: '粗糙的', shape: '球',     weapon: 0.10 },
+    { lv: 2, prefix: '碎裂的', shape: '泪滴',   weapon: 0.15 },
+    { lv: 3, prefix: '粗砺的', shape: '方块',   weapon: 0.20 },
+    { lv: 4, prefix: '抛光的', shape: '菱形',   weapon: 0.25 },
+    { lv: 5, prefix: '无瑕的', shape: '六边形', weapon: 0.35 },
+    { lv: 6, prefix: '璀璨的', shape: '八边形', weapon: 0.50 },
+    { lv: 7, prefix: '完美的', shape: '星形',   weapon: 0.70 }
+  ];
+
+  const GEM_FAMILIES = {
+    diamond: {
+      name: '钻石', color: '#d8cfc0', element: 'physical', pathBase: 64340,
+      armor: { stat: 'cdr', name: '冷却缩减', isPct: true, values: [0.01, 0.015, 0.02, 0.025, 0.03, 0.04, 0.05] },
+      accessory: { stat: 'physicalDR', name: '物理减伤', isPct: true, values: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17] }
+    },
+    ruby: {
+      name: '红宝石', color: '#e2603c', element: 'fire', pathBase: 64354,
+      armor: { stat: 'str', name: '力量', isPct: false, values: [5, 10, 15, 20, 25, 30, 35] },
+      accessory: { stat: 'fireDR', name: '火焰减伤', isPct: true, values: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17] }
+    },
+    sapphire: {
+      name: '蓝宝石', color: '#5fa8d3', element: 'cold', pathBase: 64361,
+      armor: { stat: 'hpPct', name: '最大生命%', isPct: true, values: [0.05, 0.08, 0.10, 0.12, 0.15, 0.18, 0.21] },
+      accessory: { stat: 'coldDR', name: '冰霜减伤', isPct: true, values: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17] }
+    },
+    topaz: {
+      name: '黄玉', color: '#e6c34a', element: 'lightning', pathBase: 64368,
+      armor: { stat: 'dex', name: '敏捷', isPct: false, values: [5, 10, 15, 20, 25, 30, 35] },
+      accessory: { stat: 'lightningDR', name: '闪电减伤', isPct: true, values: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17] }
+    },
+    emerald: {
+      name: '绿宝石', color: '#7fa650', element: 'poison', pathBase: 64347,
+      armor: { stat: 'thorns', name: '荆棘', isPct: false, values: [10, 20, 40, 80, 105, 130, 160] },
+      accessory: { stat: 'poisonDR', name: '毒素减伤', isPct: true, values: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17] }
+    },
+    amethyst: {
+      name: '紫水晶', color: '#a97bd4', element: 'arcane', pathBase: 64333,
+      armor: { stat: 'int', name: '智力', isPct: false, values: [5, 10, 15, 20, 25, 30, 35] },
+      accessory: { stat: 'arcaneDR', name: '奥术减伤', isPct: true, values: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.17] }
+    }
+  };
+
+  /* 槽位类型判定：决定一颗宝石镶上去读哪套加成字段 */
+  const GEM_SLOT_TYPE = {
+    1: 'weapon', 2: 'armor', 3: 'armor', 4: 'armor', 5: 'armor', 6: 'armor',
+    7: 'accessory', 8: 'accessory', 9: 'armor', 10: 'armor', 11: 'armor'
+  };
+  /* 孔位上限，与 affix.js SLOT_POOLS[k].sockets 一致（真源 ItemizationConfig） */
+  const GEM_SLOT_CAP = {
+    1: 3, 2: 1, 3: 2, 4: 2, 5: 0, 6: 0, 7: 1, 8: 1, 9: 0, 10: 0, 11: 0
+  };
+  const GEM_CONFIG = {
+    minLevel: 30,          // MinLevelForSockets，镶嵌开放等级
+    socketMaterialAmount: 100,
+    socketGoldPerItemLevel: 400,
+    note: '武器槽元素伤%直接进 1+元素%+全伤% 加算池；护甲槽主属性吃 1+主属性/100；饰品槽减伤仅生存向不进 DPS。'
+  };
+  /* app.js 的部位字符串键 → 引擎/真源数字槽位（对应 affix.js SLOT_POOLS 的 key） */
+  const GEM_KEY_TO_SLOT = {
+    weapon: 1, helm: 2, chest: 3, pants: 4, boots: 5, belt: 6,
+    ring: 7, neck: 8, gloves: 9, shoulder: 10, back: 11
+  };
+  /* 便捷查询：取某家族某品级的中文名 */
+  function gemName(fam, lv) {
+    const f = GEM_FAMILIES[fam], g = GEM_GRADES[lv - 1];
+    return f && g ? (g.prefix + f.name + g.shape) : '—';
+  }
+
   /* ---------------------------------------------------------------- 战士 */
   const warrior = {
     key: 'warrior', name: '战士', en: 'Warrior', stat: 'str', statName: '力量',
@@ -477,49 +556,49 @@ window.DESKRAWL_DATA = (function () {
 
   /* ---------------------------------------------------------------- 仆从 */
   const MINIONS = [
-    { id: 'raptor', name: '迅猛龙', rarity: '传说', bonus: { dmg: { dot: 30 }, stat: { cc: 3, cd: 25 } }, cap: 35 },
-    { id: 'emberfang', name: '烬牙', rarity: '传说', bonus: { vs: { elite: 30 } }, cap: 30 },
-    { id: 'lordcinder', name: '灰烬领主', rarity: '传说', bonus: { stat: { cdr: 12 } }, cap: 35 },
-    { id: 'icehound', name: '冰霜猎犬', rarity: '传说', bonus: { dmg: { lightning: 30, cold: 30 } }, cap: 35, note: '1.0.4 真源补冰霜伤害 +30%' },
-    { id: 'bonereaper', name: '白骨收割者', rarity: '传说', bonus: { dmg: { lightning: 30 } }, cap: 30 },
-    { id: 'tidewrath', name: '怒潮蟹王', rarity: '传说', bonus: { stat: { cd: 40 }, def: 1 }, cap: 32 },
-    { id: 'redrocklord', name: '赤岩领主', rarity: '传说', bonus: { dmg: { strong: 30 } }, cap: 25 },
-    { id: 'lordcrimson', name: '绯红谷领主', rarity: '传说', bonus: { vs: { vulnerable: 30 } }, cap: 30 },
-    { id: 'frostdragon', name: '霜龙', rarity: '传说', bonus: { vs: { distant: 40 } }, cap: 35, note: '1.0.4 真源 远处 30→40%' },
-    { id: 'harpy', name: '沙暴鹰身女王', rarity: '传说', bonus: { vs: { slowed: 30 } }, cap: 27 },
-    { id: 'serparmat', name: '吞噬者瑟帕玛特', rarity: '传说', bonus: { vs: { bleeding: 40 } }, cap: 30, note: '1.0.4 真源 流血 30→40%' },
-    { id: 'dreadmanticore', name: '沙丘蝎狮', rarity: '传说', bonus: { dmg: { poison: 30 } }, cap: 35 },
-    { id: 'darkelf', name: '暗精灵法师', rarity: '传说', bonus: { stat: { manaMax: 50 }, dmg: { fire: 30, arcane: 30 } }, cap: 25, note: '1.0.4 真源补奥术伤害 +30%' },
+    { id: 'raptor', name: '迅猛龙', rarity: '传说', bonus: { dmg: { dot: 30 }, stat: { cc: 3, cd: 25 } }, cap: 35, bonusPerLevel: 0.1  },
+    { id: 'emberfang', name: '烬牙', rarity: '传说', bonus: { vs: { elite: 30 } }, cap: 30, bonusPerLevel: 0.1  },
+    { id: 'lordcinder', name: '灰烬领主', rarity: '传说', bonus: { stat: { cdr: 12 } }, cap: 35, bonusPerLevel: 0.0667  },
+    { id: 'icehound', name: '冰霜猎犬', rarity: '传说', bonus: { dmg: { lightning: 30, cold: 30 } }, cap: 35, note: '1.0.4 真源补冰霜伤害 +30%', bonusPerLevel: 0.1  },
+    { id: 'bonereaper', name: '白骨收割者', rarity: '传说', bonus: { dmg: { lightning: 30 } }, cap: 30, bonusPerLevel: 0.1  },
+    { id: 'tidewrath', name: '怒潮蟹王', rarity: '传说', bonus: { stat: { cd: 40 }, def: 1 }, cap: 32, bonusPerLevel: 0.1  },
+    { id: 'redrocklord', name: '赤岩领主', rarity: '传说', bonus: { dmg: { strong: 30 } }, cap: 25, bonusPerLevel: 0.1  },
+    { id: 'lordcrimson', name: '绯红谷领主', rarity: '传说', bonus: { vs: { vulnerable: 30 } }, cap: 30, bonusPerLevel: 0.1  },
+    { id: 'frostdragon', name: '霜龙', rarity: '传说', bonus: { vs: { distant: 40 } }, cap: 35, note: '1.0.4 真源 远处 30→40%', bonusPerLevel: 0.1  },
+    { id: 'harpy', name: '沙暴鹰身女王', rarity: '传说', bonus: { vs: { slowed: 30 } }, cap: 27, bonusPerLevel: 0.1  },
+    { id: 'serparmat', name: '吞噬者瑟帕玛特', rarity: '传说', bonus: { vs: { bleeding: 40 } }, cap: 30, note: '1.0.4 真源 流血 30→40%', bonusPerLevel: 0.1  },
+    { id: 'dreadmanticore', name: '沙丘蝎狮', rarity: '传说', bonus: { dmg: { poison: 30 } }, cap: 35, bonusPerLevel: 0.1  },
+    { id: 'darkelf', name: '暗精灵法师', rarity: '传说', bonus: { stat: { manaMax: 50 }, dmg: { fire: 30, arcane: 30 } }, cap: 25, note: '1.0.4 真源补奥术伤害 +30%', bonusPerLevel: 0.1  },
     { id: 'defiledwyrm', name: '污秽古龙', rarity: '传说', bonus: { def: 1 }, cap: 34 },
     { id: 'ancientoak', name: '远古橡木树精', rarity: '传说', bonus: { def: 1 }, cap: 30 },
     { id: 'bloodmoon', name: '血月狼人', rarity: '传说', bonus: { def: 1 }, cap: 25 },
-    { id: 'undeadaxe', name: '亡灵斧手', rarity: '稀有', bonus: { dmg: { physical: 25 } }, cap: 27, note: '1.0.4 真源 物理 20→25%' },
-    { id: 'cinderlash', name: '烬鞭', rarity: '稀有', bonus: { dmg: { fire: 25 } }, cap: 28 },
-    { id: 'faedragon', name: '妖精龙', rarity: '稀有', bonus: { dmg: { arcane: 25 } }, cap: 25 },
-    { id: 'brinescale', name: '盐鳞蛇', rarity: '稀有', bonus: { dmg: { cold: 25 } }, cap: 25, note: '1.0.4 真源 冰霜 20→25%' },
-    { id: 'skeleton', name: '骷髅弓手', rarity: '罕见', bonus: { stat: { cc: 3 } }, cap: 25 },
+    { id: 'undeadaxe', name: '亡灵斧手', rarity: '稀有', bonus: { dmg: { physical: 25 } }, cap: 27, note: '1.0.4 真源 物理 20→25%', bonusPerLevel: 0.1  },
+    { id: 'cinderlash', name: '烬鞭', rarity: '稀有', bonus: { dmg: { fire: 25 } }, cap: 28, bonusPerLevel: 0.1  },
+    { id: 'faedragon', name: '妖精龙', rarity: '稀有', bonus: { dmg: { arcane: 25 } }, cap: 25, bonusPerLevel: 0.1  },
+    { id: 'brinescale', name: '盐鳞蛇', rarity: '稀有', bonus: { dmg: { cold: 25 } }, cap: 25, note: '1.0.4 真源 冰霜 20→25%', bonusPerLevel: 0.1  },
+    { id: 'skeleton', name: '骷髅弓手', rarity: '罕见', bonus: { stat: { cc: 3 } }, cap: 25, bonusPerLevel: 0.1  },
     { id: 'greywolf', name: '灰森林狼', rarity: '罕见', bonus: { stat: { as: 10 } }, cap: 15, note: '1.0.4 真源 攻速 5→10%' },
     { id: 'mutatingwolf', name: '变异狼', rarity: '稀有', bonus: { stat: { cc: 0 } , def: 1 }, cap: 20 },
     { id: 'orc', name: '兽人战士', rarity: '稀有', bonus: { statPct: { str: 10 } }, cap: 30, note: '1.0.4 真源仅力量+10%（旧版多记的敏捷+10% 已删）' },
-    { id: 'scorched', name: '焦灼小鬼', rarity: '罕见', bonus: { dmg: { fire: 20 } }, cap: 25 },
-    { id: 'mountain', name: '山虎', rarity: '罕见', bonus: { vs: { healthy: 25 } }, cap: 25, note: '1.0.4 真源 健康目标 15→25%' },
-    { id: 'sandwasp', name: '沙蜂', rarity: '罕见', bonus: { vs: { poisoned: 20 } }, cap: 20, note: '1.0.4 真源 中毒目标 15→20%' },
-    { id: 'koboldthief', name: '沙狗头窃贼', rarity: '罕见', bonus: { vs: { bleeding: 20 } }, cap: 20 },
-    { id: 'frozen', name: '冰霜僵尸战士', rarity: '罕见', bonus: { dmg: { all: 5 } }, cap: 25, note: '1.0.4 真源 全伤 3→5%' },
+    { id: 'scorched', name: '焦灼小鬼', rarity: '罕见', bonus: { dmg: { fire: 20 } }, cap: 25, bonusPerLevel: 0.1  },
+    { id: 'mountain', name: '山虎', rarity: '罕见', bonus: { vs: { healthy: 25 } }, cap: 25, note: '1.0.4 真源 健康目标 15→25%', bonusPerLevel: 0.1  },
+    { id: 'sandwasp', name: '沙蜂', rarity: '罕见', bonus: { vs: { poisoned: 20 } }, cap: 20, note: '1.0.4 真源 中毒目标 15→20%', bonusPerLevel: 0.1  },
+    { id: 'koboldthief', name: '沙狗头窃贼', rarity: '罕见', bonus: { vs: { bleeding: 20 } }, cap: 20, bonusPerLevel: 0.1  },
+    { id: 'frozen', name: '冰霜僵尸战士', rarity: '罕见', bonus: { dmg: { all: 5 } }, cap: 25, note: '1.0.4 真源 全伤 3→5%', bonusPerLevel: 0.1  },
     { id: 'flyingfish', name: '飞鱼王', rarity: '传说', bonus: { mana: { costRed: 10 } }, cap: 30 },
     { id: 'bluewhale', name: '蓝猛犸', rarity: '传说', bonus: { def: 1 }, cap: 35 },
 
     /* ---- 1.0.4 新增仆从：仅收录带明确 DPS 被动者（真源 SlaveData.json statId 实证）。
          其余 29 个新增为坐骑/防御/资源类（移速、减伤、找金、回蓝等），对玩家 DPS 无贡献，不收录。
          base 取真源 1 级值（×100 为百分点）；成长走引擎 bonusPerLevel 路径，本批不静默外推。 ---- */
-    { id: 'defiledsuccubus', name: '腐化魅魔', rarity: '稀有', bonus: { vs: { distant: 30 } }, cap: 27, note: '1.0.4 真源 DefiledKeepSuccubus Beguiling Whisper statId=58 远处目标 +30%（1级 base 0.3）' },
-    { id: 'ogre', name: '食人魔', rarity: '传说', bonus: { vs: { immobilized: 40 } }, cap: 30, note: '1.0.4 真源 Ogre Damage to Stunned III statId=43 定身目标 +40%；另有物理减伤15%（生存向不进DPS）' },
-    { id: 'redcroc', name: '赤沙鳄鱼', rarity: '罕见', bonus: { vs: { injured: 25 } }, cap: 25, note: '1.0.4 真源 RedDesertCrocodile statId=30 受伤目标 +25%' },
-    { id: 'redsatyr', name: '赤沙萨提尔', rarity: '罕见', bonus: { dmg: { basic: 20 } }, cap: 25, note: '1.0.4 真源 RedDesertSatyr statId=33 基础攻击伤害 +20%' },
-    { id: 'skeletonwarrior', name: '骷髅战士', rarity: '罕见', bonus: { dmg: { physical: 15 } }, cap: 30, note: '1.0.4 真源 SkeletonWarrior Physical Damage I statId=23 物理伤害 +15%' },
-    { id: 'snowwhelp', name: '雪山幼龙', rarity: '稀有', bonus: { dmg: { special: 25 } }, cap: 25, note: '1.0.4 真源 SnowHillWhelp Budding Sorcery statId=61 特殊技能伤害 +25%' },
-    { id: 'spider', name: '蜘蛛', rarity: '罕见', bonus: { dmg: { poison: 15 } }, cap: 15, note: '1.0.4 真源 Spider Poison Damage I statId=27 毒素伤害 +15%' },
-    { id: 'pumpkin', name: '世界首领·南瓜王', rarity: '传说', bonus: { vs: { injured: 50 } }, cap: 35, note: '1.0.4 真源 WorldBossPumpkin Damage to Injured III statId=30 受伤目标 +50%' }
+    { id: 'defiledsuccubus', name: '腐化魅魔', rarity: '稀有', bonus: { vs: { distant: 30 } }, cap: 27, note: '1.0.4 真源 DefiledKeepSuccubus Beguiling Whisper statId=58 远处目标 +30%（1级 base 0.3）', bonusPerLevel: 0.1  },
+    { id: 'ogre', name: '食人魔', rarity: '传说', bonus: { vs: { immobilized: 40 } }, cap: 30, note: '1.0.4 真源 Ogre Damage to Stunned III statId=43 定身目标 +40%；另有物理减伤15%（生存向不进DPS）', bonusPerLevel: 0.1  },
+    { id: 'redcroc', name: '赤沙鳄鱼', rarity: '罕见', bonus: { vs: { injured: 25 } }, cap: 25, note: '1.0.4 真源 RedDesertCrocodile statId=30 受伤目标 +25%', bonusPerLevel: 0.1  },
+    { id: 'redsatyr', name: '赤沙萨提尔', rarity: '罕见', bonus: { dmg: { basic: 20 } }, cap: 25, note: '1.0.4 真源 RedDesertSatyr statId=33 基础攻击伤害 +20%', bonusPerLevel: 0.1  },
+    { id: 'skeletonwarrior', name: '骷髅战士', rarity: '罕见', bonus: { dmg: { physical: 15 } }, cap: 30, note: '1.0.4 真源 SkeletonWarrior Physical Damage I statId=23 物理伤害 +15%', bonusPerLevel: 0.1  },
+    { id: 'snowwhelp', name: '雪山幼龙', rarity: '稀有', bonus: { dmg: { special: 25 } }, cap: 25, note: '1.0.4 真源 SnowHillWhelp Budding Sorcery statId=61 特殊技能伤害 +25%', bonusPerLevel: 0.1  },
+    { id: 'spider', name: '蜘蛛', rarity: '罕见', bonus: { dmg: { poison: 15 } }, cap: 15, note: '1.0.4 真源 Spider Poison Damage I statId=27 毒素伤害 +15%', bonusPerLevel: 0.1  },
+    { id: 'pumpkin', name: '世界首领·南瓜王', rarity: '传说', bonus: { vs: { injured: 50 } }, cap: 35, bonusPerLevel: 0.1, note: '1.0.4 真源 WorldBossPumpkin Damage to Injured III statId=30 受伤目标 +50%' }
   ];
 
   /* ---------------------------------------------------------------- 传奇装备
@@ -863,5 +942,6 @@ window.DESKRAWL_DATA = (function () {
     { v: '1.0.2b', d: '2026-10-13', items: ['减伤与元素抗性上限 90%', '冷却缩减上限 85%→80%'] }
   ];
 
-  return { VERSION, ELEMENTS, CLASSES, MINIONS, LEGENDARIES, AFFIXES, ENEMIES, ENCOUNTERS, CLASS_RANGE, PATCHES, MECHANICS };
+  return { VERSION, ELEMENTS, CLASSES, MINIONS, LEGENDARIES, AFFIXES, ENEMIES, ENCOUNTERS, CLASS_RANGE, PATCHES, MECHANICS,
+    GEMS: { GRADES: GEM_GRADES, FAMILIES: GEM_FAMILIES, SLOT_TYPE: GEM_SLOT_TYPE, SLOT_CAP: GEM_SLOT_CAP, CONFIG: GEM_CONFIG, KEY_TO_SLOT: GEM_KEY_TO_SLOT, name: gemName } };
 })();
