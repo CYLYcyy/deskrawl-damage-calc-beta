@@ -1,4 +1,5 @@
 # 环境 / 框架目录（非研究成果）
+.workbuddy/
 .codebuddy/
 .genie/
 .templates/

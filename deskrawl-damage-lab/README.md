@@ -12,9 +12,8 @@
 | `engine.js` | 纯算法：乘区聚合、0.05s 逐帧模拟、词条边际、天赋自动规划、传奇 fx、仆从、装备数值与符文接入 | 仅当游戏机制改变 |
 | `index.html` / `app.js` | 界面：三组导航（计算 / 构筑 / 资料）、Canvas 绘图、控件与状态 | 仅当要加新面板 |
 | `store.js` | 配置存档：schema 校验、多存档、自动草稿、导入导出、分享链接 | 加字段时同步 `PERSIST_KEYS` |
-| `agent/SKILL.md` | 智能体的技能定义（触发条件、工具用法、乘区红线） | 回答口径变化时 |
+| 根目录 `SKILL.md` | AI 协作技能定义：真源、口径红线、工具用法、改动纪律 | 回答口径变化时 |
 | `agent/knowledge/` | 10 篇知识库，**从 data.js 生成**，不要手改 | 不用手工维护 |
-| `agent/references/` | 5 份调研整理（装备数值/技能符文/仆从/求解器/实测指引），人工维护 | 调研结论更新时 |
 | `agent/kb.json` | 网页"智能体"页检索用 | 自动生成 |
 | `agent/tools/calc.mjs` | 命令行计算器（含装分×稀有度、技能等级、符文、静电双口径） | 加参数时 |
 | `agent/tools/build-kb.mjs` | 重新生成知识库 | 不用动 |
@@ -100,8 +99,7 @@ node agent/tools/calc.mjs --class warrior --runes RareRune_WarriorBasicAttack:6
 node agent/tools/calc.mjs --class sorcerer --taken-mode multiply
 ```
 
-把 `agent/SKILL.md` 放进 `~/.codebuddy/skills/deskrawl-damage-analyst/SKILL.md`，即可作为技能被加载。
-未明项（静电×易伤结构、横扫/CDR 取值、仆从被动是否进面板、充能指环 K 等）的裁决原则与实测步骤见 `agent/references/measurement-guide.md`；证据采信度排序与 11 条用户拍板见 `agent/SKILL.md`。
+仓库根目录的 `SKILL.md` 是 AI 协作技能定义（真源、口径红线、工具、改动纪律），已包含采信度排序、未明项选项卡与唯一未决项（静电×易伤结构）。需要作为技能加载时，把该文件放进 `~/.workbuddy/skills/deskrawl-damage-analyst/SKILL.md`。
 
 ## 仆从模型
 

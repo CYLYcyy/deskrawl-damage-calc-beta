@@ -56,7 +56,7 @@ wikily 的逐步表写得很明确：元素那一步是 `× (1 + 该元素伤害
 
 **系数已由 1.0.4 真源实锤**（2026-11-25 对齐）：`StaticElectricity` 是 `DamageAmplificationBehavior`，`AmplificationPercent.Base=0.10` → **每层 10%**；`FilterByDamageType=true`、`AffectedDamageType=3(Lightning)` → 只加闪电。旧 5%/6.6% 均为推断值，已弃用。
 
-**结构仍未决**：静电（放大受伤 Behavior）与易伤（×1.3 VulnerableBehavior）是两种不同机制，真源无合并证据。默认加算，`--taken-mode multiply` 作敏感性对照——回答时说明口径，不武断断言。详见 `/workspace/deskrawl-真源裁决-1.0.4.md`。
+**结构仍未决**：静电（放大受伤 Behavior）与易伤（×1.3 VulnerableBehavior）是两种不同机制，真源无合并证据。默认加算，`--taken-mode multiply` 作敏感性对照——回答时说明口径，不武断断言。裁决口径见仓库根目录 `SKILL.md`。
 
 ## 上限
 
