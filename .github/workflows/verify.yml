@@ -1,0 +1,28 @@
+name: verify-build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Rebuild generated artifacts
+        working-directory: deskrawl-damage-lab
+        run: |
+          node agent/tools/build-kb.mjs
+          node build-standalone.mjs
+
+      - name: Self-check damage model
+        working-directory: deskrawl-damage-lab
+        run: node agent/tools/calc.mjs --check
+
+      - name: Fail if committed artifacts are stale
+        run: git diff --exit-code
