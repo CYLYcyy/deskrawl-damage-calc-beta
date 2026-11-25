@@ -36,8 +36,7 @@ N > 10：倍率(N) = pct + (N - 10) × perLevel    （引擎 pctAtLevel 的实�
 
 ## 2. 符文总数与构成（A）
 
-**当前 1.1.11a 共 199 条**：9 Uncommon 蓝 + 56 Rare 金 + 56 Grand 大金 + 78 套装件。
-演变链：**119（发售）→ 151（1.0.1，+32 Grand）→ 199（1.0.2，+48 符文）**，官方补丁原文与 SO `RuneData.json` 计数闭合。TechWiser / PGG 的"119"与多个 SEO 站的"151"都是过期快照。每职业当前 14 对 Rare/Grand。
+**当前 1.1.11a（1.0.4 真源）共 241 条**（`runes.js` 落地数），旧文档写的 199 条（9 蓝 + 56 金 + 56 大金 + 78 套装件）与 13 套均为 1.0.2 过期快照。以 `runes.js` 的 `RuneData.RUNES` 与 `SETS` 为唯一真源。
 
 符文机制（A）：符文等级上限 6，1→6 共 5 次成长；单件属性 `base` 为 1 级值，**N 级 = base + (N−1)×per**；蓝/金/大金可重复装备，套装 6 件不可重复；套装触发 2/4/6 件，6 件需 65 级开满槽。
 
@@ -51,9 +50,9 @@ Rare: Levels=2, Grand: Levels=4, EveryN=3
 
 实现：`RuneData.grantedLevels(runeLevel, baseLevels)`；`RuneData.applyRunes(cfg, s)` 把授予写入 `cfg.skillLevels[技能id]`（引擎 `pctAtLevel` 据此缩放），**不写 `s.ability[id]`**（那是"技能专属 +%伤害"乘区，写串会算错）。符文 2–5 级游戏内数值未实测（B 站明确标注待确认），按 SO 线性公式外推属 C 级。
 
-## 4. 13 套符文套装
+## 4. 20 套符文套装
 
-13 套名称齐全（战士 4、法师/猎人/武僧各 3）；完整 2/4/6 效果见 `runes.js` 的 `RuneData.SETS`（A 级 SO 本地化，含有数值部分的 mods 与原文 text）。纯机制效果（溅射、额外投射物、免费施放、眩晕等）只记 flag + text，**不伪造乘区**。
+当前为 20 套（旧版 13 套已废弃）；完整 2/4/6 效果见 `runes.js` 的 `RuneData.SETS`（A 级 SO 本地化，含有数值部分的 mods 与原文 text）。纯机制效果（溅射、额外投射物、免费施放、眩晕等）只记 flag + text，**不伪造乘区**。
 
 | # | 套装 | 职业 | 2 件（代表） | 4 件 | 6 件 |
 |---|---|---|---|---|---|
@@ -105,4 +104,4 @@ node agent/tools/calc.mjs --class warrior --runes RareRune_WarriorBasicAttack:6 
 - https://afkmeta.com/en/deskrawl/changes （A，官方补丁转述：119→151→199）
 - https://afkmeta.com/en/deskrawl/abilities/warrior （B，1–10 级逐等级数组）
 - https://www.deskrawl.tools/abilities （B，等级滑块 max=20、"further through runes" 原文）
-- https://afkmeta.com/en/deskrawl/runes （B，199 计数与 13 套效果）
+- https://afkmeta.com/en/deskrawl/runes （B，历史快照；当前计数以 `runes.js` 为准）

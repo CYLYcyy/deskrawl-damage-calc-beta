@@ -78,7 +78,7 @@
     'legendaries', 'minionId', 'minionLevel', 'minionReins', 'minionGear', 'minionGearGate', 'minionGearBuild', 'minionStars', 'minionSynergy',
     'electroStacks', 'brittleStacks', 'brittleZone', 'reckoningStacks', 'gems', 'enemy', 'encounter', 'diff', 'duration', 'gcd', 'preset', 'slot', 'decisions'];
 
-  function snapshot() { return Store.normalize(state); }
+  function snapshot() { return Store.normalize(Object.assign({}, state, { preset: state._preset })); }
 
   function applySnapshot(src) {
     const s = Store.normalize(src);
@@ -403,7 +403,7 @@
     if (rk) {
       rk.addEventListener('input', e => {
         const raw = parseInt(e.target.value, 10);
-        state.reckoningStacks = isFinite(raw) ? Math.max(0, Math.min(50, raw)) : 0;
+        state.reckoningStacks = isFinite(raw) ? Math.max(0, Math.min(30, raw)) : 0;
         state._cache = {}; recomputeAll();
       });
       rk.addEventListener('blur', e => {

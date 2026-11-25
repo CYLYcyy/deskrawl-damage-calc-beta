@@ -60,7 +60,7 @@ node agent/tools/calc.mjs --gear 840,legendary
 # 技能等级倍率（Base+N×PerLevel，可 50+）
 node agent/tools/calc.mjs --class warrior --skill-level w_val:20
 
-# 符文加成（等级授予 + 属性；199 条 id 见 runes.js）
+# 符文加成（等级授予 + 属性；241 条 id 见 runes.js）
 node agent/tools/calc.mjs --class warrior --runes RareRune_WarriorBasicAttack:6
 
 # 静电×易伤相乘口径（默认加算）
@@ -99,6 +99,7 @@ node agent/tools/calc.mjs --check
 | `agent/knowledge/07-affixes.md` | 词条池、部位限制、优先级（值为中值） | 生成 |
 | `agent/knowledge/08-enemies-patches.md` | 敌人缩放、难度、版本记录 | 生成 |
 | `agent/knowledge/09-playbook.md` | 回答结构与常见问题模板 | 生成 |
+| `agent/knowledge/10-gems.md` | 宝石家族、品级、槽位孔数与镶嵌规则 | 生成 |
 | `agent/references/item-numbers.md` | 装备五大类型、55 词条中值、掷骰公式、职业掩码 | 人工维护（调研整理） |
 | `agent/references/skill-runes.md` | 技能等级公式、241 符文、授予公式、20 套 | 人工维护 |
 | `agent/references/minions.md` | 仆从被动成长、缰绳+5、主动技能16只、协同被动槽、5级装备（无"第13件"） | 人工维护 |
@@ -108,9 +109,9 @@ node agent/tools/calc.mjs --check
 | `agent/references/measurement-guide.md` | 所有未决项的实测步骤模板（原则 11 落地） | 人工维护 |
 | `agent/references/true-source-facts.md` | **真源实证事实表**：各机制的真源值/版本边界/采信度判断，回答静电/脆裂/横扫/易伤/CDR 等必读 | 人工维护（已更新到 1.0.4） |
 
-**机制事实优先查 `true-source-facts.md` 与 `/workspace/deskrawl-真源裁决-1.0.4.md`**：1.0.4 SO 真源（2026-11-25 全面对齐，= Steam 1.1.11a）已裁决静电 10%/层、闪电风暴 217%、横扫 97%、CDR 0.80、脆裂进暴伤池。仅「静电×易伤结构」因两种 Behavior 无合并证据，保留加算默认/相乘敏感性未决项。
+**机制事实优先查 `true-source-facts.md` 与仓库根目录的 `deskrawl-真源裁决-1.0.4.md`**：1.0.4 SO 真源（2026-11-25 全面对齐，= Steam 1.1.11a）已裁决静电 10%/层、闪电风暴 217%、横扫 97%、CDR 0.80、脆裂进暴伤池。仅「静电×易伤结构」因两种 Behavior 无合并证据，保留加算默认/相乘敏感性未决项。
 
-数据版本变了先跑 `node agent/tools/build-kb.mjs` 重建 `kb.json` 与 9 篇 md；**不要手改生成物**。references 是人工整理的调研结论，随调研更新。
+数据版本变了先跑 `node agent/tools/build-kb.mjs` 重建 `kb.json` 与 10 篇 md，再跑 `node build-standalone.mjs` 重打包单文件；**不要手改生成物**。references 是人工整理的调研结论，随调研更新。
 
 ## 必须记住的乘区规则
 

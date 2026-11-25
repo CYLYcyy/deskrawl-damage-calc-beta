@@ -14,7 +14,7 @@
   const MAX_SAVES = 40;
   const MAX_SOLVES = 40;
 
-  const GEAR_KEYS = ['dps', 'speed', 'main', 'cc', 'cd', 'as', 'ele', 'type', 'all', 'vsElite', 'vsVuln', 'manaMax', 'regen', 'costRed', 'flat'];
+  const GEAR_KEYS = ['dps', 'speed', 'main', 'cc', 'cd', 'as', 'ele', 'type', 'all', 'vsElite', 'vsVuln', 'manaMax', 'regen', 'costRed', 'flat', 'cdr', 'weaponDamage'];
   const CLASS_KEYS = Object.keys(D.CLASSES || {});
   const ELEMENTS = Object.keys(D.ELEMENTS || {});
   const TYPES = ['basic', 'strong', 'special'];
@@ -120,7 +120,7 @@
       if (n > 0) { out[k] = n; total += n; }
     });
     // 点数超上限（换版本/手改文件）时按比例截断，避免引擎按超配算
-    const CAP = 90;
+    const CAP = 70;   // 与 solver.js BUDGET、engine.js autoTalents 保持一致
     if (total > CAP) {
       let left = CAP;
       const keys = Object.keys(out).sort((a, b) => out[b] - out[a]);
@@ -308,7 +308,7 @@
   /* 宝石镶嵌 { [数字槽位]: [{ fam, lv }, ...] }，照真源 GemData 校验
      槽位 1-11、家族 6 类、品级 1-7、每槽孔数不超过 GEM_SLOT_CAP。 */
   const GEM_FAMS = ['diamond', 'ruby', 'sapphire', 'topaz', 'emerald', 'amethyst'];
-  const GEM_CAP = (window.DESKRAWL_DATA && window.DESKRAWL_DATA.GEM_SLOT_CAP) ||
+  const GEM_CAP = (D.GEMS && D.GEMS.SLOT_CAP) ||
     { 1: 3, 2: 1, 3: 2, 4: 2, 5: 0, 6: 0, 7: 1, 8: 1, 9: 0, 10: 0, 11: 0 };
   function sanitizeGems(v) {
     const out = {};
@@ -444,8 +444,9 @@
   const SHORT = {
     classKey: 'c', element: 'e', primaryType: 't', gear: 'g', skills: 's', talents: 'tl',
     setId: 'si', setCount: 'sc', legendaries: 'lg', minionId: 'mi', minionLevel: 'ml',
-    minionReins: 'mr', minionGear: 'mg', minionGearGate: 'm13g', minionGearBuild: 'm13', minionStars: 'ms', electroStacks: 'es', encounter: 'ec',
-    brittleStacks: 'bs', brittleZone: 'bz',
+    minionReins: 'mr', minionGear: 'mg', minionGearGate: 'm13g', minionGearBuild: 'm13', minionStars: 'ms', minionSynergy: 'mSyn',
+    electroStacks: 'es', encounter: 'ec', brittleStacks: 'bs', brittleZone: 'bz', reckoningStacks: 'rk', gems: 'gm',
+    gearBuild: 'gb', runeSlots: 'rs',
     enemy: 'en', diff: 'df', duration: 'du', gcd: 'gc', preset: 'pr', slot: 'sl', decisions: 'dj'
   };
 

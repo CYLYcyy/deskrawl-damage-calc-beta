@@ -1,13 +1,14 @@
 /* 把多文件前端打包成单文件自包含 HTML
  * 用法：node build-standalone.mjs
- * 产出：/workspace/deskrawl-lab.html —— 任何环境双击即可用（无外部脚本依赖）
+ * 产出：仓库根目录的 deskrawl-lab.html —— 任何环境双击即可用（无外部脚本依赖）
  * 背景：受限预览面板/沙箱 iframe 里 <script src="./x.js"> 相对路径加载失败，
  *       导致整个 app 不初始化、tab 点了没反应。内联后彻底消除该问题。
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = process.cwd();
+const root = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 // 按 index.html 中的出现顺序抽取 <script src="..."></script>

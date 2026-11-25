@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased（构建链路与存档一致性修复）
+
+### 修复
+- `build-kb.mjs` 停止读取已删除的 `selfBasePct/selfPerLevelPct`：知识库（10 篇 md、`kb.json`、`kb-data.js`）与单文件不再出现 `undefined% + undefined%/级`
+- 分享码补齐 5 个此前丢失的字段（gearBuild / runeSlots / minionSynergy / reckoningStacks / gems）与装备的 `cdr`、`weaponDamage`
+- `store.js` 宝石孔位上限改读真源 `D.GEMS.SLOT_CAP`，不再走硬编码副本
+- 天赋点数上限统一为 70（存档层此前为 90，与求解器口径冲突）；UI 清算锤上限对齐存档层为 30
+- `snapshot()` 显式带出 `_preset`，修复存档后装配档位总退回"中配"的问题
+- `build-standalone.mjs` 改用 `import.meta.url` 定位，去掉写死的 `/workspace/` 路径
+
+### 文档
+- README / SKILL.md / index.html / references 中的过时数字统一为当前真源：70 件传奇、241 符文、20 套、10 篇知识库、静电 10%/层、仆从主动技能不计 DPS
+- 版本更迭流程补上 `node build-standalone.mjs` 一步，单文件不再是"改完源码忘了重打包"
+
+### 验证
+- `calc --check` PASS，自洽误差 0
+
 ## v1.0.0-beta (2026-11-25)
 
 首个公开发布的 beta 版本。定位：**研究型伤害工作台 + 知识库智能体**，非"精确计算器正式版"。
@@ -24,7 +41,7 @@
 
 ### 验证
 - `calc --check` PASS；双引擎 5 个标量乘区逐位一致；脆裂/静电专项测试通过
-- 单文件与源码逐字节同步
+- 单文件由 `build-standalone.mjs` 从源码生成（发布流程必须执行，见 README「版本更迭」）
 - 公开资料 QA 交叉验证：模型骨架获独立佐证，三处口径差异按"真源 > 二手"裁决并记录
 
 ### 已知边界（发布说明必须保留）

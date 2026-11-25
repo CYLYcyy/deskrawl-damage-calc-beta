@@ -54,7 +54,7 @@ if (has('help') || argv.length === 0) {
 --gear       starter|mid|end（预设）或 ilvl,rarity（如 840,legendary，按装分×稀有度生成装备）
 --item       JSON 覆盖 gearBuild（ilvl/rarity/slots/roll/divineId/blackMist/ancient）
 --skill-level 技能id:N[,技能id:N]                按 Base+N×PerLevel 缩放倍率（10 级基准，可 50+）
---runes      符文id:等级[,符文id:等级]           199 符文属性 + 技能等级授予
+--runes      符文id:等级[,符文id:等级]           241 符文属性 + 技能等级授予
 --taken-mode multiply|additive                   静电×易伤口径（默认 additive；multiply 为敏感性对照）
 --enemy      mob|elite|boss|world|rift           默认 boss
 --diff       1|3.5|6                             默认 6（地狱）
