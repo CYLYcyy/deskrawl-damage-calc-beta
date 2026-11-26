@@ -24,5 +24,20 @@ jobs:
         working-directory: deskrawl-damage-lab
         run: node agent/tools/calc.mjs --check
 
+      - name: Skill entrypoints work from repo root (loaded-skill cwd)
+        # 复刻 Skill 被加载后的真实 cwd（仓库根），防止命令路径写成子目录视角
+        run: |
+          node deskrawl-damage-lab/agent/tools/calc.mjs --check
+          node deskrawl-damage-lab/agent/tools/calc.mjs --class monk --json >/dev/null
+
+      - name: SKILL.md uses repo-root-relative tool paths
+        # SKILL.md 里不应再有裸的 agent/ 或 build-standalone 前缀（cwd 假设已证伪，见 POSTMORTEM-skill-path.md）
+        run: |
+          if grep -nE '(node|python3) (agent/|build-standalone|solver)' SKILL.md; then
+            echo "ERROR: SKILL.md 含子目录视角的裸命令；应统一带 deskrawl-damage-lab/ 前缀"
+            exit 1
+          fi
+          echo "OK: SKILL.md 工具命令均为仓库根相对路径"
+
       - name: Fail if committed artifacts are stale
         run: git diff --exit-code

@@ -70,18 +70,18 @@ agent_created: true
 
 ## 五、算数优先用工具
 
-在 `deskrawl-damage-lab/` 下执行：
+在**本 skill 根目录（= 仓库根）**执行，命令已自带 `deskrawl-damage-lab/` 前缀：
 
 ```bash
-node agent/tools/calc.mjs --class sorcerer --element lightning --enemy boss --diff 6   # 秒伤+伤害构成
-node agent/tools/calc.mjs --class warrior --hit w_flame --electro 0                    # 单跳逐乘区
-node agent/tools/calc.mjs --gear 840,legendary                                          # 装分×稀有度数值
-node agent/tools/calc.mjs --class warrior --skill-level w_val:20                       # 技能等级倍率
-node agent/tools/calc.mjs --class warrior --runes RareRune_WarriorBasicAttack:6        # 符文加成
-node agent/tools/calc.mjs --class warrior --affix weapon                               # 词条边际 Top8
-node agent/tools/calc.mjs --class monk --json                                           # 机器可读
-node agent/tools/calc.mjs --check                                                       # 自洽校验（必须 PASS）
-python3 agent/tools/cross_validate.py                                                   # 双引擎乘区交叉校验
+node deskrawl-damage-lab/agent/tools/calc.mjs --class sorcerer --element lightning --enemy boss --diff 6   # 秒伤+伤害构成
+node deskrawl-damage-lab/agent/tools/calc.mjs --class warrior --hit w_flame --electro 0                    # 单跳逐乘区
+node deskrawl-damage-lab/agent/tools/calc.mjs --gear 840,legendary                                          # 装分×稀有度数值
+node deskrawl-damage-lab/agent/tools/calc.mjs --class warrior --skill-level w_val:20                       # 技能等级倍率
+node deskrawl-damage-lab/agent/tools/calc.mjs --class warrior --runes RareRune_WarriorBasicAttack:6        # 符文加成
+node deskrawl-damage-lab/agent/tools/calc.mjs --class warrior --affix weapon                               # 词条边际 Top8
+node deskrawl-damage-lab/agent/tools/calc.mjs --class monk --json                                           # 机器可读
+node deskrawl-damage-lab/agent/tools/calc.mjs --check                                                       # 自洽校验（必须 PASS）
+python3 deskrawl-damage-lab/agent/tools/cross_validate.py                                                   # 双引擎乘区交叉校验
 ```
 
 `--help` 看全部参数。`--check` PASS 是回答数值问题的前置条件。
@@ -97,11 +97,11 @@ python3 agent/tools/cross_validate.py                                           
 改任何真源或前端代码后，按顺序：
 
 ```bash
-cd deskrawl-damage-lab
-node agent/tools/build-kb.mjs      # 重建知识库（漏掉 → 网页问答读旧数据）
-node build-standalone.mjs          # 重建根目录单文件（漏掉 → 玩家拿到旧逻辑）
-node agent/tools/calc.mjs --check  # 自洽校验
-cd .. && git diff --exit-code      # 有输出说明产物没同步；CI 也会拦截
+# 从仓库根目录执行：命令已自带 deskrawl-damage-lab/ 前缀，无需 cd
+node deskrawl-damage-lab/agent/tools/build-kb.mjs      # 重建知识库（漏掉 → 网页问答读旧数据）
+node deskrawl-damage-lab/build-standalone.mjs          # 重建根目录单文件（漏掉 → 玩家拿到旧逻辑）
+node deskrawl-damage-lab/agent/tools/calc.mjs --check  # 自洽校验
+git diff --exit-code                                   # 有输出说明产物没同步；CI 也会拦截
 ```
 
 高风险改动（`engine.js` 的 `simulate`/`aggregate`、`rankAffixes` 与 `gearBuild` 的交互、`findAb` 的全局副作用、求解器评分口径）前后必须做 DPS 与循环回归比对。发布更新 `CHANGELOG.md`。

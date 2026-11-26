@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased（Skill 工具命令路径修复）
+
+### 修复
+- `SKILL.md` 上移到根目录后，内部工具命令仍是 `agent/tools/...` 子目录视角；Skill 被加载后 cwd 为仓库根，导致所有算数工具（`calc.mjs` / `cross_validate.py` / `build-kb.mjs` / `build-standalone.mjs`）定位失败。全部改为自带 `deskrawl-damage-lab/` 前缀的 cwd 无关路径，并移除 `cd` 假设。
+- CI 新增两步防回归：从仓库根直接跑 Skill 等价命令；断言 `SKILL.md` 不再含裸的 `agent/` 前缀命令。
+- 复盘见根目录 `POSTMORTEM-skill-path.md`。
+
 ## Unreleased（文档清理与技能层归位）
 
 ### 文档
